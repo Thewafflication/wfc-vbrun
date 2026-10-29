@@ -1,0 +1,67 @@
+# REQ-0102 string functions on Strings (see README.md for the format).
+# The byte forms (LeftB, RightB) count bytes; an odd result keeps its last byte.
+rtcLeftBstr s"hello world" i5 => s
+rtcLeftBstr s"hello world" i4 => s
+rtcLeftBstr s"hello world" i0 => s
+rtcLeftBstr s"hello" i100 => s
+rtcLeftBstr s0 i3 => s
+rtcLeftBstr s"" i3 => s
+rtcRightBstr s"hello world" i4 => s
+rtcRightBstr s"hello world" i5 => s
+rtcRightBstr s"hello world" i0 => s
+rtcRightBstr s"hello" i100 => s
+rtcRightBstr s0 i3 => s
+# The character forms (Left, Right) count characters.
+rtcLeftCharBstr s"hello world" i5 => s
+rtcLeftCharBstr s"hello world" i0 => s
+rtcLeftCharBstr s"hello" i100 => s
+rtcLeftCharBstr s0 i3 => s
+rtcLeftCharBstr s"\u00E9\u4E2D\u6587xyz" i3 => s
+rtcRightCharBstr s"hello world" i5 => s
+rtcRightCharBstr s"hello world" i0 => s
+rtcRightCharBstr s"hello" i100 => s
+rtcRightCharBstr s0 i3 => s
+rtcRightCharBstr s"xyz\u00E9\u4E2D\u6587" i3 => s
+# Case.
+rtcUpperCaseBstr s"Hello World 123" => s
+rtcUpperCaseBstr s"stra\u00DFe \u00E9\u00F6\u00FC" => s
+rtcUpperCaseBstr s"" => s
+rtcUpperCaseBstr s0 => s
+rtcLowerCaseBstr s"Hello WORLD 123" => s
+rtcLowerCaseBstr s"\u00C9\u00D6\u00DC" => s
+rtcLowerCaseBstr s"" => s
+rtcLowerCaseBstr s0 => s
+# Trim removes spaces only.
+rtcTrimBstr s"  pad  " => s
+rtcTrimBstr s"\t pad \t" => s
+rtcTrimBstr s"   " => s
+rtcTrimBstr s"" => s
+rtcTrimBstr s0 => s
+rtcLeftTrimBstr s"  pad  " => s
+rtcLeftTrimBstr s"   " => s
+rtcLeftTrimBstr s0 => s
+rtcRightTrimBstr s"  pad  " => s
+rtcRightTrimBstr s"   " => s
+rtcRightTrimBstr s0 => s
+# Space.
+rtcSpaceBstr i3 => s
+rtcSpaceBstr i0 => s
+rtcSpaceBstr i1 => s
+# Character codes.
+rtcAnsiValueBstr s"A" => i
+rtcAnsiValueBstr s"ABC" => i
+rtcCharValueBstr s"A" => i
+rtcCharValueBstr s"\u4E2D" => i
+rtcCharValueBstr s"\u00E9" => i
+rtcByteValueBstr s"A" => i
+rtcByteValueBstr s"\u4E2D" => i
+rtcBstrFromChar i65 => s
+rtcBstrFromChar i233 => s
+rtcBstrFromChar i20013 => s
+rtcBstrFromChar i-3 => s
+rtcBstrFromByte i65 => s
+rtcBstrFromByte i200 => s
+rtcStrReverse s"abc" => s
+rtcStrReverse s"" => s
+rtcStrReverse s0 => s
+rtcStrReverse s"a\u00E9\u4E2Dz" => s

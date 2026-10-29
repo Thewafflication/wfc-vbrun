@@ -1,0 +1,96 @@
+# The exports that have a real implementation (one name per line). Every other
+# export of the reference directory is a stub that stops the process with a
+# diagnostic. scripts/New-VbrunExports.ps1 reads this list; add a name here
+# when its helper is written, and regenerate wfcvbrun.def.
+#
+# REQ-0103 member and memory helpers
+GetMem1
+GetMem2
+GetMem4
+GetMem8
+PutMem1
+PutMem2
+PutMem4
+PutMem8
+VarPtr
+GetMemStr
+PutMemStr
+GetMemObj
+SetMemObj
+GetMemVar
+# REQ-0102 string functions on Strings
+rtcLeftBstr
+rtcRightBstr
+rtcLeftCharBstr
+rtcRightCharBstr
+rtcUpperCaseBstr
+rtcLowerCaseBstr
+rtcTrimBstr
+rtcLeftTrimBstr
+rtcRightTrimBstr
+rtcSpaceBstr
+rtcAnsiValueBstr
+rtcCharValueBstr
+rtcByteValueBstr
+rtcBstrFromChar
+rtcBstrFromByte
+rtcStrReverse
+# REQ-0102 type tests on Variants
+rtcVarType
+rtcIsEmpty
+rtcIsNull
+rtcIsArray
+rtcIsObject
+rtcIsError
+# REQ-0101 String and number conversions, Len
+__vbaLenBstr
+__vbaLenBstrB
+__vbaI4Str
+__vbaI2Str
+__vbaUI1Str
+__vbaStrI4
+__vbaStrUI1
+# REQ-0101 operators and comparisons on Variants
+__vbaVarAdd
+__vbaVarSub
+__vbaVarMul
+__vbaVarDiv
+__vbaVarIdiv
+__vbaVarMod
+__vbaVarPow
+__vbaVarAnd
+__vbaVarOr
+__vbaVarXor
+__vbaVarEqv
+__vbaVarImp
+__vbaVarNot
+__vbaVarNeg
+__vbaVarAbs
+__vbaVarFix
+__vbaVarInt
+__vbaVarTstEq
+__vbaVarTstNe
+__vbaVarTstLt
+__vbaVarTstLe
+__vbaVarTstGt
+__vbaVarTstGe
+__vbaVarTextTstEq
+__vbaVarTextTstNe
+__vbaVarTextTstLt
+__vbaVarTextTstLe
+__vbaVarTextTstGt
+__vbaVarTextTstGe
+__vbaVarCmpEq
+__vbaVarCmpNe
+__vbaVarCmpLt
+__vbaVarCmpLe
+__vbaVarCmpGt
+__vbaVarCmpGe
+__vbaVarTextCmpEq
+__vbaVarTextCmpNe
+__vbaVarTextCmpLt
+__vbaVarTextCmpLe
+__vbaVarTextCmpGt
+__vbaVarTextCmpGe
+rtcTypeName
+rtcIsNumeric
