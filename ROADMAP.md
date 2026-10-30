@@ -60,8 +60,9 @@ item is present, tested and passing in CI; an unchecked one is planned.
 ## Platform track
 
 - [ ] Windows x86, x64, ARM64 (MSVC) passing in CI.
-- [ ] Linux x86, x64 and ARM through Winelib (`cmake/winelib.cmake`): the CI
-      job exists and is experimental until it passes on all three.
+- [ ] Linux x86, x64 and ARM through Winelib (`cmake/winelib.cmake`): x64 and x86
+      build and pass in CI; arm64 builds, but Wine 9 hangs when it runs the
+      tests, so they are not run there yet.
 - [ ] WebAssembly with Emscripten: not possible for this library (it is made of Windows API calls); the static helpers move to a portable core first.
 - [ ] A browser demo of the example program.
 
