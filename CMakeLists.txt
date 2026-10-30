@@ -182,7 +182,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
   add_test(NAME TC-MP0010-vbrun-static COMMAND vbrun_static_tests)
   set_tests_properties(
     TC-MP0010-vbrun-static
-    PROPERTIES LABELS "unit;mp-0010;vbrun"
+    PROPERTIES LABELS "unit;mp-0010;vbrun" TIMEOUT 120
   )
   if(WIN32)
     # A C program loads wfcvbrun.dll, checks its COM entry points and version

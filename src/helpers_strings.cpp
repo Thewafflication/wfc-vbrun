@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <cwchar>
 
 #include "vbrun_helpers.hpp"
 
