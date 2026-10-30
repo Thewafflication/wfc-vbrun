@@ -150,4 +150,31 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     TC-MP0010-vbrun-static
     PROPERTIES LABELS "unit;mp-0010;vbrun"
   )
+  # A C program loads wfcvbrun.dll, checks its COM entry points and version
+  # resource, and registers and unregisters it for the current user.
+  enable_language(C)
+  add_executable(vbrun_dll_test tests/vbrun_dll_test.c)
+  target_link_libraries(vbrun_dll_test PRIVATE version advapi32)
+  add_dependencies(vbrun_dll_test wfc_vbrun)
+  if(MSVC)
+    target_compile_options(vbrun_dll_test PRIVATE /W4 /WX)
+  else()
+    target_compile_options(vbrun_dll_test PRIVATE -Wall -Wextra -Werror)
+  endif()
+  if(COMMAND wsp_enable_hardening)
+    wsp_enable_hardening(vbrun_dll_test)
+  endif()
+  add_test(
+    NAME TC-MP0010-vbrun-dll
+    COMMAND
+      vbrun_dll_test "$<TARGET_FILE:wfc_vbrun>" "${WFC_VBRUN_VERSION}"
+      "${WFC_LIB_TARGET}"
+  )
+  set_tests_properties(
+    TC-MP0010-vbrun-dll
+    PROPERTIES
+      LABELS "integration;mp-0010;vbrun"
+      RESOURCE_LOCK registry
+      SKIP_RETURN_CODE 77
+  )
 endif()
