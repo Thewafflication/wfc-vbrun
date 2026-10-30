@@ -7,6 +7,8 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_C_COMPILER winegcc)
 set(CMAKE_CXX_COMPILER wineg++)
+# winegcc writes name.exe (a launcher script) and name.exe.so.
+set(CMAKE_EXECUTABLE_SUFFIX ".exe")
 set(WFC_WINELIB ON CACHE BOOL "Build with Winelib" FORCE)
 if(WFC_WINELIB_ARCH STREQUAL "x86")
   set(CMAKE_C_FLAGS_INIT "-m32")
