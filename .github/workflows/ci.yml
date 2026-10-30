@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64, arm64]
+        include:
+          - { arch: x86, platform: Win32, runner: windows-2022 }
+          - { arch: x64, platform: x64, runner: windows-2022 }
+          - { arch: arm64, platform: ARM64, runner: windows-11-arm }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -S . -B out/build -A ${{ matrix.platform }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build out/build --config Debug
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir out/build -C Debug --output-on-failure
+
+  winelib:
+    name: Linux Winelib ${{ matrix.arch }} (experimental)
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: true
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { arch: x64, runner: ubuntu-24.04 }
+          - { arch: x86, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Wine development packages
+        run: |
+          if [ "${{ matrix.arch }}" = "x86" ]; then
+            sudo dpkg --add-architecture i386
+          fi
+          sudo apt-get update
+          if [ "${{ matrix.arch }}" = "x86" ]; then
+            sudo apt-get install -y wine32-development wine-development-dev:i386 cmake ninja-build
+          else
+            sudo apt-get install -y wine64-tools libwine-dev wine64 cmake ninja-build
+          fi
+
+      - name: Configure
+        run: |
+          cmake -S . -B out/winelib -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/winelib.cmake \
+            -DWFC_WINELIB_ARCH=${{ matrix.arch }} \
+            -DWFC_WARNINGS_AS_ERRORS=OFF
+
+      - name: Build
+        run: cmake --build out/winelib
+
+      - name: Test
+        run: ctest --test-dir out/winelib --output-on-failure
+
+  webassembly:
+    name: WebAssembly (experimental)
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure
+        run: |
+          emcmake cmake -S . -B out/wasm -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CROSSCOMPILING_EMULATOR=node
+
+      - name: Build
+        run: cmake --build out/wasm
+
+      - name: Test
+        run: ctest --test-dir out/wasm --output-on-failure
+
+  wsp-style:
+    name: WSP source style (report)
+    runs-on: windows-2022
+    continue-on-error: true
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Check the source style
+        shell: pwsh
+        run: |
+          & ./wsp/tools/Test-SourceStyle.ps1 -RepositoryRoot $PWD `
+            -SourcePath @('src', 'include', 'tests', 'CMakeLists.txt')
