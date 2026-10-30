@@ -13,6 +13,11 @@
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   cmake_minimum_required(VERSION 3.28)
   project(wfc-vbrun LANGUAGES CXX)
+  if(WFC_WINELIB)
+    # winegcc writes name.exe (a launcher) and name.exe.so; the platform module
+    # resets the suffix when the project is declared, so it is set here.
+    set(CMAKE_EXECUTABLE_SUFFIX ".exe")
+  endif()
   option(WFC_BUILD_TESTS "Build the tests" ON)
   include(CTest)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
