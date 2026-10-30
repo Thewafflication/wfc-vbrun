@@ -94,3 +94,8 @@ __vbaVarTextCmpGt
 __vbaVarTextCmpGe
 rtcTypeName
 rtcIsNumeric
+# Registration with Windows (registration.cpp)
+DllRegisterServer
+DllUnregisterServer
+DllCanUnloadNow
+DllGetClassObject

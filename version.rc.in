@@ -12,6 +12,7 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
+            VALUE "Comments", "Targets @WFC_LIB_TARGET@"
             VALUE "CompanyName", "Waughtal"
             VALUE "FileDescription", "@WFC_LIB_DESCRIPTION@"
             VALUE "FileVersion", "@WFC_LIB_VERSION@"

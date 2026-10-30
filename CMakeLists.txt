@@ -49,6 +49,12 @@ list(GET version_parts 0 WFC_LIB_VERSION_MAJOR)
 list(GET version_parts 1 WFC_LIB_VERSION_MINOR)
 list(GET version_parts 2 WFC_LIB_VERSION_PATCH)
 set(WFC_LIB_VERSION "${WFC_VBRUN_VERSION}")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET" WFC_LIB_TARGET LIMIT_COUNT 1)
+configure_file(
+  src/registration_info.hpp.in
+  "${CMAKE_CURRENT_BINARY_DIR}/registration_info.hpp"
+  @ONLY
+)
 set(WFC_LIB_NAME wfcvbrun)
 set(WFC_LIB_DESCRIPTION "WFC VBRUN compatibility library")
 configure_file(version.rc.in "${CMAKE_CURRENT_BINARY_DIR}/wfcvbrun.rc" @ONLY)
@@ -57,10 +63,12 @@ add_library(
   wfc_vbrun
   SHARED
   ${wfc_vbrun_sources}
+  src/registration.cpp
   src/wfcvbrun.def
   "${CMAKE_CURRENT_BINARY_DIR}/wfcvbrun.rc"
 )
-target_link_libraries(wfc_vbrun PRIVATE oleaut32)
+target_link_libraries(wfc_vbrun PRIVATE oleaut32 advapi32)
+target_include_directories(wfc_vbrun PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 set_target_properties(
   wfc_vbrun
   PROPERTIES

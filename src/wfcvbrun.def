@@ -9,8 +9,8 @@ EXPORTS
     VBDllRegisterServer=vbrun_stub_103 @103
     VBDllGetClassObject=vbrun_stub_104 @104
     UserDllMain=vbrun_stub_105 @105
-    DllRegisterServer=vbrun_stub_106 @106
-    DllUnregisterServer=vbrun_stub_107 @107
+    DllRegisterServer @106
+    DllUnregisterServer @107
     __vbaAryLock=vbrun_stub_108 @108
     __vbaBoolErrVar=vbrun_stub_109 @109
     __vbaRedimVar2=vbrun_stub_110 @110
@@ -57,8 +57,8 @@ EXPORTS
     __vbaVargVarMove=vbrun_stub_151 @151
     __vbaVargVarRef=vbrun_stub_152 @152
     DLLGetDocumentation=vbrun_stub_153 @153
-    DllCanUnloadNow=vbrun_stub_154 @154
-    DllGetClassObject=vbrun_stub_155 @155
+    DllCanUnloadNow @154
+    DllGetClassObject @155
     _CIatan=vbrun_stub_156 @156
     _CIcos=vbrun_stub_157 @157
     _CIexp=vbrun_stub_158 @158

@@ -17,5 +17,24 @@ installed reference runtime, and stubs that stop with a diagnostic for the rest.
 Targets: `wfc_vbrun` (DLL, `wfcvbrun.dll`) and `wfc_vbrun_static` (static
 library `wfcvbrun_static.lib`), so a program can link the helpers either way.
 
+## Version and target
+
+The version is in `VERSION` and the Microsoft component it stands in for in
+`TARGET`: **vbrun** targets MSVBVM60.DLL 6.0.98 (Visual Basic 6.0 SP6). The version stays
+`0.<target major>.<target minor>` until the library matches the Microsoft one
+functionally; then it takes the Microsoft version. Both are stamped into the
+DLL's version resource (`FileVersion`, `Comments`).
+
+## Registration with Windows
+
+`regsvr32 wfcvbrun.dll` (`/u` to remove) writes `Software\WFC\Libraries\vbrun`
+(version, target, path). `WFC_REGISTER_SCOPE=user|machine` picks the registry
+(default: the machine, the user when that is not writable). The runtime does not create objects through COM yet.
+
+Each library is also a WPM package of its own (`wfc-vbrun`), whose install script
+copies the DLL to `lib\wfcvbrun\<version>\<arch>` of the WFC installation and
+registers it, so dynamically linked programs get an update by installing that
+package alone.
+
 Part of [WFC](https://github.com/Thewafflication/wfc), where it is mounted at
 `lib/wfc-vbrun`. Licence: GPL-3.0-or-later (see the WFC `LICENSE`).
