@@ -18,10 +18,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
   include(WfcWarnings)
   # WSP-SEC-0015: the pinned WSP baseline supplies the hardening flags (not for
-  # the WebAssembly target, whose toolchain has none of them).
+  # the WebAssembly and Winelib targets, whose toolchains do not take them).
   if(
     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/wsp/tools/cmake/WspBuild.cmake"
     AND NOT EMSCRIPTEN
+    AND NOT WFC_WINELIB
   )
     include("${CMAKE_CURRENT_SOURCE_DIR}/wsp/tools/cmake/WspBuild.cmake")
   endif()

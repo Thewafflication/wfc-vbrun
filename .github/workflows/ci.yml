@@ -65,7 +65,7 @@ jobs:
           fi
           sudo apt-get update
           if [ "${{ matrix.arch }}" = "x86" ]; then
-            sudo apt-get install -y wine32-development wine-development-dev:i386 cmake ninja-build
+            sudo apt-get install -y wine64-tools libwine-dev:i386 gcc-multilib g++-multilib cmake ninja-build
           else
             sudo apt-get install -y wine64-tools libwine-dev wine64 cmake ninja-build
           fi
