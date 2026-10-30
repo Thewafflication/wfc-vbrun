@@ -36,5 +36,6 @@ library repository itself carries.
 | Item | Disposition |
 | --- | --- |
 | 80-column style (WSP-STYLE-0001) | CI reports it; the library sources are not yet wrapped (the generated tables are exempt) |
-| Requirements and traceability | Planned (roadmap, WSP track) |
+| Requirements | Adopted: `requirements/` (moved from WFC) |
+| Traceability check | Planned (roadmap, WSP track) |
 | Signing | Planned for the first release |

@@ -79,5 +79,6 @@ item is present, tested and passing in CI; an unchecked one is planned.
 - [x] WSP hardening flags (WSP-SEC-0015) in the standalone build.
 - [ ] 80-column source style (WSP-STYLE-0001) for the library sources; the
       generated tables are exempt. CI reports the findings meanwhile.
-- [ ] Requirements and traceability (`requirements/`, test case identifiers).
+- [x] The requirements are here (`requirements/`); WFC runs the corpus cases.
+- [ ] A traceability check (`wsp/tools/Test-Traceability.ps1`) in CI.
 - [ ] Windows code signing and the version resource review.
