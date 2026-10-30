@@ -1,0 +1,9 @@
+# Line endings are controlled here (WSP-STYLE-0002): LF in the repository and
+# in the working tree, so the corpus programs print and compare the same text
+# on every platform.
+* text=auto eol=lf
+
+*.png binary
+*.bmp binary
+*.frx binary
+*.pdf binary
