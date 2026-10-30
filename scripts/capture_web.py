@@ -27,6 +27,9 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page(viewport={"width": 960, "height": 720})
+        page.on("console", lambda message: print("console:", message.text))
+        page.on("pageerror", lambda error: print("page error:", error))
+        page.on("response", lambda response: print(response.status, response.url))
         page.goto(url)
         page.wait_for_selector("#ready", timeout=30000)
         page.screenshot(path=output, full_page=True)
