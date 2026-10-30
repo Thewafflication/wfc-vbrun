@@ -31,7 +31,7 @@ def main():
         page.on("pageerror", lambda error: print("page error:", error))
         page.on("response", lambda response: print(response.status, response.url))
         page.goto(url)
-        page.wait_for_selector("#ready", timeout=30000)
+        page.wait_for_selector("#ready", state="attached", timeout=30000)
         page.screenshot(path=output, full_page=True)
         browser.close()
     server.shutdown()
