@@ -78,13 +78,40 @@ jobs:
             -DWFC_WARNINGS_AS_ERRORS=OFF
 
       - name: Build
-        run: cmake --build out/winelib
+        run: |
+          set -o pipefail
+          cmake --build out/winelib 2>&1 | tee out/build.txt
 
       # Wine 9 on the arm64 runner creates its prefix and then hangs, so the
       # arm64 job builds only.
       - name: Test
         if: matrix.arch != 'arm64'
-        run: ctest --test-dir out/winelib --output-on-failure
+        run: |
+          set -o pipefail
+          ctest --test-dir out/winelib --output-on-failure 2>&1 | tee out/test.txt
+
+      - name: Screenshot of the session
+        if: always()
+        run: |
+          sudo apt-get install -y python3-pil fonts-dejavu-core
+          mkdir -p docs/images
+          {
+            echo '$ uname -m'; uname -m
+            echo '$ wineg++ --version'; wineg++ --version | head -1
+            echo '$ cmake --build out/winelib'; tail -n 8 out/build.txt
+            if [ -f out/test.txt ]; then
+              echo '$ ctest --test-dir out/winelib'; cat out/test.txt
+            else
+              echo '(the tests are not run on arm64: Wine hangs there)'
+            fi
+          } > out/session.txt
+          python3 scripts/render_terminal.py out/session.txt docs/images/linux-winelib-${{ matrix.arch }}.png "wfc-vbrun: Linux (Winelib) ${{ matrix.arch }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-winelib-${{ matrix.arch }}
+          path: docs/images/linux-winelib-${{ matrix.arch }}.png
 
   webassembly:
     name: WebAssembly (experimental)
