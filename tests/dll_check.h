@@ -19,6 +19,8 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#include <objbase.h>
+#include <oleauto.h>
 #include <windows.h>
 
 #include <stddef.h>
@@ -350,6 +352,99 @@ static int wfc_check_dll(int argc, char** argv, const wchar_t* library,
     free(dll);
     free(version);
     free(target);
+    return 0;
+}
+
+/* DllGetClassObject: the class factory of `clsid` makes an IDispatch control
+ * that stores a property (`property`, a Long) and accepts a method. Used by
+ * the libraries that create their controls (not wfc-vbrun). */
+static int wfc_check_create(const wchar_t* dll_path, const wchar_t* clsid_text,
+                            const wchar_t* property, const wchar_t* method) {
+    typedef HRESULT(__stdcall * get_class_object)(REFCLSID, REFIID, void**);
+    HMODULE module = LoadLibraryW(dll_path);
+    get_class_object get;
+    CLSID clsid;
+    IClassFactory* factory = NULL;
+    IDispatch* control = NULL;
+    OLECHAR* names[1];
+    DISPID id = 0;
+    DISPPARAMS none = {NULL, NULL, 0, 0};
+    DISPPARAMS put;
+    DISPID named = DISPID_PROPERTYPUT;
+    VARIANT value;
+    VARIANT back;
+    HRESULT hr;
+    IUnknown* other = NULL;
+    if (module == NULL) {
+        wfc_check_fail("cannot load", dll_path);
+    }
+    get = (get_class_object)(void*)GetProcAddress(module, "DllGetClassObject");
+    if (get == NULL || CLSIDFromString((LPOLESTR)clsid_text, &clsid) != S_OK) {
+        wfc_check_fail("no DllGetClassObject or a bad class id in", dll_path);
+    }
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = get(&clsid, &IID_IClassFactory, (void**)&factory);
+    if (hr != S_OK || factory == NULL) {
+        wfc_check_fail("DllGetClassObject failed for", clsid_text);
+    }
+    hr = factory->lpVtbl->CreateInstance(factory, NULL, &IID_IDispatch,
+                                         (void**)&control);
+    if (hr != S_OK || control == NULL) {
+        wfc_check_fail("CreateInstance failed for", clsid_text);
+    }
+    if (factory->lpVtbl->CreateInstance(factory, (IUnknown*)control,
+                                        &IID_IDispatch, (void**)&other) !=
+        CLASS_E_NOAGGREGATION) {
+        wfc_check_fail("aggregation was not refused for", clsid_text);
+    }
+    names[0] = (OLECHAR*)property;
+    if (control->lpVtbl->GetIDsOfNames(control, &IID_NULL, names, 1, 0, &id) !=
+        S_OK) {
+        wfc_check_fail("GetIDsOfNames does not know", property);
+    }
+    VariantInit(&value);
+    value.vt = VT_I4;
+    value.lVal = 4242;
+    put.rgvarg = &value;
+    put.rgdispidNamedArgs = &named;
+    put.cArgs = 1;
+    put.cNamedArgs = 1;
+    hr = control->lpVtbl->Invoke(control, id, &IID_NULL, 0,
+                                 DISPATCH_PROPERTYPUT, &put, NULL, NULL, NULL);
+    if (hr != S_OK) {
+        wfc_check_fail("setting a property failed on", property);
+    }
+    VariantInit(&back);
+    hr =
+        control->lpVtbl->Invoke(control, id, &IID_NULL, 0, DISPATCH_PROPERTYGET,
+                                &none, &back, NULL, NULL);
+    if (hr != S_OK || back.vt != VT_I4 || back.lVal != 4242) {
+        wfc_check_fail("the property did not keep its value:", property);
+    }
+    names[0] = (OLECHAR*)method;
+    if (control->lpVtbl->GetIDsOfNames(control, &IID_NULL, names, 1, 0, &id) !=
+        S_OK) {
+        wfc_check_fail("GetIDsOfNames does not know", method);
+    }
+    hr = control->lpVtbl->Invoke(control, id, &IID_NULL, 0, DISPATCH_METHOD,
+                                 &none, NULL, NULL, NULL);
+    if (hr != S_OK) {
+        wfc_check_fail("calling a method failed:", method);
+    }
+    names[0] = L"NoSuchMemberAtAll";
+    if (control->lpVtbl->GetIDsOfNames(control, &IID_NULL, names, 1, 0, &id) ==
+        S_OK) {
+        wfc_check_fail("an unknown name was found in", clsid_text);
+    }
+    control->lpVtbl->Release(control);
+    factory->lpVtbl->Release(factory);
+    if (((HRESULT(__stdcall*)(void))(void*)GetProcAddress(
+            module, "DllCanUnloadNow"))() != S_OK) {
+        wfc_check_fail("the library cannot unload after the release:",
+                       clsid_text);
+    }
+    printf("%ls: DllGetClassObject makes a control (%ls, %ls)\n", clsid_text,
+           property, method);
     return 0;
 }
 
