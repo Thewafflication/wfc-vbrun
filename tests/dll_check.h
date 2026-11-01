@@ -7,10 +7,11 @@
  *
  * It loads the DLL, looks for the four COM entry points, compares the version
  * resource with the version and target the library was built from, and runs a
- * registration round trip in the registry of the current user (DllRegisterServer,
- * then DllUnregisterServer), once under WFC's own ProgIDs and once more under
- * the Microsoft ones. Exit code 77 means the registry already holds the library
- * or the Microsoft class ids, so the test left it alone.
+ * registration round trip in the registry of the current user
+ * (DllRegisterServer, then DllUnregisterServer), once under WFC's own ProgIDs
+ * and once more under the Microsoft ones. Exit code 77 means the registry
+ * already holds the library or the Microsoft class ids, so the test left it
+ * alone.
  */
 #ifndef WFC_DLL_CHECK_H
 #define WFC_DLL_CHECK_H
@@ -27,10 +28,10 @@
 #include <wchar.h>
 
 struct wfc_check_class {
-    const wchar_t* progid;     /* WFC's own ProgID */
-    const wchar_t* clsid;      /* WFC's own class id */
-    const wchar_t* ms_progid;  /* the Microsoft ProgID, or NULL */
-    const wchar_t* ms_clsid;   /* the Microsoft class id, or NULL */
+    const wchar_t* progid;    /* WFC's own ProgID */
+    const wchar_t* clsid;     /* WFC's own class id */
+    const wchar_t* ms_progid; /* the Microsoft ProgID, or NULL */
+    const wchar_t* ms_clsid;  /* the Microsoft class id, or NULL */
 };
 
 typedef HRESULT(__stdcall* wfc_check_entry)(void);
@@ -139,7 +140,8 @@ static void wfc_check_version(const wchar_t* dll, const wchar_t* version,
     if (data == NULL || !GetFileVersionInfoW(dll, 0, size, data)) {
         wfc_check_fail("cannot read the version resource of", dll);
     }
-    if (!VerQueryValueW(data, L"\\", (void**)&fixed, &length) || fixed == NULL) {
+    if (!VerQueryValueW(data, L"\\", (void**)&fixed, &length) ||
+        fixed == NULL) {
         wfc_check_fail("no fixed version in", dll);
     }
     if (!wfc_check_parse_version(version, &major, &minor, &patch) ||
@@ -166,8 +168,8 @@ static void wfc_check_exports(HMODULE module, wfc_check_entry* reg,
         (wfc_check_entry)(void*)GetProcAddress(module, "DllCanUnloadNow");
     HRESULT(__stdcall * get_class)
     (const GUID*, const GUID*, void**) =
-        (HRESULT(__stdcall*)(const GUID*, const GUID*, void**))(void*)
-            GetProcAddress(module, "DllGetClassObject");
+        (HRESULT(__stdcall*)(const GUID*, const GUID*, void**))(
+            void*)GetProcAddress(module, "DllGetClassObject");
     const GUID none = {0U, 0U, 0U, {0, 0, 0, 0, 0, 0, 0, 0}};
     void* object = (void*)&none;
     *reg = (wfc_check_entry)(void*)GetProcAddress(module, "DllRegisterServer");
@@ -187,8 +189,8 @@ static void wfc_check_exports(HMODULE module, wfc_check_entry* reg,
     }
 }
 
-static void wfc_check_registered(const wchar_t* dll_name, const wchar_t* version,
-                                 const wchar_t* target,
+static void wfc_check_registered(const wchar_t* dll_name,
+                                 const wchar_t* version, const wchar_t* target,
                                  const struct wfc_check_class* classes,
                                  size_t count, int microsoft) {
     wchar_t library[512];
@@ -210,33 +212,36 @@ static void wfc_check_registered(const wchar_t* dll_name, const wchar_t* version
         wfc_check_fail("the server is not the library:", server);
     }
     for (i = 0U; i < count; ++i) {
-        const wchar_t* progid = microsoft ? classes[i].ms_progid
-                                          : classes[i].progid;
-        const wchar_t* clsid = microsoft ? classes[i].ms_clsid : classes[i].clsid;
+        const wchar_t* progid =
+            microsoft ? classes[i].ms_progid : classes[i].progid;
+        const wchar_t* clsid =
+            microsoft ? classes[i].ms_clsid : classes[i].clsid;
         if (progid == NULL || clsid == NULL) {
             continue;
         }
         wfc_check_path(path, L"Software\\Classes\\%ls\\CLSID%ls", progid, NULL);
         wfc_check_expect(path, NULL, clsid);
-        wfc_check_path(path, L"Software\\Classes\\CLSID\\%ls\\InprocServer32%ls",
+        wfc_check_path(path,
+                       L"Software\\Classes\\CLSID\\%ls\\InprocServer32%ls",
                        clsid, NULL);
         wfc_check_expect(path, NULL, server);
     }
 }
 
-static void wfc_check_removed(const struct wfc_check_class* classes, size_t count,
-                              int microsoft) {
+static void wfc_check_removed(const struct wfc_check_class* classes,
+                              size_t count, int microsoft) {
     wchar_t path[512];
     size_t i;
-    wfc_check_path(path, L"Software\\WFC\\Libraries\\%ls%ls",
-                   wfc_check_library, NULL);
+    wfc_check_path(path, L"Software\\WFC\\Libraries\\%ls%ls", wfc_check_library,
+                   NULL);
     if (wfc_check_exists(path)) {
         wfc_check_fail("the unregistration left", path);
     }
     for (i = 0U; i < count; ++i) {
-        const wchar_t* progid = microsoft ? classes[i].ms_progid
-                                          : classes[i].progid;
-        const wchar_t* clsid = microsoft ? classes[i].ms_clsid : classes[i].clsid;
+        const wchar_t* progid =
+            microsoft ? classes[i].ms_progid : classes[i].progid;
+        const wchar_t* clsid =
+            microsoft ? classes[i].ms_clsid : classes[i].clsid;
         if (progid == NULL || clsid == NULL) {
             continue;
         }
@@ -268,7 +273,8 @@ static int wfc_check_microsoft_free(const struct wfc_check_class* classes,
     return 1;
 }
 
-/* `library` is the short name (mscomctl); argv holds the DLL, version, target. */
+/* `library` is the short name (mscomctl); argv holds the DLL, version, target.
+ */
 static int wfc_check_dll(int argc, char** argv, const wchar_t* library,
                          const struct wfc_check_class* classes, size_t count) {
     wchar_t* dll;
