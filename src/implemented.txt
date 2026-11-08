@@ -99,3 +99,9 @@ DllRegisterServer
 DllUnregisterServer
 DllCanUnloadNow
 DllGetClassObject
+rtcMidBstr
+rtcMidCharBstr
+rtcSpaceVar
+rtcIsDate
+rtcRgb
+rtcQBColor

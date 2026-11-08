@@ -429,7 +429,7 @@ EXPORTS
     rtcRightTrimBstr @523
     rtcRightTrimVar=vbrun_stub_524 @524
     rtcSpaceBstr @525
-    rtcSpaceVar=vbrun_stub_526 @526
+    rtcSpaceVar @526
     rtcUpperCaseBstr @527
     rtcUpperCaseVar=vbrun_stub_528 @528
     rtcKillFiles=vbrun_stub_529 @529
@@ -460,7 +460,7 @@ EXPORTS
     rtcFileReset=vbrun_stub_554 @554
     rtcFileAttributes=vbrun_stub_555 @555
     rtcIsArray @556
-    rtcIsDate=vbrun_stub_557 @557
+    rtcIsDate @557
     rtcIsEmpty @558
     rtcIsError @559
     rtcIsNull @560
@@ -491,8 +491,8 @@ EXPORTS
     rtcAtn=vbrun_stub_585 @585
     rtcExp=vbrun_stub_586 @586
     rtcLog=vbrun_stub_587 @587
-    rtcRgb=vbrun_stub_588 @588
-    rtcQBColor=vbrun_stub_589 @589
+    rtcRgb @588
+    rtcQBColor @589
     rtcMacId=vbrun_stub_590 @590
     rtcTypeName @591
     rtcIsMissing=vbrun_stub_592 @592
@@ -531,10 +531,10 @@ EXPORTS
     rtcCreateObject=vbrun_stub_625 @625
     rtcGetObject=vbrun_stub_626 @626
     rtcAppleScript=vbrun_stub_627 @627
-    rtcMidBstr=vbrun_stub_628 @628
+    rtcMidBstr @628
     rtcMidVar=vbrun_stub_629 @629
     rtcInStr=vbrun_stub_630 @630
-    rtcMidCharBstr=vbrun_stub_631 @631
+    rtcMidCharBstr @631
     rtcMidCharVar=vbrun_stub_632 @632
     rtcInStrChar=vbrun_stub_633 @633
     rtBstrFromErrVar=vbrun_stub_634 @634
