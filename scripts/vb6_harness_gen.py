@@ -230,6 +230,23 @@ experiment('rtcDatePart', 'OSVVV', 'V',
            [(iv, b, ('CLng(%s)' % f, 'v3:%s' % f), ('CLng(%s)' % w, 'v3:%s' % w))
             for iv in IVS for b in BASES for f in (1, 2) for w in (1, 2)])
 
+# IPMT, PPMT and Rate: Doubles by value, then optional Variants.
+FV2 = [('CDbl(0)', 'v5:0'), ('CDbl(1000)', 'v5:1000'),
+       ('CDbl(-5000)', 'v5:-5000')]
+TY2 = [('CLng(0)', 'v3:0'), ('CLng(1)', 'v3:1')]
+for name in ('rtcIPMT', 'rtcPPMT'):
+    experiment(name, 'DDDDVV', 'd',
+               [(dbl(r), dbl(p), dbl(n), dbl(v), f, t)
+                for r, n, v in ((0.05 / 12, 360, 100000), (0.08, 10, -2000),
+                                (0.01, 24, 500.5))
+                for p in (1, 2, 10) for f in FV2 for t in TY2])
+experiment('rtcRate', 'DDDVVV', 'd',
+           [(dbl(n), dbl(m), dbl(v), f, t, g)
+            for n, m, v in ((360, -537, 100000), (10, -300, 2000),
+                            (24, -25, 500.5))
+            for f in FV2[:2] for t in TY2
+            for g in (('CDbl(0.1)', 'v5:0.1'), ('CDbl(0.5)', 'v5:0.5'))])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

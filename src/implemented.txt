@@ -166,3 +166,5 @@ rtcFormatDateTime
 rtcDateAdd
 rtcDateDiff
 rtcDatePart
+rtcIPMT
+rtcPPMT

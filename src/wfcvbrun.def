@@ -577,8 +577,8 @@ EXPORTS
     rtcSLN @671
     rtcSYD @672
     rtcDDB @673
-    rtcIPMT=vbrun_stub_674 @674
-    rtcPPMT=vbrun_stub_675 @675
+    rtcIPMT @674
+    rtcPPMT @675
     rtcPMT @676
     rtcPV @677
     rtcFV @678

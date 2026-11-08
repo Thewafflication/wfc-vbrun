@@ -192,6 +192,77 @@ double WINAPI rtcNPer(const double rate, const double payment,
     return std::log(top / bottom) / std::log(1.0 + rate);
 }
 
+}  // extern "C"
+
+namespace {
+
+// The payment of a period split into interest and principal.
+bool period_payment(const double rate, const double period,
+                    const double periods, const double present,
+                    VARIANT* const future, VARIANT* const type,
+                    double& interest, double& payment) {
+    double end = 0.0;
+    double kind = 0.0;
+    if (!number_of(future, 0.0, end) || !number_of(type, 0.0, kind)) {
+        return false;
+    }
+    if (periods <= 0.0 || period < 1.0 || period > periods) {
+        static_cast<void>(vbrun::raise(kInvalidArgument));
+        return false;
+    }
+    const bool begin = kind != 0.0;
+    if (rate == 0.0) {
+        payment = -(present + end) / periods;
+    } else {
+        const double growth = std::pow(1.0 + rate, periods);
+        const double due = begin ? 1.0 + rate : 1.0;
+        payment = -(end + present * growth) * rate / (due * (growth - 1.0));
+    }
+    if (period == 1.0) {
+        interest = begin ? 0.0 : -present * rate;
+    } else if (begin) {
+        interest =
+            (future_of({rate, period - 2.0, payment, present, 0.0, true}) -
+             payment) *
+            rate;
+    } else {
+        interest =
+            future_of({rate, period - 1.0, payment, present, 0.0, false}) *
+            rate;
+    }
+    return true;
+}
+
+}  // namespace
+
+extern "C" {
+
+// IPMT(rate, period, periods, present, future, type).
+double WINAPI rtcIPMT(const double rate, const double period,
+                      const double periods, const double present,
+                      VARIANT* const future, VARIANT* const type) {
+    double interest = 0.0;
+    double payment = 0.0;
+    if (!period_payment(rate, period, periods, present, future, type,
+                        interest, payment)) {
+        return 0.0;
+    }
+    return interest;
+}
+
+// PPMT(rate, period, periods, present, future, type).
+double WINAPI rtcPPMT(const double rate, const double period,
+                      const double periods, const double present,
+                      VARIANT* const future, VARIANT* const type) {
+    double interest = 0.0;
+    double payment = 0.0;
+    if (!period_payment(rate, period, periods, present, future, type,
+                        interest, payment)) {
+        return 0.0;
+    }
+    return payment - interest;
+}
+
 // WeekdayName(weekday, abbreviate, first day of the week).
 BSTR WINAPI rtcWeekdayName(const LONG weekday, const LONG abbreviate,
                            const LONG first_day) {
