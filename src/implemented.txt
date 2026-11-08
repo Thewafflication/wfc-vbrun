@@ -137,3 +137,15 @@ rtcGetDayOfWeek
 rtcStrFromVar
 rtcInStr
 rtcInStrChar
+rtcSin
+rtcCos
+rtcTan
+rtcAtn
+rtcExp
+rtcLog
+rtcSqr
+rtcR8ValFromBstr
+rtcMonthName
+rtcImmediateIf
+rtcRound
+rtcPartition

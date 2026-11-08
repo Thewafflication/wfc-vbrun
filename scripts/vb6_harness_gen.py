@@ -115,6 +115,41 @@ experiment('rtcStrConvVar', 'OVL', 'V',
 experiment('rtcGetDayOfWeek', 'OVL', 'V',
            [(d, (f, 'i' + f)) for d in DATES[:3] for f in ('0', '1', '2')])
 
+# The numeric helpers: a Double by value, a Double result.
+DOUBLES = [('0', 'd0'), ('1', 'd1'), ('-1', 'd-1'), ('0.5', 'd0.5'),
+           ('2.718281828459045', 'd2.718281828459045'), ('100', 'd100'),
+           ('1E-10', 'd1e-10'), ('-7.25', 'd-7.25'),
+           ('3.141592653589793', 'd3.141592653589793')]
+for name in ('rtcSin', 'rtcCos', 'rtcTan', 'rtcAtn', 'rtcExp', 'rtcLog',
+             'rtcSqr'):
+    experiment(name, 'D', 'd', [(x,) for x in DOUBLES])
+VALS = [('"12"', 's"12"'), ('" 12abc"', 's" 12abc"'), ('"&HFF"', 's"&HFF"'),
+        ('"1e3"', 's"1e3"'), ('"abc"', 's"abc"'), ('""', 's""'),
+        ('"-.5"', 's"-.5"'), ('"1,5"', 's"1,5"'), ('"12 34"', 's"12 34"'),
+        ('"&O17"', 's"&O17"'), ('"3.25.5"', 's"3.25.5"'),
+        ('"  -42  "', 's"  -42  "')]
+experiment('rtcR8ValFromBstr', 'S', 'd', [(v,) for v in VALS])
+experiment('rtcMonthName', 'LL', 's',
+           [((str(m), 'i%d' % m), (a, 'i' + a)) for m in range(1, 13)
+            for a in ('0', '-1')])
+CONDS = [('True', 'v11:-1'), ('False', 'v11:0'), ('CLng(1)', 'v3:1'),
+         ('CLng(0)', 'v3:0'), ('Null', 'v1'), ('"x"', 'v8"x"')]
+experiment('rtcImmediateIf', 'OVVV', 'V',
+           [(c, ('"yes"', 'v8"yes"'), ('CLng(7)', 'v3:7')) for c in CONDS])
+ROUNDS = [('CDbl(2.5)', 'v5:2.5'), ('CDbl(3.5)', 'v5:3.5'),
+          ('CDbl(-2.5)', 'v5:-2.5'), ('CDbl(1.2345)', 'v5:1.2345'),
+          ('CDbl(0.285)', 'v5:0.285'), ('CLng(7)', 'v3:7'),
+          ('CCur(-3.5)', 'v6:-35000'), ('"1.5"', 'v8"1.5"'),
+          ('Null', 'v1'), ('Empty', 'v0')]
+experiment('rtcRound', 'OVL', 'V',
+           [(v, (c, 'i' + c)) for v in ROUNDS for c in ('0', '1', '2')])
+experiment('rtcPartition', 'OVVVV', 'V',
+           [(n, ('CLng(0)', 'v3:0'), ('CLng(99)', 'v3:99'),
+             ('CLng(10)', 'v3:10')) for n in
+            [('CLng(5)', 'v3:5'), ('CLng(15)', 'v3:15'),
+             ('CLng(99)', 'v3:99'), ('CLng(-1)', 'v3:-1'),
+             ('CLng(100)', 'v3:100'), ('Null', 'v1')]])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -136,6 +171,9 @@ def vb_call(kind, index, row):
         elif letter == 'S':
             arguments.append('StrPtr(%s)' % item[0])
             case.append(item[1])
+        elif letter == 'D':
+            arguments.append('CDbl(%s)' % item[0])
+            case.append(item[1])
         else:
             arguments.append('CLng(%s)' % item[0])
             case.append(item[1])
@@ -147,12 +185,15 @@ def declare(number, export, kind, result):
     for place, letter in enumerate(kind):
         if letter in 'OV':
             parameters.append('ByRef a%d As Variant' % place)
+        elif letter == 'D':
+            parameters.append('ByVal a%d As Double' % place)
         else:
             parameters.append('ByVal a%d As Long' % place)
     if kind.startswith('O'):
         ret = 'Long'
     else:
-        ret = {'s': 'Long', 'i': 'Long', 'w': 'Integer'}.get(result, 'Long')
+        ret = {'s': 'Long', 'i': 'Long', 'w': 'Integer',
+               'd': 'Double'}.get(result, 'Long')
     return ('Declare Function E%d_%s Lib "msvbvm60.dll" Alias "%s" (%s) '
             'As %s' % (number, export, export, ', '.join(parameters), ret))
 
@@ -216,6 +257,15 @@ Public Function Fmt(ByRef v As Variant) As String
     End Select
 End Function
 
+Private Function HexD(ByVal d As Double) As String
+    Dim b(0 To 7) As Byte, i As Long, s As String
+    CopyMemory b(0), d, 8
+    For i = 7 To 0 Step -1
+        s = s & Right$("0" & Hex$(b(i)), 2)
+    Next
+    HexD = s
+End Function
+
 Private Function BstrFmt(ByVal p As Long) As String
     Dim n As Long, i As Long, b() As Byte, u As Long, s As String
     If p = 0 Then
@@ -270,7 +320,7 @@ def build(folder):
     for number, (export, kind, result, grid) in enumerate(EXPERIMENTS):
         subs += '\nPrivate Sub Run%d()\n' % number
         subs += '    Dim v1 As Variant, v2 As Variant, v3 As Variant, '
-        subs += 'v4 As Variant, r As Variant, p As Long\n'
+        subs += 'v4 As Variant, r As Variant, p As Long, q As Double\n'
         subs += '    On Error Resume Next\n'
         for row in grid:
             code, arguments, case = vb_call(kind, number, row)
@@ -279,13 +329,16 @@ def build(folder):
             subs += '    Trace "%s"\n' % label.replace('"', '""')
             subs += '    r = Empty\n    Err.Clear\n'
             call = 'E%d_%s(%s)' % (number, export, ', '.join(arguments))
-            subs += '    p = %s\n' % call
+            subs += '    %s = %s\n' % ('q' if result == 'd' else 'p', call)
             subs += '    If Err.Number <> 0 Then\n'
             subs += '        Rec "%s => err" & Err.Number\n' % label.replace(
                 '"', '""')
             subs += '    Else\n'
             if result == 'V':
                 subs += '        Rec "%s => " & Fmt(r)\n' % label.replace(
+                    '"', '""')
+            elif result == 'd':
+                subs += '        Rec "%s => d:x" & HexD(q)\n' % label.replace(
                     '"', '""')
             elif result == 's':
                 subs += '        Rec "%s => " & BstrFmt(p)\n' % label.replace(

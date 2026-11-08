@@ -380,6 +380,8 @@ std::string run_case(const std::string& line) {
     std::vector<BSTR> allocated;
     std::vector<VARIANT*> variants;
     std::vector<VARIANT*> outputs;
+    double number_argument = 0.0;  // d1.5: a Double passed by value
+    bool has_double = false;
     while (!rest.empty()) {
         while (!rest.empty() && rest.front() == ' ') {
             rest.erase(0, 1);
@@ -435,6 +437,11 @@ std::string run_case(const std::string& line) {
             arguments.push_back(
                 static_cast<Word>(static_cast<std::intptr_t>(value)));
             rest.erase(0, used + 1U);
+        } else if (rest.front() == 'd') {
+            std::size_t used = 0;
+            number_argument = std::stod(rest.substr(1), &used);
+            has_double = true;
+            rest.erase(0, used + 1U);
         } else if (rest.front() == 'x') {
             std::size_t used = 0;
             const unsigned long value = std::stoul(rest.substr(1), &used, 16);
@@ -448,6 +455,19 @@ std::string run_case(const std::string& line) {
     const FARPROC proc = GetProcAddress(g_library, name.c_str());
     if (proc == nullptr) {
         return "not exported";
+    }
+    if (kind == "D") {  // a Double result (and one Double or String argument)
+        const double answer =
+            has_double ? reinterpret_cast<double(WINAPI*)(double)>(proc)(
+                             number_argument)
+                       : reinterpret_cast<double(WINAPI*)(Word)>(proc)(
+                             arguments.empty() ? 0 : arguments[0]);
+        std::uint64_t bits = 0;
+        std::memcpy(&bits, &answer, sizeof(bits));
+        for (BSTR b : allocated) {
+            SysFreeString(b);
+        }
+        return "d:" + hex_text("x%016llX", bits);
     }
     const Word raw = call_with(proc, arguments);
     std::string result;

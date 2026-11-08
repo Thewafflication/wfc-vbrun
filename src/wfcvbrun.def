@@ -484,13 +484,13 @@ EXPORTS
     rtcFileLen=vbrun_stub_578 @578
     rtcGetFileAttr=vbrun_stub_579 @579
     rtcSetFileAttr=vbrun_stub_580 @580
-    rtcR8ValFromBstr=vbrun_stub_581 @581
-    rtcSin=vbrun_stub_582 @582
-    rtcCos=vbrun_stub_583 @583
-    rtcTan=vbrun_stub_584 @584
-    rtcAtn=vbrun_stub_585 @585
-    rtcExp=vbrun_stub_586 @586
-    rtcLog=vbrun_stub_587 @587
+    rtcR8ValFromBstr @581
+    rtcSin @582
+    rtcCos @583
+    rtcTan @584
+    rtcAtn @585
+    rtcExp @586
+    rtcLog @587
     rtcRgb @588
     rtcQBColor @589
     rtcMacId=vbrun_stub_590 @590
@@ -517,7 +517,7 @@ EXPORTS
     rtcGetTimeBstr=vbrun_stub_611 @611
     rtcGetTimeVar=vbrun_stub_612 @612
     rtcVarStrFromVar=vbrun_stub_613 @613
-    rtcSqr=vbrun_stub_614 @614
+    rtcSqr @614
     rtcIMEStatus=vbrun_stub_615 @615
     rtcLeftCharBstr @616
     rtcLeftCharVar @617
@@ -567,7 +567,7 @@ EXPORTS
     rtcDateAdd=vbrun_stub_661 @661
     rtcDateDiff=vbrun_stub_662 @662
     rtcDatePart=vbrun_stub_663 @663
-    rtcPartition=vbrun_stub_664 @664
+    rtcPartition @664
     rtcChoose=vbrun_stub_665 @665
     rtcEnvironVar=vbrun_stub_666 @666
     rtcEnvironBstr=vbrun_stub_667 @667
@@ -584,7 +584,7 @@ EXPORTS
     rtcFV=vbrun_stub_678 @678
     rtcNPer=vbrun_stub_679 @679
     rtcRate=vbrun_stub_680 @680
-    rtcImmediateIf=vbrun_stub_681 @681
+    rtcImmediateIf @681
     rtcIRR=vbrun_stub_682 @682
     rtcMIRR=vbrun_stub_683 @683
     rtcNPV=vbrun_stub_684 @684
@@ -610,14 +610,14 @@ EXPORTS
     rtcFormatPercent=vbrun_stub_704 @704
     rtcFormatDateTime=vbrun_stub_705 @705
     rtcWeekdayName=vbrun_stub_706 @706
-    rtcMonthName=vbrun_stub_707 @707
+    rtcMonthName @707
     rtcFilter=vbrun_stub_708 @708
     rtcInStrRev=vbrun_stub_709 @709
     rtcJoin=vbrun_stub_710 @710
     rtcSplit=vbrun_stub_711 @711
     rtcReplace=vbrun_stub_712 @712
     rtcStrReverse @713
-    rtcRound=vbrun_stub_714 @714
+    rtcRound @714
     rtcCallByName=vbrun_stub_715 @715
     rtcCreateObject2=vbrun_stub_716 @716
     rtcStrConvVar2=vbrun_stub_717 @717

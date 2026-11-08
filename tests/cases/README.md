@@ -48,3 +48,9 @@ Variants, the start must be a number (else 13) and at least 1 (else 5), and
 the compare argument may be missing. `rtcStrFromVar` raises 94 for a Null and
 13 for a text that is no number. `rtcCompareBstr` and `rtcStringBstr` fault in
 every signature tried and are not implemented.
+
+`rtcSin`, `rtcCos`, `rtcTan` reproduce the 66-bit pi of the x87 instructions
+near a multiple of pi/2 (Sin of the Double nearest to pi is 1.2246063538223773E-16
+in the reference); Tan(-7.25) and Atn(pi) differ from the reference by one unit
+in the last place (the instructions round twice) and are not cases. A Double
+by value is `d1.5` and a Double result is `D` (the bits, `d:x...`).
