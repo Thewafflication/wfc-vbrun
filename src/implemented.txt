@@ -105,3 +105,14 @@ rtcSpaceVar
 rtcIsDate
 rtcRgb
 rtcQBColor
+rtcAbsVar
+rtcFixVar
+rtcIntVar
+rtcSgnVar
+rtcLenVar
+rtcLenCharVar
+rtcLowerCaseVar
+rtcUpperCaseVar
+rtcTrimVar
+rtcLeftTrimVar
+rtcRightTrimVar

@@ -27,3 +27,17 @@ is shown as its bits in hexadecimal.
 
 Error paths are not cases: the reference raises a Visual Basic error through
 the frames of a running program and fails outside one.
+
+## Exports that need the state of a running program
+
+The `rtc*Var` functions read the thread state that a Visual Basic program's
+start-up creates, so they fault when `Probe-VbrunCases.ps1` calls them from
+PowerShell, and the reference raises its errors through the frames of a running
+program. These are measured from inside one instead: `scripts/vb6_harness_gen.py`
+writes a Visual Basic 6 module that declares the exports (`Declare Function
+rtcAbsVar Lib "msvbvm60.dll" (ByRef result As Variant, ByRef v As Variant)`),
+calls them under `On Error Resume Next` and writes the result or the error
+number of each call; `scripts/vb6_harness_cases.py` turns that output into
+the `.cases` and `.expected` files (`varfuncs`). Errors are not cases: the
+reference raises 13 (Type mismatch) for a text that is no number in Abs, Fix,
+Int and Sgn.

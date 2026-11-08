@@ -421,17 +421,17 @@ EXPORTS
     rtcRightVar=vbrun_stub_515 @515
     rtcAnsiValueBstr @516
     rtcLowerCaseBstr @517
-    rtcLowerCaseVar=vbrun_stub_518 @518
+    rtcLowerCaseVar @518
     rtcTrimBstr @519
-    rtcTrimVar=vbrun_stub_520 @520
+    rtcTrimVar @520
     rtcLeftTrimBstr @521
-    rtcLeftTrimVar=vbrun_stub_522 @522
+    rtcLeftTrimVar @522
     rtcRightTrimBstr @523
-    rtcRightTrimVar=vbrun_stub_524 @524
+    rtcRightTrimVar @524
     rtcSpaceBstr @525
     rtcSpaceVar @526
     rtcUpperCaseBstr @527
-    rtcUpperCaseVar=vbrun_stub_528 @528
+    rtcUpperCaseVar @528
     rtcKillFiles=vbrun_stub_529 @529
     rtcChangeDir=vbrun_stub_530 @530
     rtcMakeDir=vbrun_stub_531 @531
@@ -556,12 +556,12 @@ EXPORTS
     rtcBstrFromFormatVar=vbrun_stub_650 @650
     rtcBstrFromError=vbrun_stub_651 @651
     rtcVarFromError=vbrun_stub_652 @652
-    rtcLenCharVar=vbrun_stub_653 @653
-    rtcLenVar=vbrun_stub_654 @654
-    rtcFixVar=vbrun_stub_655 @655
-    rtcAbsVar=vbrun_stub_656 @656
-    rtcIntVar=vbrun_stub_657 @657
-    rtcSgnVar=vbrun_stub_658 @658
+    rtcLenCharVar @653
+    rtcLenVar @654
+    rtcFixVar @655
+    rtcAbsVar @656
+    rtcIntVar @657
+    rtcSgnVar @658
     _adj_fdiv_m16i=vbrun_stub_659 @659
     rtcVarFromFormatVar=vbrun_stub_660 @660
     rtcDateAdd=vbrun_stub_661 @661

@@ -18,13 +18,19 @@
 .PARAMETER Initialize
     Bind the Automation entry points of the reference runtime first (needed
     for the Variant operators).
+.PARAMETER Thread
+    Create the thread state of the reference runtime as well (the routine at
+    RVA 0x2D9E4 that a program's start-up runs); the exports that read the
+    state of the running program (the rtc*Var functions, InStr, ...) fault
+    without it.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Cases,
     [string]$Output = '',
     [string]$Runtime = 'msvbvm60.dll',
-    [switch]$Initialize
+    [switch]$Initialize,
+    [switch]$Thread
 )
 
 if ([Environment]::Is64BitProcess) {
@@ -33,6 +39,7 @@ if ([Environment]::Is64BitProcess) {
     $arguments = @('-NoProfile', '-File', $PSCommandPath, '-Cases', $Cases,
         '-Runtime', $Runtime)
     if ($Initialize) { $arguments += '-Initialize' }
+    if ($Thread) { $arguments += '-Thread' }
     if ($Output -ne '') { $arguments += @('-Output', $Output) }
     & $ps32 @arguments
     exit $LASTEXITCODE
@@ -191,6 +198,11 @@ if ($Initialize) {
     # 0x2CE61); run it so that the exports that call them can be probed.
     $bind = [IntPtr]($module.ToInt64() + 0x2CE61)
     [void][Native]::Call($bind, @())
+}
+
+if ($Thread) {
+    $state = [IntPtr]($module.ToInt64() + 0x2D9E4)
+    [void][Native]::Call($state, @([IntPtr]::Zero, [IntPtr]1))
 }
 
 $results = New-Object System.Collections.Generic.List[string]
