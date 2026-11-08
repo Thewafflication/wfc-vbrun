@@ -149,3 +149,17 @@ rtcMonthName
 rtcImmediateIf
 rtcRound
 rtcPartition
+rtcSLN
+rtcSYD
+rtcDDB
+rtcPMT
+rtcFV
+rtcPV
+rtcNPer
+rtcWeekdayName
+rtcReplace
+rtcInStrRev
+rtcFormatNumber
+rtcFormatCurrency
+rtcFormatPercent
+rtcFormatDateTime

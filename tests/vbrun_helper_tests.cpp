@@ -360,10 +360,14 @@ Word call_with(const FARPROC proc, const std::vector<Word>& a) {
         case 4:
             return reinterpret_cast<Word(WINAPI*)(Word, Word, Word, Word)>(
                 proc)(a[0], a[1], a[2], a[3]);
-        default:
+        case 5:
             return reinterpret_cast<Word(WINAPI*)(
                 Word, Word, Word, Word, Word)>(proc)(a[0], a[1], a[2], a[3],
                                                      a[4]);
+        default:
+            return reinterpret_cast<Word(WINAPI*)(
+                Word, Word, Word, Word, Word, Word)>(proc)(a[0], a[1], a[2],
+                                                           a[3], a[4], a[5]);
     }
 }
 
@@ -382,6 +386,7 @@ std::string run_case(const std::string& line) {
     std::vector<VARIANT*> outputs;
     double number_argument = 0.0;  // d1.5: a Double passed by value
     bool has_double = false;
+    std::vector<double> doubles;  // every Double argument, in order
     while (!rest.empty()) {
         while (!rest.empty() && rest.front() == ' ') {
             rest.erase(0, 1);
@@ -440,6 +445,7 @@ std::string run_case(const std::string& line) {
         } else if (rest.front() == 'd') {
             std::size_t used = 0;
             number_argument = std::stod(rest.substr(1), &used);
+            doubles.push_back(number_argument);
             has_double = true;
             rest.erase(0, used + 1U);
         } else if (rest.front() == 'x') {
@@ -456,12 +462,39 @@ std::string run_case(const std::string& line) {
     if (proc == nullptr) {
         return "not exported";
     }
-    if (kind == "D") {  // a Double result (and one Double or String argument)
-        const double answer =
-            has_double ? reinterpret_cast<double(WINAPI*)(double)>(proc)(
-                             number_argument)
-                       : reinterpret_cast<double(WINAPI*)(Word)>(proc)(
-                             arguments.empty() ? 0 : arguments[0]);
+    if (kind == "D") {  // a Double result
+        // The Doubles come first, then the other arguments (Variants).
+        const std::string shape = std::string(doubles.size(), 'd') +
+                                  std::string(arguments.size(), 'w');
+        double answer = 0.0;
+        if (shape == "ddd") {
+            answer = reinterpret_cast<double(WINAPI*)(double, double, double)>(
+                proc)(doubles[0], doubles[1], doubles[2]);
+        } else if (shape == "dddd") {
+            answer = reinterpret_cast<double(WINAPI*)(double, double, double,
+                                                      double)>(proc)(
+                doubles[0], doubles[1], doubles[2], doubles[3]);
+        } else if (shape == "ddddw") {
+            answer = reinterpret_cast<double(WINAPI*)(double, double, double,
+                                                      double, Word)>(proc)(
+                doubles[0], doubles[1], doubles[2], doubles[3], arguments[0]);
+        } else if (shape == "dddww") {
+            answer = reinterpret_cast<double(WINAPI*)(double, double, double,
+                                                      Word, Word)>(proc)(
+                doubles[0], doubles[1], doubles[2], arguments[0],
+                arguments[1]);
+        } else if (shape == "ddddww") {
+            answer = reinterpret_cast<double(WINAPI*)(
+                double, double, double, double, Word, Word)>(proc)(
+                doubles[0], doubles[1], doubles[2], doubles[3], arguments[0],
+                arguments[1]);
+        } else {
+            answer = has_double
+                         ? reinterpret_cast<double(WINAPI*)(double)>(proc)(
+                               number_argument)
+                         : reinterpret_cast<double(WINAPI*)(Word)>(proc)(
+                               arguments.empty() ? 0 : arguments[0]);
+        }
         std::uint64_t bits = 0;
         std::memcpy(&bits, &answer, sizeof(bits));
         for (BSTR b : allocated) {

@@ -151,6 +151,70 @@ experiment('rtcPartition', 'OVVVV', 'V',
              ('CLng(100)', 'v3:100'), ('Null', 'v1')]])
 
 
+# Financial functions: Doubles by value, optional Variants after them (a
+# missing one is an error Variant).
+EXPERIMENTS_BEFORE_FINANCE = len(EXPERIMENTS)
+
+
+def dbl(x):
+    return (repr(float(x)), 'd' + repr(float(x)))
+
+
+experiment('rtcSLN', 'DDD', 'd',
+           [(dbl(a), dbl(b), dbl(c)) for a, b, c in
+            ((10000, 1000, 5), (1000, 0, 10), (1, 2, 3), (5000.5, 500.25, 7),
+             (0, 0, 1), (-1000, 100, 4))])
+experiment('rtcSYD', 'DDDD', 'd',
+           [(dbl(a), dbl(b), dbl(c), dbl(d)) for a, b, c, d in
+            ((10000, 1000, 5, 1), (10000, 1000, 5, 2), (10000, 1000, 5, 5),
+             (1000, 0, 10, 3), (5000.5, 500.25, 7, 4))])
+FACT = [MISSING, ('CDbl(2)', 'v5:2'), ('CDbl(1.5)', 'v5:1.5'),
+        ('CLng(3)', 'v3:3')]
+experiment('rtcDDB', 'DDDDV', 'd',
+           [(dbl(a), dbl(b), dbl(c), dbl(d), f) for a, b, c, d in
+            ((10000, 1000, 5, 1), (10000, 1000, 5, 2), (10000, 1000, 5, 5),
+             (5000.5, 500.25, 7, 3)) for f in FACT])
+FV = [MISSING, ('CDbl(0)', 'v5:0'), ('CDbl(1000)', 'v5:1000'),
+      ('CDbl(-5000)', 'v5:-5000')]
+TY = [MISSING, ('CLng(0)', 'v3:0'), ('CLng(1)', 'v3:1')]
+for name in ('rtcPMT', 'rtcFV', 'rtcPV', 'rtcNPer'):
+    experiment(name, 'DDDVV', 'd',
+               [(dbl(a), dbl(b), dbl(c), f, t) for a, b, c in
+                ((0.05 / 12, 360, 100000), (0.08, 10, -2000),
+                 (0.01, 24, 500.5)) for f in FV for t in TY])
+
+# Strings: WeekdayName, Replace, InStrRev, and the Format functions.
+experiment('rtcWeekdayName', 'LLL', 's',
+           [((str(d), 'i%d' % d), (a, 'i' + a), (f, 'i' + f))
+            for d in range(1, 8) for a in ('0', '-1') for f in ('0', '1')])
+SRC = [('"banana"', 's"banana"'), ('"aaa"', 's"aaa"'), ('""', 's""')]
+PAIRS = [(('"a"', 's"a"'), ('"o"', 's"o"')),
+         (('"an"', 's"an"'), ('""', 's""')),
+         (('"A"', 's"A"'), ('"x"', 's"x"'))]
+experiment('rtcReplace', 'SSSLLL', 's',
+           [(x, f, r, (st, 'i' + st), (cn, 'i' + cn), (cm, 'i' + cm))
+            for x in SRC for f, r in PAIRS
+            for st in ('1', '3') for cn in ('-1', '1') for cm in ('0', '1')])
+experiment('rtcInStrRev', 'SSLL', 'i',
+           [(x, f, (st, 'i' + st), (cm, 'i' + cm))
+            for x in SRC[:2] for f in (('"a"', 's"a"'), ('"A"', 's"A"'),
+                                       ('"an"', 's"an"'), ('""', 's""'))
+            for st in ('-1', '2', '4', '10') for cm in ('0', '1')])
+NUMS = [('CDbl(1234.5678)', 'v5:1234.5678'), ('CDbl(-0.5)', 'v5:-0.5'),
+        ('CLng(7)', 'v3:7'), ('CDbl(0)', 'v5:0'),
+        ('CDbl(1234567.891)', 'v5:1234567.891'), ('Null', 'v1')]
+for name in ('rtcFormatNumber', 'rtcFormatCurrency', 'rtcFormatPercent'):
+    experiment(name, 'VLLLL', 's',
+               [(n, (dg, 'i' + dg), (ld, 'i' + ld), (pr, 'i' + pr),
+                 (gr, 'i' + gr)) for n in NUMS for dg in ('-1', '2')
+                for ld in ('-1', '0') for pr in ('-1', '0') for gr in
+                ('-1', '0')])
+experiment('rtcFormatDateTime', 'VL', 's',
+           [(d, (f, 'i' + f)) for d in DATES[:2] + [
+               ('"2000-01-01 13:45:10"', 'v8"2000-01-01 13:45:10"')]
+            for f in ('0', '1', '2', '3', '4')])
+
+
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
     code = []
@@ -320,7 +384,7 @@ def build(folder):
     for number, (export, kind, result, grid) in enumerate(EXPERIMENTS):
         subs += '\nPrivate Sub Run%d()\n' % number
         subs += '    Dim v1 As Variant, v2 As Variant, v3 As Variant, '
-        subs += 'v4 As Variant, r As Variant, p As Long, q As Double\n'
+        subs += 'v4 As Variant, v5 As Variant, v6 As Variant, r As Variant, p As Long, q As Double\n'
         subs += '    On Error Resume Next\n'
         for row in grid:
             code, arguments, case = vb_call(kind, number, row)

@@ -574,15 +574,15 @@ EXPORTS
     rtcSwitch=vbrun_stub_668 @668
     rtcCommandBstr=vbrun_stub_669 @669
     rtcCommandVar=vbrun_stub_670 @670
-    rtcSLN=vbrun_stub_671 @671
-    rtcSYD=vbrun_stub_672 @672
-    rtcDDB=vbrun_stub_673 @673
+    rtcSLN @671
+    rtcSYD @672
+    rtcDDB @673
     rtcIPMT=vbrun_stub_674 @674
     rtcPPMT=vbrun_stub_675 @675
-    rtcPMT=vbrun_stub_676 @676
-    rtcPV=vbrun_stub_677 @677
-    rtcFV=vbrun_stub_678 @678
-    rtcNPer=vbrun_stub_679 @679
+    rtcPMT @676
+    rtcPV @677
+    rtcFV @678
+    rtcNPer @679
     rtcRate=vbrun_stub_680 @680
     rtcImmediateIf @681
     rtcIRR=vbrun_stub_682 @682
@@ -605,17 +605,17 @@ EXPORTS
     rtcSetCurrentCalendar=vbrun_stub_699 @699
     rtcGetCurrentCalendar=vbrun_stub_700 @700
     _adj_fdiv_m32i=vbrun_stub_701 @701
-    rtcFormatNumber=vbrun_stub_702 @702
-    rtcFormatCurrency=vbrun_stub_703 @703
-    rtcFormatPercent=vbrun_stub_704 @704
-    rtcFormatDateTime=vbrun_stub_705 @705
-    rtcWeekdayName=vbrun_stub_706 @706
+    rtcFormatNumber @702
+    rtcFormatCurrency @703
+    rtcFormatPercent @704
+    rtcFormatDateTime @705
+    rtcWeekdayName @706
     rtcMonthName @707
     rtcFilter=vbrun_stub_708 @708
-    rtcInStrRev=vbrun_stub_709 @709
+    rtcInStrRev @709
     rtcJoin=vbrun_stub_710 @710
     rtcSplit=vbrun_stub_711 @711
-    rtcReplace=vbrun_stub_712 @712
+    rtcReplace @712
     rtcStrReverse @713
     rtcRound @714
     rtcCallByName=vbrun_stub_715 @715
