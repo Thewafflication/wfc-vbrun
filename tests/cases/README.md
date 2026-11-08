@@ -41,3 +41,10 @@ number of each call; `scripts/vb6_harness_cases.py` turns that output into
 the `.cases` and `.expected` files (`varfuncs`). Errors are not cases: the
 reference raises 13 (Type mismatch) for a text that is no number in Abs, Fix,
 Int and Sgn.
+
+Found with it: `rtcInStr` is InStrB (byte positions, never ignores case) and
+`rtcInStrChar` is InStr; both take (result, start, text, find, compare) as
+Variants, the start must be a number (else 13) and at least 1 (else 5), and
+the compare argument may be missing. `rtcStrFromVar` raises 94 for a Null and
+13 for a text that is no number. `rtcCompareBstr` and `rtcStringBstr` fault in
+every signature tried and are not implemented.

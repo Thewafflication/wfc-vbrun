@@ -416,9 +416,9 @@ EXPORTS
     __vbaVargObj=vbrun_stub_510 @510
     __vbaVargObjAddref=vbrun_stub_511 @511
     rtcLeftBstr @512
-    rtcLeftVar=vbrun_stub_513 @513
+    rtcLeftVar @513
     rtcRightBstr @514
-    rtcRightVar=vbrun_stub_515 @515
+    rtcRightVar @515
     rtcAnsiValueBstr @516
     rtcLowerCaseBstr @517
     rtcLowerCaseVar @518
@@ -439,24 +439,24 @@ EXPORTS
     rtcChangeDrive=vbrun_stub_533 @533
     rtcBeep=vbrun_stub_534 @534
     rtcGetTimer=vbrun_stub_535 @535
-    rtcStrFromVar=vbrun_stub_536 @536
+    rtcStrFromVar @536
     rtcBstrFromAnsi=vbrun_stub_537 @537
     rtcPackDate=vbrun_stub_538 @538
     rtcPackTime=vbrun_stub_539 @539
     rtcGetDateValue=vbrun_stub_540 @540
     rtcGetTimeValue=vbrun_stub_541 @541
-    rtcGetDayOfMonth=vbrun_stub_542 @542
-    rtcGetHourOfDay=vbrun_stub_543 @543
-    rtcGetMinuteOfHour=vbrun_stub_544 @544
-    rtcGetMonthOfYear=vbrun_stub_545 @545
+    rtcGetDayOfMonth @542
+    rtcGetHourOfDay @543
+    rtcGetMinuteOfHour @544
+    rtcGetMonthOfYear @545
     rtcGetPresentDate=vbrun_stub_546 @546
-    rtcGetSecondOfMinute=vbrun_stub_547 @547
+    rtcGetSecondOfMinute @547
     rtcSetDateVar=vbrun_stub_548 @548
     rtcSetDateBstr=vbrun_stub_549 @549
     rtcSetTimeVar=vbrun_stub_550 @550
     rtcSetTimeBstr=vbrun_stub_551 @551
-    rtcGetDayOfWeek=vbrun_stub_552 @552
-    rtcGetYear=vbrun_stub_553 @553
+    rtcGetDayOfWeek @552
+    rtcGetYear @553
     rtcFileReset=vbrun_stub_554 @554
     rtcFileAttributes=vbrun_stub_555 @555
     rtcIsArray @556
@@ -476,9 +476,9 @@ EXPORTS
     rtcFileLength=vbrun_stub_570 @570
     rtcEndOfFile=vbrun_stub_571 @571
     rtcHexBstrFromVar=vbrun_stub_572 @572
-    rtcHexVarFromVar=vbrun_stub_573 @573
+    rtcHexVarFromVar @573
     rtcOctBstrFromVar=vbrun_stub_574 @574
-    rtcOctVarFromVar=vbrun_stub_575 @575
+    rtcOctVarFromVar @575
     rtcFileCopy=vbrun_stub_576 @576
     rtcFileDateTime=vbrun_stub_577 @577
     rtcFileLen=vbrun_stub_578 @578
@@ -510,7 +510,7 @@ EXPORTS
     __vbaVerifyVarObj=vbrun_stub_604 @604
     rtcGetErl=vbrun_stub_605 @605
     rtcStringBstr=vbrun_stub_606 @606
-    rtcStringVar=vbrun_stub_607 @607
+    rtcStringVar @607
     rtcVarBstrFromAnsi=vbrun_stub_608 @608
     rtcGetDateBstr=vbrun_stub_609 @609
     rtcGetDateVar=vbrun_stub_610 @610
@@ -520,23 +520,23 @@ EXPORTS
     rtcSqr=vbrun_stub_614 @614
     rtcIMEStatus=vbrun_stub_615 @615
     rtcLeftCharBstr @616
-    rtcLeftCharVar=vbrun_stub_617 @617
+    rtcLeftCharVar @617
     rtcRightCharBstr @618
-    rtcRightCharVar=vbrun_stub_619 @619
+    rtcRightCharVar @619
     rtcInputCharCount=vbrun_stub_620 @620
     rtcInputCharCountVar=vbrun_stub_621 @621
-    rtcStrConvVar=vbrun_stub_622 @622
+    rtcStrConvVar @622
     __vbaWriteFile=vbrun_stub_623 @623
     rtcGetHostLCID=vbrun_stub_624 @624
     rtcCreateObject=vbrun_stub_625 @625
     rtcGetObject=vbrun_stub_626 @626
     rtcAppleScript=vbrun_stub_627 @627
     rtcMidBstr @628
-    rtcMidVar=vbrun_stub_629 @629
-    rtcInStr=vbrun_stub_630 @630
+    rtcMidVar @629
+    rtcInStr @630
     rtcMidCharBstr @631
-    rtcMidCharVar=vbrun_stub_632 @632
-    rtcInStrChar=vbrun_stub_633 @633
+    rtcMidCharVar @632
+    rtcInStrChar @633
     rtBstrFromErrVar=vbrun_stub_634 @634
     rtBoolFromErrVar=vbrun_stub_635 @635
     rtCyFromErrVar=vbrun_stub_636 @636
@@ -601,7 +601,7 @@ EXPORTS
     rtcVarBstrFromByte=vbrun_stub_695 @695
     rtcCharValueBstr @696
     rtcBstrFromChar @697
-    rtcVarBstrFromChar=vbrun_stub_698 @698
+    rtcVarBstrFromChar @698
     rtcSetCurrentCalendar=vbrun_stub_699 @699
     rtcGetCurrentCalendar=vbrun_stub_700 @700
     _adj_fdiv_m32i=vbrun_stub_701 @701
