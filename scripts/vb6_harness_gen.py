@@ -214,6 +214,22 @@ experiment('rtcFormatDateTime', 'VL', 's',
                ('"2000-01-01 13:45:10"', 'v8"2000-01-01 13:45:10"')]
             for f in ('0', '1', '2', '3', '4')])
 
+# Date arithmetic: DateAdd(interval, number, date), DateDiff and DatePart.
+IVS = [('"%s"' % i, 's"%s"' % i) for i in
+       ('yyyy', 'q', 'm', 'y', 'd', 'w', 'ww', 'h', 'n', 's', 'x', '')]
+BASES = [('CDate(36526.5)', 'v7:36526.5'), ('CDate(40000.75)', 'v7:40000.75'),
+         ('CDate(36585)', 'v7:36585'), ('"2000-01-31 13:45:10"',
+                                          'v8"2000-01-31 13:45:10"')]
+experiment('rtcDateAdd', 'OSDV', 'V',
+           [(iv, ('%s' % n, 'd%s' % n), b) for iv in IVS for n in
+            ('1', '-1', '2.7', '13') for b in BASES])
+experiment('rtcDateDiff', 'OSVVVV', 'V',
+           [(iv, a, b, ('CLng(1)', 'v3:1'), ('CLng(1)', 'v3:1'))
+            for iv in IVS for a in BASES[:2] for b in BASES[1:]])
+experiment('rtcDatePart', 'OSVVV', 'V',
+           [(iv, b, ('CLng(%s)' % f, 'v3:%s' % f), ('CLng(%s)' % w, 'v3:%s' % w))
+            for iv in IVS for b in BASES for f in (1, 2) for w in (1, 2)])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

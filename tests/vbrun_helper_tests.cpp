@@ -502,7 +502,15 @@ std::string run_case(const std::string& line) {
         }
         return "d:" + hex_text("x%016llX", bits);
     }
-    const Word raw = call_with(proc, arguments);
+    Word raw = 0;
+    if (doubles.size() == 1 && arguments.size() == 3) {
+        // A Double between the arguments: DateAdd(result, interval, number,
+        // date).
+        raw = reinterpret_cast<Word(WINAPI*)(Word, Word, double, Word)>(proc)(
+            arguments[0], arguments[1], doubles[0], arguments[2]);
+    } else {
+        raw = call_with(proc, arguments);
+    }
     std::string result;
     if (kind == "s") {
         const auto text = reinterpret_cast<BSTR>(raw);

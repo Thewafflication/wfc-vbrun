@@ -564,9 +564,9 @@ EXPORTS
     rtcSgnVar @658
     _adj_fdiv_m16i=vbrun_stub_659 @659
     rtcVarFromFormatVar=vbrun_stub_660 @660
-    rtcDateAdd=vbrun_stub_661 @661
-    rtcDateDiff=vbrun_stub_662 @662
-    rtcDatePart=vbrun_stub_663 @663
+    rtcDateAdd @661
+    rtcDateDiff @662
+    rtcDatePart @663
     rtcPartition @664
     rtcChoose=vbrun_stub_665 @665
     rtcEnvironVar=vbrun_stub_666 @666

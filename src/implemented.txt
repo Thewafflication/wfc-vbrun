@@ -163,3 +163,6 @@ rtcFormatNumber
 rtcFormatCurrency
 rtcFormatPercent
 rtcFormatDateTime
+rtcDateAdd
+rtcDateDiff
+rtcDatePart
