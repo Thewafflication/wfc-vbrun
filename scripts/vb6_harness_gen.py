@@ -305,6 +305,27 @@ experiment('rtcArray', 'OP', 'V',
            [([],), ([('"a"', 'v8"a"')],),
             ([('CLng(1)', 'v3:1'), ('"b"', 'v8"b"'), ('Null', 'v1')],)])
 
+# Error text, CVErr, Environ, IsMissing and FreeFile.
+ERRORS = ['0', '1', '3', '5', '6', '7', '9', '11', '13', '53', '57', '58',
+          '70', '76', '91', '94', '380', '429', '438', '1000', '32767',
+          '65535', '-1', '40000']
+experiment('rtcBstrFromError', 'V', 's',
+           [(('CLng(%s)' % e, 'v3:' + e),) for e in ERRORS], isolate=True)
+experiment('rtcVarFromError', 'OV', 'V',
+           [(('CLng(%s)' % e, 'v3:' + e),) for e in ERRORS], isolate=True)
+NAMES = [('"OS"', 'v8"OS"'), ('"os"', 'v8"os"'),
+         ('"NO_SUCH_VARIABLE_X"', 'v8"NO_SUCH_VARIABLE_X"'),
+         ('""', 'v8""'), ('"OS="', 'v8"OS="'), ('CLng(0)', 'v3:0'),
+         ('Null', 'v1')]
+experiment('rtcEnvironBstr', 'V', 's', [(n,) for n in NAMES], isolate=True)
+experiment('rtcEnvironVar', 'OV', 'V', [(n,) for n in NAMES], isolate=True)
+experiment('rtcIsMissing', 'V', 'w',
+           [(v,) for v in [MISSING, ('CLng(1)', 'v3:1'), ('Null', 'v1'),
+                           ('Empty', 'v0'), ('"x"', 'v8"x"')]])
+experiment('rtcFreeFile', 'V', 'w',
+           [(v,) for v in [('CLng(0)', 'v3:0'), ('CLng(1)', 'v3:1'),
+                           ('CLng(2)', 'v3:2'), MISSING]], isolate=True)
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

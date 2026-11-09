@@ -175,3 +175,5 @@ rtcNPV
 rtcMIRR
 rtcChoose
 rtcSwitch
+rtcEnvironBstr
+rtcEnvironVar

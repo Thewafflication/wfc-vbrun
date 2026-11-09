@@ -569,8 +569,8 @@ EXPORTS
     rtcDatePart @663
     rtcPartition @664
     rtcChoose @665
-    rtcEnvironVar=vbrun_stub_666 @666
-    rtcEnvironBstr=vbrun_stub_667 @667
+    rtcEnvironVar @666
+    rtcEnvironBstr @667
     rtcSwitch @668
     rtcCommandBstr=vbrun_stub_669 @669
     rtcCommandVar=vbrun_stub_670 @670

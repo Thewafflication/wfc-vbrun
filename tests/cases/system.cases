@@ -1,0 +1,10 @@
+# Environ, measured from a Visual Basic 6 program that declares the exports
+# (scripts/vb6_harness_gen.py). OS is Windows_NT on every Windows.
+rtcEnvironBstr v8"OS" => s
+rtcEnvironBstr v8"os" => s
+rtcEnvironBstr v8"NO_SUCH_VARIABLE_X" => s
+rtcEnvironBstr v8"OS=" => s
+rtcEnvironVar o v8"OS" => V
+rtcEnvironVar o v8"os" => V
+rtcEnvironVar o v8"NO_SUCH_VARIABLE_X" => V
+rtcEnvironVar o v8"OS=" => V
