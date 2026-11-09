@@ -247,6 +247,37 @@ experiment('rtcRate', 'DDDVVV', 'd',
             for f in FV2[:2] for t in TY2
             for g in (('CDbl(0.1)', 'v5:0.1'), ('CDbl(0.5)', 'v5:0.5'))])
 
+# Arrays of Strings: Split, Join and Filter.
+def sarr(items):
+    """A Variant holding a String array and its case spelling."""
+    if items is None:
+        return ('Split("")', 'v8200:0""')
+    text = '|'.join(items)
+    return ('Split("%s", "|")' % text, 'v8200:%d"%s"' % (len(items), text))
+
+
+SPLIT_TEXT = [('"a,b,,c"', 's"a,b,,c"'), ('"abc"', 's"abc"'),
+              ('""', 's""'), ('"A,a,B"', 's"A,a,B"'),
+              ('",a,"', 's",a,"')]
+SPLIT_DELIM = [('","', 'v8","'), ('"a"', 'v8"a"'), ('""', 'v8""'),
+               ('CLng(5)', 'v3:5'), MISSING]
+experiment('rtcSplit', 'OSVLL', 'V',
+           [(t, d, (lm, 'i' + lm), (cm, 'i' + cm))
+            for t in SPLIT_TEXT for d in SPLIT_DELIM
+            for lm in ('-1', '2', '0') for cm in ('0', '1')])
+JOIN_ARRAYS = [sarr(['a', 'b', 'c']), sarr(['x']), sarr(['', '']),
+               sarr(None)]
+JOIN_DELIM = [('","', 'v8","'), ('""', 'v8""'), ('CLng(5)', 'v3:5'),
+              ('Null', 'v1'), MISSING]
+experiment('rtcJoin', 'VV', 's',
+           [(a, d) for a in JOIN_ARRAYS for d in JOIN_DELIM])
+FILTER_ARRAYS = [sarr(['apple', 'banana', 'Apricot', 'cherry'])]
+experiment('rtcFilter', 'OVSLL', 'V',
+           [(a, (m, 's' + m), (inc, 'i' + inc), (cm, 'i' + cm))
+            for a in FILTER_ARRAYS for m in ('"ap"', '"AP"', '"an"', '"zz"',
+                                             '""')
+            for inc in ('-1', '0') for cm in ('0', '1')])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -337,6 +368,17 @@ Private Function Dec64(ByRef v As Variant) As String
     Dec64 = CStr(c * 10000@)
 End Function
 
+Private Function FmtArr(ByRef v As Variant) As String
+    Dim i As Long, s As String, lo As Long, hi As Long
+    lo = LBound(v)
+    hi = UBound(v)
+    For i = lo To hi
+        If i > lo Then s = s & "|"
+        s = s & EscText(CStr(v(i)))
+    Next
+    FmtArr = "v8200:" & CStr(hi - lo + 1) & """" & s & """"
+End Function
+
 Public Function Fmt(ByRef v As Variant) As String
     Dim t As Long
     t = VarType(v)
@@ -350,6 +392,7 @@ Public Function Fmt(ByRef v As Variant) As String
     Case 5, 7: Fmt = "v" & t & ":x" & HexOf(v, 8)
     Case 6: Fmt = "v6:" & Dec64(v)
     Case 8: Fmt = "v8""" & EscText(CStr(v)) & """"
+    Case 8200: Fmt = FmtArr(v)
     Case Else: Fmt = "v" & t & ":?"
     End Select
 End Function

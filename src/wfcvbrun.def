@@ -611,10 +611,10 @@ EXPORTS
     rtcFormatDateTime @705
     rtcWeekdayName @706
     rtcMonthName @707
-    rtcFilter=vbrun_stub_708 @708
+    rtcFilter @708
     rtcInStrRev @709
-    rtcJoin=vbrun_stub_710 @710
-    rtcSplit=vbrun_stub_711 @711
+    rtcJoin @710
+    rtcSplit @711
     rtcReplace @712
     rtcStrReverse @713
     rtcRound @714

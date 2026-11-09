@@ -168,3 +168,6 @@ rtcDateDiff
 rtcDatePart
 rtcIPMT
 rtcPPMT
+rtcSplit
+rtcJoin
+rtcFilter

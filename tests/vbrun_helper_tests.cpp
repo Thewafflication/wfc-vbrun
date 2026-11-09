@@ -289,6 +289,32 @@ VARIANT* make_variant(const int vt, const std::string& number,
             v->bstrVal =
                 SysAllocStringLen(text.data(), static_cast<UINT>(text.size()));
             break;
+        case 8200: {  // an array of Strings: the elements, split at '|'
+            std::vector<std::wstring> items;
+            if (std::stol(number) > 0) {
+                std::size_t from = 0;
+                for (;;) {
+                    const std::size_t bar = text.find(L'|', from);
+                    items.push_back(text.substr(
+                        from, bar == std::wstring::npos ? bar : bar - from));
+                    if (bar == std::wstring::npos) {
+                        break;
+                    }
+                    from = bar + 1U;
+                }
+            }
+            SAFEARRAYBOUND bound = {static_cast<ULONG>(items.size()), 0};
+            SAFEARRAY* const array = SafeArrayCreate(VT_BSTR, 1, &bound);
+            for (LONG at = 0; at < static_cast<LONG>(items.size()); ++at) {
+                BSTR item = SysAllocStringLen(
+                    items[static_cast<std::size_t>(at)].data(),
+                    static_cast<UINT>(items[static_cast<std::size_t>(at)].size()));
+                SafeArrayPutElement(array, &at, item);
+                SysFreeString(item);
+            }
+            v->parray = array;
+            break;
+        }
         default:
             break;
     }
@@ -340,6 +366,29 @@ std::string format_variant(const VARIANT* const v) {
                    write_case_text(v->bstrVal,
                                    SysStringByteLen(v->bstrVal) / 2U) +
                    "\"";
+        case 8200: {  // an array of Strings
+            if (v->parray == nullptr) {
+                return "v8200:0\"\"";
+            }
+            LONG low = 0;
+            LONG high = -1;
+            SafeArrayGetLBound(v->parray, 1, &low);
+            SafeArrayGetUBound(v->parray, 1, &high);
+            std::string text;
+            for (LONG at = low; at <= high; ++at) {
+                BSTR item = nullptr;
+                SafeArrayGetElement(v->parray, &at, &item);
+                if (at != low) {
+                    text += "|";
+                }
+                if (item != nullptr) {
+                    text += write_case_text(item, SysStringByteLen(item) / 2U);
+                    SysFreeString(item);
+                }
+            }
+            return "v8200:" + std::to_string(high - low + 1) + "\"" + text +
+                   "\"";
+        }
         default:
             return "v" + std::to_string(vt) + ":?";
     }
@@ -420,7 +469,16 @@ std::string run_case(const std::string& line) {
             std::size_t at = 1U + used;
             std::string number;
             std::wstring text;
-            if (at < rest.size() && rest[at] == ':') {
+            if (vt == 8200) {  // v8200:<count>"a|b|c"
+                const auto quote = rest.find('"', at);
+                number = rest.substr(at + 1U, quote - at - 1U);
+                std::size_t end = quote + 1U;
+                while (end < rest.size() && rest[end] != '"') {
+                    end += rest[end] == '\\' ? 2U : 1U;
+                }
+                text = read_case_text(rest.substr(quote + 1U, end - quote - 1U));
+                at = end + 1U;
+            } else if (at < rest.size() && rest[at] == ':') {
                 const auto end = rest.find(' ', at);
                 number = rest.substr(at + 1U, end - at - 1U);
                 at = end == std::string::npos ? rest.size() : end;
