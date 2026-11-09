@@ -1,0 +1,32 @@
+# NPV, MIRR, Choose and Switch, measured from a Visual Basic 6 program that
+# declares the exports (scripts/vb6_harness_gen.py). a:1,2 is an array of Doubles
+# and p[v3:1 v8"a"] an array of Variants, both passed by reference; f2 is a
+# Single.
+# Rows whose last bits differ (powers on the x87 unit) are left out.
+rtcNPV d0.0 a:-1000,300,400,500 => D
+rtcNPV d0.0 a:-500,-100,200 => D
+rtcNPV d0.0 a:100,200,300 => D
+rtcNPV d0.0 a:-1000,-1000,2500 => D
+rtcNPV d0.0 a:-70000,12000,15000,18000,21000,26000 => D
+rtcNPV d-0.5 a:-1000,300,400,500 => D
+rtcNPV d-0.5 a:-500,-100,200 => D
+rtcNPV d-0.5 a:100,200,300 => D
+rtcNPV d-0.5 a:-1000,-1000,2500 => D
+rtcNPV d-0.5 a:-70000,12000,15000,18000,21000,26000 => D
+rtcMIRR a:-1000,300,400,500 d0.0 d0.1 => D
+rtcMIRR a:-500,-100,200 d0.1 d0.12 => D
+rtcMIRR a:-500,-100,200 d0.05 d0.05 => D
+rtcChoose o f0 p[v8"a" v3:7 v1] => V
+rtcChoose o f1 p[v8"a" v3:7 v1] => V
+rtcChoose o f2 p[v8"a" v3:7 v1] => V
+rtcChoose o f3 p[v8"a" v3:7 v1] => V
+rtcChoose o f4 p[v8"a" v3:7 v1] => V
+rtcChoose o f1.5 p[v8"a" v3:7 v1] => V
+rtcChoose o f2.5 p[v8"a" v3:7 v1] => V
+rtcChoose o f-1 p[v8"a" v3:7 v1] => V
+rtcSwitch o p[v11:-1 v8"x" v11:-1 v8"y"] => V
+rtcSwitch o p[v11:-1 v8"x" v11:0 v8"y"] => V
+rtcSwitch o p[v11:0 v8"x" v11:-1 v8"y"] => V
+rtcSwitch o p[v11:0 v8"x" v11:0 v8"y"] => V
+rtcSwitch o p[v11:0 v8"x"] => V
+rtcSwitch o p[v1 v8"x" v11:-1 v8"y"] => V

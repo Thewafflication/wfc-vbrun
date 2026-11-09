@@ -278,6 +278,33 @@ experiment('rtcFilter', 'OVSLL', 'V',
                                              '""')
             for inc in ('-1', '0') for cm in ('0', '1')])
 
+# NPV, IRR, MIRR, Choose, Switch and Array: arrays passed by reference.
+STREAMS = [['-1000', '300', '400', '500'], ['-500', '-100', '200'],
+           ['100', '200', '300'], ['-1000', '-1000', '2500'],
+           ['-70000', '12000', '15000', '18000', '21000', '26000']]
+experiment('rtcNPV', 'DA', 'd',
+           [(dbl(r), (a, a)) for r in (0.1, 0.0, 0.05, -0.5)
+            for a in STREAMS])
+GUESS = [MISSING, ('CDbl(0.1)', 'v5:0.1'), ('CDbl(-0.5)', 'v5:-0.5')]
+experiment('rtcIRR', 'AV', 'd',
+           [((a, a), g) for a in STREAMS for g in GUESS], isolate=True)
+experiment('rtcMIRR', 'ADD', 'd',
+           [((a, a), dbl(f), dbl(r)) for a in STREAMS
+            for f, r in ((0.1, 0.12), (0.05, 0.05), (0.0, 0.1))])
+CHOICES = [('"a"', 'v8"a"'), ('CLng(7)', 'v3:7'), ('Null', 'v1')]
+experiment('rtcChoose', 'OFP', 'V',
+           [((str(i), 'f%s' % i), CHOICES) for i in
+            ('0', '1', '2', '3', '4', '1.5', '2.5', '-1')])
+SW = [('True', 'v11:-1'), ('False', 'v11:0')]
+experiment('rtcSwitch', 'OP', 'V',
+           [([a, ('"x"', 'v8"x"'), b, ('"y"', 'v8"y"')],) for a in SW
+            for b in SW] + [([('False', 'v11:0'), ('"x"', 'v8"x"')],),
+                            ([('Null', 'v1'), ('"x"', 'v8"x"'),
+                              ('True', 'v11:-1'), ('"y"', 'v8"y"')],)])
+experiment('rtcArray', 'OP', 'V',
+           [([],), ([('"a"', 'v8"a"')],),
+            ([('CLng(1)', 'v3:1'), ('"b"', 'v8"b"'), ('Null', 'v1')],)])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -302,6 +329,23 @@ def vb_call(kind, index, row):
         elif letter == 'D':
             arguments.append('CDbl(%s)' % item[0])
             case.append(item[1])
+        elif letter == 'F':
+            arguments.append('CSng(%s)' % item[0])
+            case.append(item[1])
+        elif letter == 'A':
+            numbers = item[0]
+            code.append('    ReDim da%d(0 To %d)' % (cursor, len(numbers) - 1))
+            for place, number in enumerate(numbers):
+                code.append('    da%d(%d) = %s' % (cursor, place, number))
+            arguments.append('VarPtrArray(da%d)' % cursor)
+            case.append('a:' + ','.join(numbers))
+        elif letter == 'P':
+            members = item
+            code.append('    ReDim pa%d(0 To %d)' % (cursor, len(members) - 1))
+            for place, member in enumerate(members):
+                code.append('    pa%d(%d) = %s' % (cursor, place, member[0]))
+            arguments.append('VarPtrArray(pa%d)' % cursor)
+            case.append('p[' + ' '.join(m[1] for m in members) + ']')
         else:
             arguments.append('CLng(%s)' % item[0])
             case.append(item[1])
@@ -315,6 +359,8 @@ def declare(number, export, kind, result):
             parameters.append('ByRef a%d As Variant' % place)
         elif letter == 'D':
             parameters.append('ByVal a%d As Double' % place)
+        elif letter == 'F':
+            parameters.append('ByVal a%d As Single' % place)
         else:
             parameters.append('ByVal a%d As Long' % place)
     if kind.startswith('O'):
@@ -329,6 +375,7 @@ def declare(number, export, kind, result):
 PROLOGUE = r'''Attribute VB_Name = "Hmod"
 Option Explicit
 Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (Dest As Any, Src As Any, ByVal n As Long)
+Declare Function VarPtrArray Lib "msvbvm60.dll" Alias "VarPtr" (Var() As Any) As Long
 '''
 
 SUPPORT = r'''
@@ -461,6 +508,8 @@ def build(folder):
         subs += '\nPrivate Sub Run%d()\n' % number
         subs += '    Dim v1 As Variant, v2 As Variant, v3 As Variant, '
         subs += 'v4 As Variant, v5 As Variant, v6 As Variant, r As Variant, p As Long, q As Double\n'
+        subs += '    Dim da1() As Double, da2() As Double, da3() As Double\n'
+        subs += '    Dim pa1() As Variant, pa2() As Variant, pa3() As Variant\n'
         subs += '    On Error Resume Next\n'
         for row in grid:
             code, arguments, case = vb_call(kind, number, row)

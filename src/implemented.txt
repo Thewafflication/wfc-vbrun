@@ -171,3 +171,7 @@ rtcPPMT
 rtcSplit
 rtcJoin
 rtcFilter
+rtcNPV
+rtcMIRR
+rtcChoose
+rtcSwitch

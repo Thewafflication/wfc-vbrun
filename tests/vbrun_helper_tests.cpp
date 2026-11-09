@@ -436,6 +436,7 @@ std::string run_case(const std::string& line) {
     double number_argument = 0.0;  // d1.5: a Double passed by value
     bool has_double = false;
     std::vector<double> doubles;  // every Double argument, in order
+    std::vector<float> singles;   // f1.5: a Single passed by value
     while (!rest.empty()) {
         while (!rest.empty() && rest.front() == ' ') {
             rest.erase(0, 1);
@@ -506,6 +507,82 @@ std::string run_case(const std::string& line) {
             doubles.push_back(number_argument);
             has_double = true;
             rest.erase(0, used + 1U);
+        } else if (rest.rfind("a:", 0) == 0) {
+            // a double array by reference: a:1,2,3
+            const auto end = rest.find(' ');
+            const std::string list = rest.substr(2U, end - 2U);
+            std::vector<double> numbers;
+            std::size_t from = 0;
+            while (from <= list.size()) {
+                const auto comma = list.find(',', from);
+                numbers.push_back(std::stod(list.substr(
+                    from, comma == std::string::npos ? comma : comma - from)));
+                if (comma == std::string::npos) {
+                    break;
+                }
+                from = comma + 1U;
+            }
+            SAFEARRAYBOUND bound = {static_cast<ULONG>(numbers.size()), 0};
+            SAFEARRAY* const array = SafeArrayCreate(VT_R8, 1, &bound);
+            for (LONG at = 0; at < static_cast<LONG>(numbers.size()); ++at) {
+                SafeArrayPutElement(array, &at,
+                                    &numbers[static_cast<std::size_t>(at)]);
+            }
+            auto* cell = new SAFEARRAY*(array);
+            arguments.push_back(reinterpret_cast<Word>(cell));
+            rest.erase(0, end == std::string::npos ? rest.size() : end);
+        } else if (rest.rfind("p[", 0) == 0) {
+            // a Variant array by reference: p[v8"a" v3:7]
+            std::size_t close = 2U;
+            bool quoted = false;
+            while (close < rest.size() && (quoted || rest[close] != ']')) {
+                if (rest[close] == '\\' && quoted) {
+                    ++close;
+                } else if (rest[close] == '"') {
+                    quoted = !quoted;
+                }
+                ++close;
+            }
+            std::string inner = rest.substr(2U, close - 2U);
+            std::vector<VARIANT*> members;
+            while (!inner.empty()) {
+                if (inner.front() == ' ') {
+                    inner.erase(0, 1);
+                    continue;
+                }
+                std::size_t used = 0;
+                const int vt = std::stoi(inner.substr(1), &used);
+                std::size_t at = 1U + used;
+                std::string number;
+                std::wstring text;
+                if (at < inner.size() && inner[at] == ':') {
+                    const auto stop = inner.find(' ', at);
+                    number = inner.substr(at + 1U, stop - at - 1U);
+                    at = stop == std::string::npos ? inner.size() : stop;
+                } else if (at < inner.size() && inner[at] == '"') {
+                    std::size_t end = at + 1U;
+                    while (end < inner.size() && inner[end] != '"') {
+                        end += inner[end] == '\\' ? 2U : 1U;
+                    }
+                    text = read_case_text(inner.substr(at + 1U, end - at - 1U));
+                    at = end + 1U;
+                }
+                members.push_back(make_variant(vt, number, text));
+                inner.erase(0, at);
+            }
+            SAFEARRAYBOUND bound = {static_cast<ULONG>(members.size()), 0};
+            SAFEARRAY* const array = SafeArrayCreate(VT_VARIANT, 1, &bound);
+            for (LONG at = 0; at < static_cast<LONG>(members.size()); ++at) {
+                SafeArrayPutElement(array, &at,
+                                    members[static_cast<std::size_t>(at)]);
+            }
+            auto* cell = new SAFEARRAY*(array);
+            arguments.push_back(reinterpret_cast<Word>(cell));
+            rest.erase(0, close + 1U);
+        } else if (rest.front() == 'f') {
+            std::size_t used = 0;
+            singles.push_back(std::stof(rest.substr(1), &used));
+            rest.erase(0, used + 1U);
         } else if (rest.front() == 'x') {
             std::size_t used = 0;
             const unsigned long value = std::stoul(rest.substr(1), &used, 16);
@@ -546,6 +623,16 @@ std::string run_case(const std::string& line) {
                 double, double, double, double, Word, Word)>(proc)(
                 doubles[0], doubles[1], doubles[2], doubles[3], arguments[0],
                 arguments[1]);
+        } else if (name == "rtcNPV") {
+            answer = reinterpret_cast<double(WINAPI*)(double, Word)>(proc)(
+                doubles[0], arguments[0]);
+        } else if (name == "rtcMIRR") {
+            answer =
+                reinterpret_cast<double(WINAPI*)(Word, double, double)>(proc)(
+                    arguments[0], doubles[0], doubles[1]);
+        } else if (name == "rtcIRR") {
+            answer = reinterpret_cast<double(WINAPI*)(Word, Word)>(proc)(
+                arguments[0], arguments[1]);
         } else {
             answer = has_double
                          ? reinterpret_cast<double(WINAPI*)(double)>(proc)(
@@ -561,7 +648,11 @@ std::string run_case(const std::string& line) {
         return "d:" + hex_text("x%016llX", bits);
     }
     Word raw = 0;
-    if (doubles.size() == 1 && arguments.size() == 3) {
+    if (singles.size() == 1 && arguments.size() == 2) {
+        // Choose(result, index as a Single, array)
+        raw = reinterpret_cast<Word(WINAPI*)(Word, float, Word)>(proc)(
+            arguments[0], singles[0], arguments[1]);
+    } else if (doubles.size() == 1 && arguments.size() == 3) {
         // A Double between the arguments: DateAdd(result, interval, number,
         // date).
         raw = reinterpret_cast<Word(WINAPI*)(Word, Word, double, Word)>(proc)(

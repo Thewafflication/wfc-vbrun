@@ -568,10 +568,10 @@ EXPORTS
     rtcDateDiff @662
     rtcDatePart @663
     rtcPartition @664
-    rtcChoose=vbrun_stub_665 @665
+    rtcChoose @665
     rtcEnvironVar=vbrun_stub_666 @666
     rtcEnvironBstr=vbrun_stub_667 @667
-    rtcSwitch=vbrun_stub_668 @668
+    rtcSwitch @668
     rtcCommandBstr=vbrun_stub_669 @669
     rtcCommandVar=vbrun_stub_670 @670
     rtcSLN @671
@@ -586,8 +586,8 @@ EXPORTS
     rtcRate=vbrun_stub_680 @680
     rtcImmediateIf @681
     rtcIRR=vbrun_stub_682 @682
-    rtcMIRR=vbrun_stub_683 @683
-    rtcNPV=vbrun_stub_684 @684
+    rtcMIRR @683
+    rtcNPV @684
     rtcErrObj=vbrun_stub_685 @685
     rtUI1FromErrVar=vbrun_stub_686 @686
     rtcVarDateFromVar=vbrun_stub_687 @687
