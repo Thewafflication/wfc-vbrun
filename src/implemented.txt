@@ -177,3 +177,15 @@ rtcChoose
 rtcSwitch
 rtcEnvironBstr
 rtcEnvironVar
+rtcFileLen
+rtcGetFileAttr
+rtcFileDateTime
+rtcSetFileAttr
+rtcMakeDir
+rtcRemoveDir
+rtcChangeDir
+rtcKillFiles
+rtcFileCopy
+rtcDir
+rtcCurrentDirBstr
+rtcCurrentDir

@@ -1,6 +1,11 @@
 """Runs the harness of vb6_harness_gen.py and writes the case files.
 
 Usage: python vb6_harness_cases.py <folder with Harness.exe> <family> <cases>
+           [<export,export...>]
+
+With a list of exports only their experiments run. The experiments of the
+file exports start from a scratch folder, so each group of their cases
+begins with a `#fixture` line that tells the test to rebuild it.
 
 Starts Harness.exe once for every experiment (listed in experiments.txt next
 to it), so an export called with a wrong signature only costs its own run, and
@@ -15,13 +20,20 @@ import subprocess
 import sys
 
 
-def main(folder, family, cases):
+FILE_EXPORTS = {'rtcCurrentDirBstr', 'rtcCurrentDir', 'rtcFileLen', 'rtcGetFileAttr', 'rtcFileDateTime',
+                'rtcSetFileAttr', 'rtcMakeDir', 'rtcRemoveDir',
+                'rtcChangeDir', 'rtcKillFiles', 'rtcFileCopy', 'rtcDir'}
+
+
+def main(folder, family, cases, only=None):
     experiments = [line.split() for line in open(
         os.path.join(folder, 'experiments.txt')).read().splitlines()]
     lines = []
     errors = collections.Counter()
     crashed = []
     for number, export, kind, result in experiments:
+        if only and export not in only.split(','):
+            continue
         target = os.path.join(folder, 'vh%s.txt' % number)
         if os.path.exists(target):
             os.remove(target)
@@ -39,6 +51,8 @@ def main(folder, family, cases):
             crashed.append(export)
             continue
         measured = open(target, encoding='utf-8', errors='replace').read()
+        if export in FILE_EXPORTS:
+            lines.append(('#fixture', None))
         for line in measured.replace('\r', '').splitlines():
             head, _, tail = line.rpartition(' => ')
             if tail.startswith('err'):
@@ -55,8 +69,8 @@ def main(folder, family, cases):
         out.write(header + '\n'.join(l[0] for l in lines) + '\n')
     with open(os.path.join(cases, family + '.expected'), 'w',
               newline='\n') as out:
-        out.write('\n'.join(l[1] for l in lines) + '\n')
+        out.write('\n'.join(l[1] for l in lines if l[1] is not None) + '\n')
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

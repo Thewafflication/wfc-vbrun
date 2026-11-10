@@ -432,10 +432,10 @@ EXPORTS
     rtcSpaceVar @526
     rtcUpperCaseBstr @527
     rtcUpperCaseVar @528
-    rtcKillFiles=vbrun_stub_529 @529
-    rtcChangeDir=vbrun_stub_530 @530
-    rtcMakeDir=vbrun_stub_531 @531
-    rtcRemoveDir=vbrun_stub_532 @532
+    rtcKillFiles @529
+    rtcChangeDir @530
+    rtcMakeDir @531
+    rtcRemoveDir @532
     rtcChangeDrive=vbrun_stub_533 @533
     rtcBeep=vbrun_stub_534 @534
     rtcGetTimer=vbrun_stub_535 @535
@@ -479,11 +479,11 @@ EXPORTS
     rtcHexVarFromVar @573
     rtcOctBstrFromVar=vbrun_stub_574 @574
     rtcOctVarFromVar @575
-    rtcFileCopy=vbrun_stub_576 @576
-    rtcFileDateTime=vbrun_stub_577 @577
-    rtcFileLen=vbrun_stub_578 @578
-    rtcGetFileAttr=vbrun_stub_579 @579
-    rtcSetFileAttr=vbrun_stub_580 @580
+    rtcFileCopy @576
+    rtcFileDateTime @577
+    rtcFileLen @578
+    rtcGetFileAttr @579
+    rtcSetFileAttr @580
     rtcR8ValFromBstr @581
     rtcSin @582
     rtcCos @583
@@ -548,9 +548,9 @@ EXPORTS
     rtcVarFromVar=vbrun_stub_642 @642
     rtcCVErrFromVar=vbrun_stub_643 @643
     VarPtr @644
-    rtcDir=vbrun_stub_645 @645
-    rtcCurrentDirBstr=vbrun_stub_646 @646
-    rtcCurrentDir=vbrun_stub_647 @647
+    rtcDir @645
+    rtcCurrentDirBstr @646
+    rtcCurrentDir @647
     rtcFreeFile=vbrun_stub_648 @648
     rtcCompareBstr=vbrun_stub_649 @649
     rtcBstrFromFormatVar=vbrun_stub_650 @650

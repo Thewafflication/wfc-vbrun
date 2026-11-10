@@ -65,6 +65,7 @@ set(
   src/helpers_arrays.cpp
   src/helpers_lists.cpp
   src/helpers_system.cpp
+  src/helpers_files.cpp
   src/helpers_varops.cpp
 )
 
@@ -170,7 +171,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")
-    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings numeric finance dates payments arrays lists system)
+    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings numeric finance dates payments arrays lists system files)
       add_test(
         NAME TC-MP0009-vbrun-cases-${vbrun_cases}
         COMMAND

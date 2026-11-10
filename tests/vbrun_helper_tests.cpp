@@ -10,9 +10,11 @@
 
 #include <oleauto.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <cwctype>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -308,7 +310,8 @@ VARIANT* make_variant(const int vt, const std::string& number,
             for (LONG at = 0; at < static_cast<LONG>(items.size()); ++at) {
                 BSTR item = SysAllocStringLen(
                     items[static_cast<std::size_t>(at)].data(),
-                    static_cast<UINT>(items[static_cast<std::size_t>(at)].size()));
+                    static_cast<UINT>(
+                        items[static_cast<std::size_t>(at)].size()));
                 SafeArrayPutElement(array, &at, item);
                 SysFreeString(item);
             }
@@ -420,6 +423,177 @@ Word call_with(const FARPROC proc, const std::vector<Word>& a) {
     }
 }
 
+// ----- file cases ----------------------------------------------------------
+// The cases of the file exports start from a scratch folder that a `#fixture`
+// line rebuilds (the same files, times and attributes the Visual Basic 6
+// harness started from); the results `n` (the state of the folder), `r` and
+// `R` (a BSTR and a Variant string with the scratch folder shown as <R>).
+
+std::wstring g_root;
+
+void wipe_folder(const std::wstring& folder) {
+    WIN32_FIND_DATAW data;
+    const HANDLE found = FindFirstFileW((folder + L"\\*").c_str(), &data);
+    if (found == INVALID_HANDLE_VALUE) {
+        return;
+    }
+    do {
+        const std::wstring name = data.cFileName;
+        if (name == L"." || name == L"..") {
+            continue;
+        }
+        const std::wstring path = folder + L"\\" + name;
+        SetFileAttributesW(path.c_str(), FILE_ATTRIBUTE_NORMAL);
+        if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0U) {
+            wipe_folder(path);
+            RemoveDirectoryW(path.c_str());
+        } else {
+            DeleteFileW(path.c_str());
+        }
+    } while (FindNextFileW(found, &data));
+    FindClose(found);
+}
+
+void put_file(const wchar_t* const name, const char* const text) {
+    std::ofstream out(name, std::ios::binary);
+    out << text;
+}
+
+// Sets the time of the last write to a local time.
+void stamp(const wchar_t* const name, const WORD year, const WORD month,
+           const WORD day, const WORD hour, const WORD minute,
+           const WORD second) {
+    SYSTEMTIME at = {year, month, 0, day, hour, minute, second, 0};
+    FILETIME local;
+    FILETIME utc;
+    SystemTimeToFileTime(&at, &local);
+    LocalFileTimeToFileTime(&local, &utc);
+    const HANDLE file = CreateFileW(
+        name, FILE_WRITE_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+        OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+    if (file != INVALID_HANDLE_VALUE) {
+        SetFileTime(file, nullptr, nullptr, &utc);
+        CloseHandle(file);
+    }
+}
+
+void build_fixture() {
+    if (g_root.empty()) {
+        wchar_t temp[MAX_PATH];
+        const DWORD length = GetTempPathW(MAX_PATH, temp);
+        std::wstring base(temp, length);
+        while (!base.empty() && base.back() == L'\\') {
+            base.pop_back();
+        }
+        g_root =
+            base + L"\\wfcvbrunfx" + std::to_wstring(GetCurrentProcessId());
+    }
+    SetCurrentDirectoryW(g_root.substr(0, g_root.rfind(L'\\')).c_str());
+    wipe_folder(g_root);
+    CreateDirectoryW(g_root.c_str(), nullptr);
+    SetCurrentDirectoryW(g_root.c_str());
+    put_file(L"a.txt", "hello");
+    put_file(L"b.txt", "abcdefghij");
+    put_file(L"c.txt", "ccc");
+    put_file(L"empty.txt", "");
+    put_file(L"ro.txt", "abc");
+    put_file(L"hid.txt", "x");
+    CreateDirectoryW(L"sub", nullptr);
+    put_file(L"sub\\in.txt", "in");
+    CreateDirectoryW(L"emptydir", nullptr);
+    stamp(L"a.txt", 2000, 1, 1, 13, 45, 10);
+    stamp(L"c.txt", 2000, 1, 1, 13, 45, 11);
+    for (const wchar_t* const name :
+         {L"b.txt", L"empty.txt", L"ro.txt", L"hid.txt", L"sub\\in.txt", L"sub",
+          L"emptydir"}) {
+        stamp(name, 2001, 2, 3, 4, 5, 6);
+    }
+    SetFileAttributesW(L"ro.txt", FILE_ATTRIBUTE_READONLY);
+    SetFileAttributesW(L"hid.txt", FILE_ATTRIBUTE_HIDDEN);
+}
+
+std::string narrow(const std::wstring& text) {
+    std::string result;
+    for (const wchar_t c : text) {
+        result += static_cast<char>(c);
+    }
+    return result;
+}
+
+std::wstring upper(std::wstring text) {
+    for (wchar_t& c : text) {
+        c = static_cast<wchar_t>(std::towupper(c));
+    }
+    return text;
+}
+
+// The files and folders under `folder` ("" or ends with a separator), by
+// name: name:attributes:size, a folder with its contents in braces.
+std::string folder_tree(const std::wstring& folder) {
+    std::vector<WIN32_FIND_DATAW> entries;
+    WIN32_FIND_DATAW data;
+    const HANDLE found = FindFirstFileW((folder + L"*").c_str(), &data);
+    if (found != INVALID_HANDLE_VALUE) {
+        do {
+            const std::wstring name = data.cFileName;
+            if (name != L"." && name != L"..") {
+                entries.push_back(data);
+            }
+        } while (FindNextFileW(found, &data));
+        FindClose(found);
+    }
+    std::sort(entries.begin(), entries.end(),
+              [](const WIN32_FIND_DATAW& a, const WIN32_FIND_DATAW& b) {
+                  return upper(a.cFileName) < upper(b.cFileName);
+              });
+    std::string text;
+    for (const WIN32_FIND_DATAW& entry : entries) {
+        const std::wstring name = entry.cFileName;
+        const std::string narrow_name = narrow(name);
+        const unsigned attributes = entry.dwFileAttributes & 0x37U;
+        text += narrow_name + ":" + std::to_string(attributes) + ":";
+        if ((attributes & 0x10U) != 0U) {
+            text += "0{" + folder_tree(folder + name + L"\\") + "};";
+        } else {
+            text += std::to_string(entry.nFileSizeLow) + ";";
+        }
+    }
+    return text;
+}
+
+std::string folder_state() {
+    wchar_t buffer[MAX_PATH * 2];
+    const std::wstring current(buffer,
+                               GetCurrentDirectoryW(MAX_PATH * 2, buffer));
+    std::wstring where;
+    if (upper(current) == upper(g_root)) {
+        where = L".";
+    } else if (upper(current).rfind(upper(g_root) + L"\\", 0) == 0) {
+        where = current.substr(g_root.size() + 1U);
+    } else {
+        where = L"?" + current;
+    }
+    return "cwd=" + narrow(where) + " " + folder_tree(L"");
+}
+
+// The text with the scratch folder shown as <R>.
+std::wstring hide_root(const std::wstring& text) {
+    std::wstring result;
+    const std::wstring key = upper(g_root);
+    const std::wstring big = upper(text);
+    std::size_t at = 0;
+    while (at < text.size()) {
+        if (!key.empty() && big.compare(at, key.size(), key) == 0) {
+            result += L"<R>";
+            at += key.size();
+        } else {
+            result += text[at++];
+        }
+    }
+    return result;
+}
+
 // Runs one case line and returns the result text.
 std::string run_case(const std::string& line) {
     const auto arrow = line.find(" => ");
@@ -477,7 +651,8 @@ std::string run_case(const std::string& line) {
                 while (end < rest.size() && rest[end] != '"') {
                     end += rest[end] == '\\' ? 2U : 1U;
                 }
-                text = read_case_text(rest.substr(quote + 1U, end - quote - 1U));
+                text =
+                    read_case_text(rest.substr(quote + 1U, end - quote - 1U));
                 at = end + 1U;
             } else if (at < rest.size() && rest[at] == ':') {
                 const auto end = rest.find(' ', at);
@@ -606,9 +781,9 @@ std::string run_case(const std::string& line) {
             answer = reinterpret_cast<double(WINAPI*)(double, double, double)>(
                 proc)(doubles[0], doubles[1], doubles[2]);
         } else if (shape == "dddd") {
-            answer = reinterpret_cast<double(WINAPI*)(double, double, double,
-                                                      double)>(proc)(
-                doubles[0], doubles[1], doubles[2], doubles[3]);
+            answer = reinterpret_cast<double(WINAPI*)(
+                double, double, double, double)>(proc)(doubles[0], doubles[1],
+                                                       doubles[2], doubles[3]);
         } else if (shape == "ddddw") {
             answer = reinterpret_cast<double(WINAPI*)(double, double, double,
                                                       double, Word)>(proc)(
@@ -616,8 +791,7 @@ std::string run_case(const std::string& line) {
         } else if (shape == "dddww") {
             answer = reinterpret_cast<double(WINAPI*)(double, double, double,
                                                       Word, Word)>(proc)(
-                doubles[0], doubles[1], doubles[2], arguments[0],
-                arguments[1]);
+                doubles[0], doubles[1], doubles[2], arguments[0], arguments[1]);
         } else if (shape == "ddddww") {
             answer = reinterpret_cast<double(WINAPI*)(
                 double, double, double, double, Word, Word)>(proc)(
@@ -627,18 +801,16 @@ std::string run_case(const std::string& line) {
             answer = reinterpret_cast<double(WINAPI*)(double, Word)>(proc)(
                 doubles[0], arguments[0]);
         } else if (name == "rtcMIRR") {
-            answer =
-                reinterpret_cast<double(WINAPI*)(Word, double, double)>(proc)(
-                    arguments[0], doubles[0], doubles[1]);
+            answer = reinterpret_cast<double(WINAPI*)(Word, double, double)>(
+                proc)(arguments[0], doubles[0], doubles[1]);
         } else if (name == "rtcIRR") {
             answer = reinterpret_cast<double(WINAPI*)(Word, Word)>(proc)(
                 arguments[0], arguments[1]);
         } else {
-            answer = has_double
-                         ? reinterpret_cast<double(WINAPI*)(double)>(proc)(
-                               number_argument)
-                         : reinterpret_cast<double(WINAPI*)(Word)>(proc)(
-                               arguments.empty() ? 0 : arguments[0]);
+            answer = has_double ? reinterpret_cast<double(WINAPI*)(double)>(
+                                      proc)(number_argument)
+                                : reinterpret_cast<double(WINAPI*)(Word)>(proc)(
+                                      arguments.empty() ? 0 : arguments[0]);
         }
         std::uint64_t bits = 0;
         std::memcpy(&bits, &answer, sizeof(bits));
@@ -671,6 +843,23 @@ std::string run_case(const std::string& line) {
                      ((bytes % 2U) != 0U ? "+1" : "");
             SysFreeString(text);
         }
+    } else if (kind == "n") {
+        result = folder_state();
+    } else if (kind == "r") {
+        const auto text = reinterpret_cast<BSTR>(raw);
+        const std::wstring shown =
+            hide_root(text == nullptr ? std::wstring()
+                                      : std::wstring(text, SysStringLen(text)));
+        result = "s\"" + write_case_text(shown.data(), shown.size()) + "\"";
+        SysFreeString(text);
+    } else if (kind == "R") {
+        const VARIANT* const out = outputs.front();
+        const std::wstring shown = hide_root(
+            out->vt == VT_BSTR && out->bstrVal != nullptr
+                ? std::wstring(out->bstrVal, SysStringLen(out->bstrVal))
+                : std::wstring());
+        result = "vt" + std::to_string(out->vt) + " s\"" +
+                 write_case_text(shown.data(), shown.size()) + "\"";
     } else if (kind == "i") {
         result = "i" + std::to_string(static_cast<std::int32_t>(raw));
     } else if (kind == "w") {
@@ -704,6 +893,10 @@ void cases_family(const char* const cases, const char* const expected) {
     while (std::getline(case_stream, line)) {
         if (!line.empty() && line.back() == '\r') {
             line.pop_back();
+        }
+        if (line == "#fixture") {
+            build_fixture();
+            continue;
         }
         if (line.empty() || line.front() == '#') {
             continue;

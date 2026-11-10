@@ -1,0 +1,358 @@
+# Measured from a Visual Basic 6 program that declares the
+# exports (scripts/vb6_harness_gen.py); the calls that raise an
+# error are not cases.
+#fixture
+rtcFileLen s"a.txt" => i
+rtcFileLen s"b.txt" => i
+rtcFileLen s"c.txt" => i
+rtcFileLen s"empty.txt" => i
+rtcFileLen s"ro.txt" => i
+rtcFileLen s"hid.txt" => i
+rtcFileLen s"sub" => i
+rtcFileLen s"emptydir" => i
+rtcFileLen s"sub\\in.txt" => i
+rtcFileLen s"A.TXT" => i
+rtcFileLen s"." => i
+rtcFileLen s".." => i
+rtcFileLen s"a.txt " => i
+rtcFileLen s"sub\\." => i
+#fixture
+rtcGetFileAttr s"a.txt" => i
+rtcGetFileAttr s"b.txt" => i
+rtcGetFileAttr s"c.txt" => i
+rtcGetFileAttr s"empty.txt" => i
+rtcGetFileAttr s"ro.txt" => i
+rtcGetFileAttr s"hid.txt" => i
+rtcGetFileAttr s"sub" => i
+rtcGetFileAttr s"emptydir" => i
+rtcGetFileAttr s"sub\\in.txt" => i
+rtcGetFileAttr s"A.TXT" => i
+rtcGetFileAttr s"." => i
+rtcGetFileAttr s".." => i
+rtcGetFileAttr s"a.txt " => i
+rtcGetFileAttr s"sub\\" => i
+rtcGetFileAttr s"sub\\." => i
+#fixture
+rtcFileDateTime o s"a.txt" => V
+rtcFileDateTime o s"b.txt" => V
+rtcFileDateTime o s"c.txt" => V
+rtcFileDateTime o s"empty.txt" => V
+rtcFileDateTime o s"ro.txt" => V
+rtcFileDateTime o s"hid.txt" => V
+rtcFileDateTime o s"sub" => V
+rtcFileDateTime o s"emptydir" => V
+rtcFileDateTime o s"sub\\in.txt" => V
+rtcFileDateTime o s"A.TXT" => V
+rtcFileDateTime o s"a.txt " => V
+rtcFileDateTime o s"sub\\." => V
+#fixture
+rtcSetFileAttr s"a.txt" i0 => n
+#fixture
+rtcSetFileAttr s"a.txt" i1 => n
+#fixture
+rtcSetFileAttr s"a.txt" i2 => n
+#fixture
+rtcSetFileAttr s"a.txt" i4 => n
+#fixture
+rtcSetFileAttr s"a.txt" i7 => n
+#fixture
+rtcSetFileAttr s"a.txt" i32 => n
+#fixture
+rtcSetFileAttr s"a.txt" i33 => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcSetFileAttr s"ro.txt" i0 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i1 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i2 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i4 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i7 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i32 => n
+#fixture
+rtcSetFileAttr s"ro.txt" i33 => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcSetFileAttr s"hid.txt" i0 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i1 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i2 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i4 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i7 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i32 => n
+#fixture
+rtcSetFileAttr s"hid.txt" i33 => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcSetFileAttr s"sub" i0 => n
+#fixture
+rtcSetFileAttr s"sub" i1 => n
+#fixture
+rtcSetFileAttr s"sub" i2 => n
+#fixture
+rtcSetFileAttr s"sub" i4 => n
+#fixture
+rtcSetFileAttr s"sub" i7 => n
+#fixture
+rtcSetFileAttr s"sub" i32 => n
+#fixture
+rtcSetFileAttr s"sub" i33 => n
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+rtcMakeDir s"newdir" => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcMakeDir s"newdir\\" => n
+#fixture
+#fixture
+#fixture
+rtcMakeDir s"sub\\inner" => n
+#fixture
+rtcMakeDir s"a b" => n
+#fixture
+rtcMakeDir s"x.y" => n
+#fixture
+rtcRemoveDir s"emptydir" => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcRemoveDir s"EMPTYDIR" => n
+#fixture
+#fixture
+#fixture
+rtcRemoveDir s"emptydir\\" => n
+#fixture
+rtcChangeDir s"sub" => n
+#fixture
+rtcChangeDir s"emptydir" => n
+#fixture
+#fixture
+#fixture
+rtcChangeDir s"." => n
+#fixture
+rtcChangeDir s"SUB" => n
+#fixture
+#fixture
+rtcChangeDir s"sub\\.." => n
+#fixture
+rtcChangeDir s"sub\\" => n
+#fixture
+rtcKillFiles v8"a.txt" => n
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+rtcKillFiles v8"sub\\*" => n
+#fixture
+rtcKillFiles v8"sub\\in.txt" => n
+#fixture
+rtcKillFiles v8"a.tx?" => n
+#fixture
+#fixture
+#fixture
+rtcKillFiles v8"A.TXT" => n
+#fixture
+#fixture
+#fixture
+rtcKillFiles v8"e*" => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcFileCopy s"a.txt" s"copy.txt" => n
+#fixture
+rtcFileCopy s"a.txt" s"b.txt" => n
+#fixture
+#fixture
+#fixture
+rtcFileCopy s"a.txt" s"sub\\a.txt" => n
+#fixture
+rtcFileCopy s"ro.txt" s"rocopy.txt" => n
+#fixture
+#fixture
+#fixture
+#fixture
+#fixture
+rtcFileCopy s"empty.txt" s"e2.txt" => n
+#fixture
+#fixture
+rtcFileCopy s"hid.txt" s"hidcopy.txt" => n
+#fixture
+#fixture
+#fixture
+#fixture
+rtcCurrentDirBstr v10:x80020004 => r
+#fixture
+rtcCurrentDirBstr v8"" => r
+#fixture
+#fixture
+#fixture
+rtcCurrentDir o v10:x80020004 => R
+#fixture
+rtcCurrentDir o v8"" => R
+#fixture
+#fixture
+#fixture
+rtcDir v8"*.txt" i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i16 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i2 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i7 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"a.txt" i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"sub" i0 => s
+#fixture
+rtcDir v8"sub" i16 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"SUB" i16 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*.TXT" i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"sub\\*" i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"missing" i0 => s
+#fixture
+rtcDir v8"" i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"a.tx?" i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i32 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i1 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i4 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*.*" i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"nodir\\*" i0 => s
+#fixture
+rtcDir v8"sub\\" i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"emptydir\\*" i16 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i23 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture
+rtcDir v8"*" i55 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+rtcDir v10:x80020004 i0 => s
+#fixture

@@ -54,3 +54,10 @@ near a multiple of pi/2 (Sin of the Double nearest to pi is 1.2246063538223773E-
 in the reference); Tan(-7.25) and Atn(pi) differ from the reference by one unit
 in the last place (the instructions round twice) and are not cases. A Double
 by value is `d1.5` and a Double result is `D` (the bits, `d:x...`).
+
+File-system cases (`files.cases`): a `#fixture` line rebuilds a scratch
+folder under the temp folder (the same files, times and attributes the Visual
+Basic 6 harness started from) and makes it the current folder. The results `n`
+(the state of the folder: current folder, files, attributes, sizes), `r` (a
+BSTR) and `R` (a Variant string, with its type) show the scratch folder as
+`<R>`. Measured with `scripts/vb6_harness_cases.py` and an export list.

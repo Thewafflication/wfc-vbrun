@@ -84,7 +84,7 @@ for name in ('rtcGetYear', 'rtcGetMonthOfYear', 'rtcGetDayOfMonth',
 
 # Exports whose signature was read from the disassembly but not confirmed:
 # each shape is its own experiment, so a wrong one only fails its own run.
-MISSING = ('CVErr(-2147352572)', 'v10:x80020004')
+MISSING = ('Miss()', 'v10:x80020004')  # an omitted Optional Variant
 STARTS = [(c, 'i' + c) for c in ('1', '3', '7', '20')]
 LENGTHS = [('CLng(3)', 'v3:3'), ('CInt(100)', 'v2:100'), MISSING]
 TEXTV = [VARIANTS[6], VARIANTS[2], VARIANTS[8], VARIANTS[9]]
@@ -326,6 +326,114 @@ experiment('rtcFreeFile', 'V', 'w',
            [(v,) for v in [('CLng(0)', 'v3:0'), ('CLng(1)', 'v3:1'),
                            ('CLng(2)', 'v3:2'), MISSING]], isolate=True)
 
+# The file system: every run starts from the same scratch folder (Fixture in
+# SUPPORT) and the program works inside it, so the names are relative.
+# MUTATORS change the folder: their result is the state of the folder after
+# the call (State in SUPPORT; result letter n).
+def esc(name):
+    return name.replace(chr(92), chr(92) * 2)
+
+
+MUTATORS = {'rtcKillFiles', 'rtcChangeDir', 'rtcMakeDir', 'rtcRemoveDir',
+            'rtcFileCopy', 'rtcSetFileAttr'}
+FILES = ['a.txt', 'b.txt', 'c.txt', 'empty.txt', 'ro.txt', 'hid.txt', 'sub',
+         'emptydir', 'sub\\in.txt', 'missing.txt', 'A.TXT', 'nodir\\x.txt',
+         '', '.', '..', '*.txt', 'a.tx?', 'a.txt ', ' a.txt', 'sub\\',
+         'sub\\.']
+experiment('rtcFileLen', 'S', 'i',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in FILES])
+experiment('rtcGetFileAttr', 'S', 'i',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in FILES])
+experiment('rtcFileDateTime', 'OS', 'V',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in FILES])
+experiment('rtcSetFileAttr', 'SL', 'n',
+           [(('"%s"' % f, 's"%s"' % esc(f)), (a, 'i' + a))
+            for f in ('a.txt', 'ro.txt', 'hid.txt', 'sub', 'missing.txt')
+            for a in ('0', '1', '2', '4', '7', '32', '33', '16', '17', '8')],
+           isolate=True)
+experiment('rtcMakeDir', 'S', 'n',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in
+            ('newdir', 'sub', 'a.txt', 'nodir\\x', 'newdir\\', 'Sub', '',
+             'sub\\inner', 'a b', 'x.y')], isolate=True)
+experiment('rtcRemoveDir', 'S', 'n',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in
+            ('emptydir', 'sub', 'a.txt', 'missing', 'EMPTYDIR', '', '.',
+             'emptydir\\')], isolate=True)
+experiment('rtcChangeDir', 'S', 'n',
+           [(('"%s"' % f, 's"%s"' % esc(f)),) for f in
+            ('sub', 'emptydir', 'a.txt', 'missing', '.', 'SUB', '',
+             'sub\\..', 'sub\\')], isolate=True)
+experiment('rtcKillFiles', 'V', 'n',
+           [(('"%s"' % f, 'v8"%s"' % esc(f)),) for f in
+            ('a.txt', '*.txt', 'ro.txt', 'hid.txt', 'missing.txt', 'sub',
+             'sub\\*', 'sub\\in.txt', 'a.tx?', '*', '', 'A.TXT',
+             'emptydir', '*.*', 'e*', 'nodir\\x')] +
+           [(('Null', 'v1'),), (('CLng(5)', 'v3:5'),)], isolate=True)
+experiment('rtcFileCopy', 'SS', 'n',
+           [(('"%s"' % f, 's"%s"' % esc(f)), ('"%s"' % t, 's"%s"' % esc(t)))
+            for f, t in (('a.txt', 'copy.txt'), ('a.txt', 'b.txt'),
+                         ('missing.txt', 'x.txt'), ('a.txt', 'a.txt'),
+                         ('a.txt', 'sub\\a.txt'), ('ro.txt', 'rocopy.txt'),
+                         ('a.txt', 'emptydir'), ('sub', 'subcopy'),
+                         ('a.txt', 'ro.txt'), ('a.txt', 'nodir\\a.txt'),
+                         ('empty.txt', 'e2.txt'), ('a.txt', 'A.TXT'),
+                         ('hid.txt', 'hidcopy.txt'), ('', 'x.txt'),
+                         ('a.txt', ''), ('*.txt', 'all.txt'))],
+           isolate=True)
+CURDIRS = [MISSING, ('""', 'v8""'), ('Null', 'v1'), ('CLng(5)', 'v3:5')]
+experiment('rtcCurrentDirBstr', 'V', 'r', [(d,) for d in CURDIRS],
+           isolate=True)
+experiment('rtcCurrentDir', 'OV', 'R', [(d,) for d in CURDIRS],
+           isolate=True)
+# Dir keeps its place between calls: a sequence of calls in one run.
+GO = MISSING
+for pattern, attr in (('*.txt', '0'), ('*', '0'), ('*', '16'), ('*', '2'),
+                      ('*', '7'), ('a.txt', '0'), ('sub', '0'),
+                      ('sub', '16'), ('SUB', '16'), ('*.TXT', '0'),
+                      ('sub\\*', '0'), ('missing', '0'), ('', '0'),
+                      ('a.tx?', '0'), ('*', '32'), ('*', '1'), ('*', '4'),
+                      ('*.*', '0'), ('nodir\\*', '0'), ('sub\\', '0'),
+                      ('emptydir\\*', '16'), ('*', '23'), ('*', '55')):
+    experiment('rtcDir', 'VL', 's',
+               [(('"%s"' % pattern, 'v8"%s"' % esc(pattern)), (attr, 'i' + attr))] +
+               [(GO, ('0', 'i0'))] * 9)
+experiment('rtcDir', 'VL', 's', [(GO, ('0', 'i0'))] * 3)
+
+
+# Experiments written by hand (name: the Visual Basic statements; each
+# `Rec` line becomes a case). They compare Visual Basic's own Dir$ with the
+# export.
+RAW = {
+    'rtcDirNative': '''    rs(0) = Dir$("*.txt")
+    rs(1) = Dir$
+    rs(2) = Dir$
+    rs(3) = Dir$
+    rs(4) = Dir$
+    rs(5) = Dir$
+    Rec "native => " & rs(0) & "," & rs(1) & "," & rs(2) & "," & rs(3) & "," & rs(4) & "," & rs(5)
+''',
+    'rtcDirMix': '''    v1 = "*.txt"
+    p = RawDir(v1, 0)
+    rs(0) = BstrFmt(p)
+    rs(1) = Dir$
+    rs(2) = Dir$
+    rs(3) = Dir$
+    Rec "mix => " & rs(0) & "," & rs(1) & "," & rs(2) & "," & rs(3)
+''',
+    'rtcDirMix2': '''    rs(0) = Dir$("*.txt")
+    v1 = Miss()
+    p = RawDir(v1, 0)
+    rs(1) = BstrFmt(p)
+    p = RawDir(v1, 0)
+    rs(2) = BstrFmt(p)
+    rs(3) = Dir$
+    Rec "mix2 => " & rs(0) & "," & rs(1) & "," & rs(2) & "," & rs(3)
+''',
+}
+experiment('rtcDirNative', 'x', 'n', [()])
+experiment('rtcDirMix', 'x', 'n', [()])
+experiment('rtcDirMix2', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -397,6 +505,12 @@ PROLOGUE = r'''Attribute VB_Name = "Hmod"
 Option Explicit
 Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (Dest As Any, Src As Any, ByVal n As Long)
 Declare Function VarPtrArray Lib "msvbvm60.dll" Alias "VarPtr" (Var() As Any) As Long
+Declare Function CreateFileA Lib "kernel32" (ByVal n As String, ByVal acc As Long, ByVal sh As Long, ByVal sa As Long, ByVal disp As Long, ByVal fl As Long, ByVal t As Long) As Long
+Declare Function SetFileTime Lib "kernel32" (ByVal h As Long, c As Any, a As Any, w As Any) As Long
+Declare Function CloseHandle Lib "kernel32" (ByVal h As Long) As Long
+Declare Function SystemTimeToFileTime Lib "kernel32" (s As Any, f As Any) As Long
+Declare Function LocalFileTimeToFileTime Lib "kernel32" (a As Any, b As Any) As Long
+Declare Function RawDir Lib "msvbvm60.dll" Alias "rtcDir" (ByRef a0 As Variant, ByVal a1 As Long) As Long
 '''
 
 SUPPORT = r'''
@@ -495,6 +609,154 @@ Private Function BstrFmt(ByVal p As Long) As String
     BstrFmt = s
 End Function
 
+Private Function Root() As String
+    Root = Environ$("TEMP") & "\wfcvbrunfx" & Command$
+End Function
+
+Private Sub Wipe(ByVal d As String)
+    Dim names() As String, n As Long, nm As String, i As Long
+    ReDim names(0 To 199)
+    On Error Resume Next
+    nm = Dir$(d & "\*", 55)
+    Do While nm <> ""
+        If nm <> "." And nm <> ".." Then
+            names(n) = nm
+            n = n + 1
+        End If
+        nm = Dir$
+    Loop
+    For i = 0 To n - 1
+        SetAttr d & "\" & names(i), 0
+        If (GetAttr(d & "\" & names(i)) And 16) <> 0 Then
+            Wipe d & "\" & names(i)
+            RmDir d & "\" & names(i)
+        Else
+            Kill d & "\" & names(i)
+        End If
+    Next
+End Sub
+
+Private Sub PutFile(ByVal nm As String, ByVal txt As String)
+    Dim f As Integer
+    f = FreeFile
+    Open nm For Binary As #f
+    If Len(txt) > 0 Then Put #f, , txt
+    Close #f
+End Sub
+
+Private Sub Stamp(ByVal nm As String, ByVal y As Long, ByVal mo As Long, ByVal d As Long, ByVal h As Long, ByVal mi As Long, ByVal s As Long)
+    Dim st(0 To 7) As Integer, l(0 To 1) As Long, f(0 To 1) As Long, hh As Long
+    st(0) = y: st(1) = mo: st(2) = 0: st(3) = d: st(4) = h: st(5) = mi: st(6) = s: st(7) = 0
+    SystemTimeToFileTime st(0), l(0)
+    LocalFileTimeToFileTime l(0), f(0)
+    hh = CreateFileA(nm, &H100, 7, 0, 3, &H2000000, 0)
+    If hh <> -1 Then
+        SetFileTime hh, ByVal 0&, ByVal 0&, f(0)
+        CloseHandle hh
+    End If
+End Sub
+
+' The scratch folder that every run starts from (the C++ runner builds the
+' same one).
+Private Sub Fixture()
+    Dim r As String
+    r = Root()
+    On Error Resume Next
+    Wipe r
+    MkDir r
+    On Error GoTo 0
+    ChDir r
+    PutFile "a.txt", "hello"
+    PutFile "b.txt", "abcdefghij"
+    PutFile "c.txt", "ccc"
+    PutFile "empty.txt", ""
+    PutFile "ro.txt", "abc"
+    PutFile "hid.txt", "x"
+    On Error Resume Next
+    MkDir "sub"
+    On Error GoTo 0
+    PutFile "sub\in.txt", "in"
+    MkDir "emptydir"
+    Stamp "a.txt", 2000, 1, 1, 13, 45, 10
+    Stamp "c.txt", 2000, 1, 1, 13, 45, 11
+    Stamp "b.txt", 2001, 2, 3, 4, 5, 6
+    Stamp "empty.txt", 2001, 2, 3, 4, 5, 6
+    Stamp "ro.txt", 2001, 2, 3, 4, 5, 6
+    Stamp "hid.txt", 2001, 2, 3, 4, 5, 6
+    Stamp "sub\in.txt", 2001, 2, 3, 4, 5, 6
+    Stamp "sub", 2001, 2, 3, 4, 5, 6
+    Stamp "emptydir", 2001, 2, 3, 4, 5, 6
+    SetAttr "ro.txt", vbReadOnly
+    SetAttr "hid.txt", vbHidden
+End Sub
+
+Private Function Tree(ByVal d As String) As String
+    Dim names() As String, n As Long, nm As String, i As Long, j As Long
+    Dim t As String, a As Long, k As String
+    ReDim names(0 To 199)
+    nm = Dir$(d & "*", 55)
+    Do While nm <> ""
+        If nm <> "." And nm <> ".." Then
+            names(n) = nm
+            n = n + 1
+        End If
+        nm = Dir$
+    Loop
+    For i = 0 To n - 2
+        For j = i + 1 To n - 1
+            If UCase$(names(j)) < UCase$(names(i)) Then
+                k = names(i)
+                names(i) = names(j)
+                names(j) = k
+            End If
+        Next
+    Next
+    For i = 0 To n - 1
+        a = GetAttr(d & names(i)) And 55
+        If (a And 16) <> 0 Then
+            t = t & names(i) & ":" & a & ":0{" & Tree(d & names(i) & "\") & "};"
+        Else
+            t = t & names(i) & ":" & a & ":" & FileLen(d & names(i)) & ";"
+        End If
+    Next
+    Tree = t
+End Function
+
+Private Function State() As String
+    Dim c As String, r As String, w As String
+    c = CurDir$
+    r = Root()
+    If LCase$(c) = LCase$(r) Then
+        w = "."
+    ElseIf LCase$(Left$(c, Len(r) + 1)) = LCase$(r & "\") Then
+        w = Mid$(c, Len(r) + 2)
+    Else
+        w = "?" & c
+    End If
+    State = "cwd=" & w & " " & Tree("")
+End Function
+
+Private Function RootFmt(ByVal p As Long) As String
+    Dim n As Long, i As Long, t As String, s As String
+    If p = 0 Then
+        RootFmt = "s0"
+        Exit Function
+    End If
+    CopyMemory n, ByVal p - 4, 4
+    t = Space$(n \ 2)
+    If n > 0 Then CopyMemory ByVal StrPtr(t), ByVal p, n
+    t = Replace(t, Root(), "<R>", , , vbTextCompare)
+    s = "s"""
+    For i = 1 To Len(t)
+        s = s & Esc(AscW(Mid$(t, i, 1)))
+    Next
+    RootFmt = s & """"
+End Function
+
+Private Function Miss(Optional m As Variant) As Variant
+    Miss = m
+End Function
+
 Private Sub Rec(ByVal s As String)
     Print #out, s
 End Sub
@@ -531,11 +793,29 @@ def build(folder):
         subs += 'v4 As Variant, v5 As Variant, v6 As Variant, r As Variant, p As Long, q As Double\n'
         subs += '    Dim da1() As Double, da2() As Double, da3() As Double\n'
         subs += '    Dim pa1() As Variant, pa2() As Variant, pa3() As Variant\n'
+        subs += '    Dim rs(0 To 99) As String\n'
+        subs += '    Fixture\n'
         subs += '    On Error Resume Next\n'
+        # Dir keeps its place between calls: nothing else may run between
+        # them (no file output), so the results are written afterwards.
+        deferred = export == 'rtcDir'
+        labels = []
+        if export in RAW:
+            subs += RAW[export]
+            grid = []
         for row in grid:
             code, arguments, case = vb_call(kind, number, row)
             label = '%s %s' % (export, ' '.join(case))
             subs += '\n'.join(code) + '\n' if code else ''
+            if deferred:
+                call = 'E%d_%s(%s)' % (number, export, ', '.join(arguments))
+                subs += '    Err.Clear\n    p = %s\n' % call
+                subs += '    If Err.Number <> 0 Then\n'
+                subs += '        rs(%d) = "err" & Err.Number\n' % len(labels)
+                subs += '    Else\n'
+                subs += '        rs(%d) = BstrFmt(p)\n    End If\n' % len(labels)
+                labels.append(label)
+                continue
             subs += '    Trace "%s"\n' % label.replace('"', '""')
             subs += '    r = Empty\n    Err.Clear\n'
             call = 'E%d_%s(%s)' % (number, export, ', '.join(arguments))
@@ -544,7 +824,17 @@ def build(folder):
             subs += '        Rec "%s => err" & Err.Number\n' % label.replace(
                 '"', '""')
             subs += '    Else\n'
-            if result == 'V':
+            if result == 'n':
+                subs += '        Rec "%s => " & State()\n' % label.replace(
+                    '"', '""')
+            elif result == 'r':
+                subs += '        Rec "%s => " & RootFmt(p)\n' % label.replace(
+                    '"', '""')
+            elif result == 'R':
+                subs += ('        Rec "%s => vt" & VarType(r) & " " & '
+                         'RootFmt(StrPtr(CStr(r)))\n' %
+                         label.replace('"', '""'))
+            elif result == 'V':
                 subs += '        Rec "%s => " & Fmt(r)\n' % label.replace(
                     '"', '""')
             elif result == 'd':
@@ -553,10 +843,16 @@ def build(folder):
             elif result == 's':
                 subs += '        Rec "%s => " & BstrFmt(p)\n' % label.replace(
                     '"', '""')
+            elif result == 'i':
+                subs += '        Rec "%s => i" & CStr(p)\n' % label.replace(
+                    '"', '""')
             else:
                 subs += '        Rec "%s => " & CStr(p)\n' % label.replace(
                     '"', '""')
             subs += '    End If\n'
+        for place, label in enumerate(labels):
+            subs += '    Rec "%s => " & rs(%d)\n' % (label.replace('"', '""'),
+                                                    place)
         subs += 'End Sub\n'
     text += '\n' + body + subs
     open(os.path.join(folder, 'Hmod.bas'), 'w', newline='').write(
