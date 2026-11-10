@@ -155,6 +155,14 @@ SHORT WINAPI rtcIsArray(const VARIANT* value) {
     return truth((language_type(value) & VT_ARRAY) != 0);
 }
 
+// IsMissing(argument): True only for the Variant of an omitted Optional
+// argument (an error Variant with the code DISP_E_PARAMNOTFOUND); the error
+// value CVErr(-2147352572) is not the same thing.
+SHORT WINAPI rtcIsMissing(const VARIANT* value) {
+    return truth(value->vt == VT_ERROR &&
+                 static_cast<unsigned>(value->scode) == 0x80020004U);
+}
+
 SHORT WINAPI rtcIsError(const VARIANT* value) {
     return truth(language_type(value) == VT_ERROR);
 }

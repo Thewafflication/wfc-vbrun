@@ -189,3 +189,4 @@ rtcFileCopy
 rtcDir
 rtcCurrentDirBstr
 rtcCurrentDir
+rtcIsMissing

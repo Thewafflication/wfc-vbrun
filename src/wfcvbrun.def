@@ -495,7 +495,7 @@ EXPORTS
     rtcQBColor @589
     rtcMacId=vbrun_stub_590 @590
     rtcTypeName @591
-    rtcIsMissing=vbrun_stub_592 @592
+    rtcIsMissing @592
     rtcRandomNext=vbrun_stub_593 @593
     rtcRandomize=vbrun_stub_594 @594
     rtcMsgBox=vbrun_stub_595 @595
