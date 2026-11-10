@@ -11,6 +11,7 @@
 #include <string>
 
 #include "vbrun_helpers.hpp"
+#include "x87math.hpp"
 
 namespace {
 
@@ -42,17 +43,52 @@ bool number_of(const VARIANT* const value, const double fallback,
     return true;
 }
 
+using vbrun::Extended;
+
+Extended ext(const double value) {
+    return Extended::from_double(value);
+}
+
+// The growth factor (1 + rate)^periods that the annuity functions compute on
+// the x87 unit (the base reaches the power as a Double), and the factor of the
+// payments at the start of the period (also stored as a Double). False when the
+// base is not positive.
+struct Growth {
+    Extended factor;
+    Extended due;
+};
+
+bool growth_of(const double rate, const double periods, const bool begin,
+               Growth& growth) {
+    const double base = (ext(rate) + ext(1.0)).to_double();
+    if (!(base > 0.0)) {
+        return false;
+    }
+    growth.factor = vbrun::x87_power(base, periods);
+    growth.due = ext(begin ? base : 1.0);
+    return true;
+}
+
 // The value that Rate sets to zero: the future value of the payments minus
-// the future value wanted.
+// the future value wanted, as the reference computes it (a Double).
 double rate_error(const double rate, const double periods, const double payment,
                   const double present, const double future, const bool begin) {
     if (rate == 0.0) {
-        return payment * periods + future + present;
+        return (ext(payment) * ext(periods) + ext(future) + ext(present))
+            .to_double();
     }
-    const double base = rate + 1.0;
-    const double growth = std::pow(base, periods);
-    const double due = begin ? base : 1.0;
-    return (growth - 1.0) * due * payment / rate + present * growth + future;
+    const double base = (ext(rate) + ext(1.0)).to_double();
+    if (!(base > 0.0)) {
+        const double growth = std::pow(base, periods);
+        const double due = begin ? base : 1.0;
+        return (growth - 1.0) * due * payment / rate + present * growth +
+               future;
+    }
+    const Extended growth = vbrun::x87_power(base, periods);
+    const Extended due = ext(begin ? base : 1.0);
+    const Extended stream =
+        (((growth - ext(1.0)) * due) * ext(payment)) / ext(rate);
+    return (stream + growth * ext(present) + ext(future)).to_double();
 }
 
 double fail_number() {
@@ -83,28 +119,48 @@ double WINAPI rtcSYD(const double cost, const double salvage, const double life,
            (life * (life + 1.0));
 }
 
-// DDB(cost, salvage, life, period, factor).
+// DDB(cost, salvage, life, period, factor): the reference's own formulas on
+// the x87 unit, not a period by period loop.
 double WINAPI rtcDDB(const double cost, const double salvage, const double life,
                      const double period, VARIANT* const factor_argument) {
     double factor = 0.0;
     if (!number_of(factor_argument, 2.0, factor)) {
         return 0.0;
     }
-    if (cost < 0.0 || salvage < 0.0 || life <= 0.0 || period <= 0.0 ||
-        period > life || factor <= 0.0) {
+    if (factor <= 0.0 || salvage < 0.0 || period <= 0.0 || period > life) {
         return fail_number();
     }
-    const double rate = factor / life;
-    double book = cost;
-    double depreciation = 0.0;
-    for (double step = 1.0; step <= period; step += 1.0) {
-        depreciation = std::min(book * rate, std::max(book - salvage, 0.0));
-        if (period - step < 1.0 && step < period) {
-            depreciation = std::min(depreciation, book - salvage);
-        }
-        book -= depreciation;
+    if (cost <= 0.0) {
+        return 0.0;
     }
-    return depreciation;
+    const Extended one = ext(1.0);
+    if (life < 2.0) {
+        return (ext(cost) - ext(salvage)).to_double();
+    }
+    if (life == 2.0) {
+        return period <= 1.0 ? (ext(cost) - ext(salvage)).to_double() : 0.0;
+    }
+    if (period <= 1.0) {
+        const double most = (ext(cost) - ext(salvage)).to_double();
+        const Extended share = (ext(factor) * ext(cost)) / ext(life);
+        return compare(share, ext(most)) <= 0 ? share.to_double() : most;
+    }
+    const Extended ratio = (ext(life) - ext(factor)) / ext(life);
+    const double base = ratio.to_double();
+    const auto power = [&](const double exponent) {
+        return base > 0.0 ? vbrun::x87_power(base, exponent)
+                          : ext(std::pow(base, exponent));
+    };
+    const Extended before = power((ext(period) - one).to_double());
+    const Extended share = (ext(cost) * ext(factor)) / ext(life);
+    double depreciation = (before * share).to_double();
+    const Extended after = power(period);
+    const Extended excess =
+        (one - after) * ext(cost) - ext(cost) + ext(salvage);
+    if (compare(excess, ext(0.0)) > 0) {
+        depreciation = (ext(depreciation) - excess).to_double();
+    }
+    return depreciation < 0.0 ? 0.0 : depreciation;
 }
 
 namespace {
@@ -127,6 +183,45 @@ double future_of(const Annuity& a) {
     return -(a.present * growth + a.payment * due * (growth - 1.0) / a.rate);
 }
 
+// The payment of an annuity; false when the periods are zero.
+bool payment_of(const double rate, const double periods, const double present,
+                const double end, const bool begin, double& payment) {
+    if (periods == 0.0) {
+        static_cast<void>(fail_number());
+        return false;
+    }
+    if (rate == 0.0) {
+        payment = ((ext(-end) - ext(present)) / ext(periods)).to_double();
+        return true;
+    }
+    Growth g;
+    if (growth_of(rate, periods, begin, g)) {
+        const Extended top = ext(-end) - g.factor * ext(present);
+        const Extended bottom = (g.factor - ext(1.0)) * g.due;
+        payment = ((top / bottom) * ext(rate)).to_double();
+        return true;
+    }
+    const double growth = std::pow(1.0 + rate, periods);
+    const double due = begin ? 1.0 + rate : 1.0;
+    payment = -(end + present * growth) * rate / (due * (growth - 1.0));
+    return true;
+}
+
+double future_value(const double rate, const double periods,
+                    const double payment, const double start,
+                    const bool begin) {
+    if (rate == 0.0) {
+        return (ext(-start) - ext(payment) * ext(periods)).to_double();
+    }
+    Growth g;
+    if (growth_of(rate, periods, begin, g)) {
+        const Extended annuity =
+            (((g.factor - ext(1.0)) * g.due) * ext(payment)) / ext(rate);
+        return ((ext(start) * g.factor).negated() - annuity).to_double();
+    }
+    return future_of({rate, periods, payment, start, 0.0, begin});
+}
+
 }  // namespace
 
 // PMT(rate, periods, present, future, type).
@@ -135,19 +230,12 @@ double WINAPI rtcPMT(const double rate, const double periods,
                      VARIANT* const type) {
     double end = 0.0;
     double kind = 0.0;
-    if (!number_of(future, 0.0, end) || !number_of(type, 0.0, kind)) {
+    double payment = 0.0;
+    if (!number_of(future, 0.0, end) || !number_of(type, 0.0, kind) ||
+        !payment_of(rate, periods, present, end, kind != 0.0, payment)) {
         return 0.0;
     }
-    if (periods == 0.0) {
-        return fail_number();
-    }
-    const bool begin = kind != 0.0;
-    if (rate == 0.0) {
-        return -(present + end) / periods;
-    }
-    const double growth = std::pow(1.0 + rate, periods);
-    const double due = begin ? 1.0 + rate : 1.0;
-    return -(end + present * growth) * rate / (due * (growth - 1.0));
+    return payment;
 }
 
 // FV(rate, periods, payment, present, type).
@@ -159,7 +247,7 @@ double WINAPI rtcFV(const double rate, const double periods,
     if (!number_of(present, 0.0, start) || !number_of(type, 0.0, kind)) {
         return 0.0;
     }
-    return future_of({rate, periods, payment, start, 0.0, kind != 0.0});
+    return future_value(rate, periods, payment, start, kind != 0.0);
 }
 
 // PV(rate, periods, payment, future, type).
@@ -172,7 +260,13 @@ double WINAPI rtcPV(const double rate, const double periods,
         return 0.0;
     }
     if (rate == 0.0) {
-        return -(end + payment * periods);
+        return (ext(-end) - ext(payment) * ext(periods)).to_double();
+    }
+    Growth g;
+    if (growth_of(rate, periods, kind != 0.0, g)) {
+        const Extended annuity =
+            (((g.factor - ext(1.0)) * g.due) * ext(payment)) / ext(rate);
+        return ((annuity + ext(end)) / g.factor).negated().to_double();
     }
     const double growth = std::pow(1.0 + rate, periods);
     const double due = kind != 0.0 ? 1.0 + rate : 1.0;
@@ -192,7 +286,25 @@ double WINAPI rtcNPer(const double rate, const double payment,
         if (payment == 0.0) {
             return fail_number();
         }
-        return -(present + end) / payment;
+        return ((ext(end) + ext(present)) / ext(payment)).negated().to_double();
+    }
+    const Extended base = ext(rate) + ext(1.0);
+    if (!base.is_negative() && !base.is_zero()) {
+        const Extended factor = kind != 0.0 ? base : ext(1.0);
+        const Extended stream = (ext(payment) * factor) / ext(rate);
+        double top = (stream - ext(end)).to_double();
+        double bottom = (stream + ext(present)).to_double();
+        if (top == 0.0 || bottom == 0.0 || (top < 0.0) != (bottom < 0.0)) {
+            return fail_number();
+        }
+        if (top < 0.0) {
+            top = -top;
+            bottom = -bottom;
+        }
+        const Extended ln2 = vbrun::x87_ln2();
+        const Extended difference =
+            vbrun::fyl2x(ext(top), ln2) - vbrun::fyl2x(ext(bottom), ln2);
+        return (difference / vbrun::fyl2x(base, ln2)).to_double();
     }
     const double due = kind != 0.0 ? payment * (1.0 + rate) : payment;
     const double top = due - end * rate;
@@ -207,40 +319,35 @@ double WINAPI rtcNPer(const double rate, const double payment,
 
 namespace {
 
-// The payment of a period split into interest and principal.
+// The interest of a period, as the reference leaves it on the x87 stack (not
+// rounded to a Double), and the payment.
 bool period_payment(const double rate, const double period,
                     const double periods, const double present,
                     VARIANT* const future, VARIANT* const type,
-                    double& interest, double& payment) {
+                    Extended& interest, double& payment) {
     double end = 0.0;
     double kind = 0.0;
     if (!number_of(future, 0.0, end) || !number_of(type, 0.0, kind)) {
         return false;
     }
-    if (periods <= 0.0 || period < 1.0 || period > periods) {
+    const bool begin = kind != 0.0;
+    if (!(period > 0.0) || compare(ext(periods) + ext(1.0), ext(period)) <= 0) {
         static_cast<void>(vbrun::raise(kInvalidArgument));
         return false;
     }
-    const bool begin = kind != 0.0;
-    if (rate == 0.0) {
-        payment = -(present + end) / periods;
-    } else {
-        const double growth = std::pow(1.0 + rate, periods);
-        const double due = begin ? 1.0 + rate : 1.0;
-        payment = -(end + present * growth) * rate / (due * (growth - 1.0));
+    if (begin && period == 1.0) {
+        interest = Extended();
+        // the payment is still worked out (it can raise an error)
+        return payment_of(rate, periods, present, end, begin, payment);
     }
-    if (period == 1.0) {
-        interest = begin ? 0.0 : -present * rate;
-    } else if (begin) {
-        interest =
-            (future_of({rate, period - 2.0, payment, present, 0.0, true}) -
-             payment) *
-            rate;
-    } else {
-        interest =
-            future_of({rate, period - 1.0, payment, present, 0.0, false}) *
-            rate;
+    if (!payment_of(rate, periods, present, end, begin, payment)) {
+        return false;
     }
+    const double stream =
+        begin ? (ext(payment) + ext(present)).to_double() : present;
+    const double before = (ext(period) - ext(begin ? 2.0 : 1.0)).to_double();
+    interest =
+        ext(future_value(rate, before, payment, stream, false)) * ext(rate);
     return true;
 }
 
@@ -252,31 +359,30 @@ extern "C" {
 double WINAPI rtcIPMT(const double rate, const double period,
                       const double periods, const double present,
                       VARIANT* const future, VARIANT* const type) {
-    double interest = 0.0;
+    Extended interest;
     double payment = 0.0;
     if (!period_payment(rate, period, periods, present, future, type, interest,
                         payment)) {
         return 0.0;
     }
-    return interest;
+    return interest.to_double();
 }
 
 // PPMT(rate, period, periods, present, future, type).
 double WINAPI rtcPPMT(const double rate, const double period,
                       const double periods, const double present,
                       VARIANT* const future, VARIANT* const type) {
-    double interest = 0.0;
+    Extended interest;
     double payment = 0.0;
     if (!period_payment(rate, period, periods, present, future, type, interest,
                         payment)) {
         return 0.0;
     }
-    return payment - interest;
+    return (ext(payment) - interest).to_double();
 }
 
 // Rate(periods, payment, present, future, type, guess): a secant search from
-// the guess, 40 steps at most. (The reference raises the power on the x87
-// unit, so the result can differ from this one in the last bits.)
+// the guess, 40 steps at most, on the x87 unit like the reference.
 double WINAPI rtcRate(const double periods, const double payment,
                       const double present, VARIANT* const future,
                       VARIANT* const type, VARIANT* const guess) {
@@ -296,18 +402,21 @@ double WINAPI rtcRate(const double periods, const double payment,
     };
     double x0 = start;
     double g0 = error(x0);
-    double x1 = g0 > 0.0 ? x0 * 0.5 : x0 + x0;
+    double x1 = g0 > 0.0 ? (ext(x0) * ext(0.5)).to_double()
+                         : (ext(x0) + ext(x0)).to_double();
     double g1 = error(x1);
     for (int round = 0; round < 40; ++round) {
         if (g1 == g0) {
             const double direction = x1 > x0 ? 1.0 : -1.0;
-            x0 -= direction * 1.0e-5;
+            x0 = (ext(x0) - ext(direction) * ext(1.0e-5)).to_double();
             g0 = error(x0);
             if (g1 == g0) {
                 return fail_number();
             }
         }
-        const double x2 = x1 - (x1 - x0) * g1 / (g1 - g0);
+        const double x2 =
+            (ext(x1) - ((ext(x1) - ext(x0)) * ext(g1)) / (ext(g1) - ext(g0)))
+                .to_double();
         const double g2 = error(x2);
         if (std::fabs(g2) < 1.0e-7) {
             return x2;

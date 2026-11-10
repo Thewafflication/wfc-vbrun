@@ -63,6 +63,65 @@ public:
 
     bool is_zero() const { return mantissa_ == 0U; }
 
+    bool is_negative() const { return negative_ && mantissa_ != 0U; }
+
+    static Extended from_int(const std::int64_t value) {
+        Extended result;
+        if (value == 0) {
+            return result;
+        }
+        result.negative_ = value < 0;
+        std::uint64_t magnitude = result.negative_
+                                      ? 0ULL - static_cast<std::uint64_t>(value)
+                                      : static_cast<std::uint64_t>(value);
+        int exponent = 63;
+        while ((magnitude >> 63) == 0U) {
+            magnitude <<= 1;
+            --exponent;
+        }
+        result.mantissa_ = magnitude;
+        result.exponent_ = exponent;
+        return result;
+    }
+
+    // The nearest integer (halves to even), for numbers below 2^62.
+    std::int64_t round_to_int() const {
+        if (mantissa_ == 0U || exponent_ < -1) {
+            return 0;
+        }
+        // value = mantissa_ * 2^(exponent_ - 63)
+        const int shift = 63 - exponent_;
+        std::uint64_t whole = 0;
+        if (shift <= 0) {
+            whole = mantissa_ << (-shift);
+        } else if (shift >= 64) {
+            whole = 0;  // below one half (exponent_ == -1 is handled below)
+        } else {
+            whole = mantissa_ >> shift;
+            const std::uint64_t rest = mantissa_ & ((1ULL << shift) - 1U);
+            const std::uint64_t half = 1ULL << (shift - 1);
+            if (rest > half || (rest == half && (whole & 1U) != 0U)) {
+                ++whole;
+            }
+        }
+        if (exponent_ == -1) {
+            // between 0.5 and 1: above one half rounds to 1, exactly one half
+            // rounds to 0
+            whole = mantissa_ > (1ULL << 63) ? 1U : 0U;
+        }
+        const auto signed_whole = static_cast<std::int64_t>(whole);
+        return negative_ ? -signed_whole : signed_whole;
+    }
+
+    // This number times 2^count.
+    Extended scaled(const int count) const {
+        Extended result = *this;
+        if (result.mantissa_ != 0U) {
+            result.exponent_ += count;
+        }
+        return result;
+    }
+
     Extended negated() const {
         Extended result = *this;
         if (result.mantissa_ != 0U) {
@@ -115,13 +174,13 @@ public:
         const Extended& y = a_larger ? b : a;
         const int shift = x.exponent_ - y.exponent_;
         Wide big{x.mantissa_, 0U};
-        Wide small{y.mantissa_, 0U};
+        Wide lesser{y.mantissa_, 0U};
         bool sticky = false;
-        shift_right(small, shift, sticky);
+        shift_right(lesser, shift, sticky);
         int exponent = x.exponent_;
         Wide sum;
         if (x.negative_ == y.negative_) {
-            sum = add(big, small);
+            sum = add(big, lesser);
             if (sum.high < big.high ||
                 (sum.high == big.high && sum.low < big.low)) {
                 // a carry out of the top bit
@@ -132,7 +191,7 @@ public:
                 ++exponent;
             }
         } else {
-            sum = subtract(big, small);
+            sum = subtract(big, lesser);
             if (sticky) {
                 // the bits shifted out make the difference a little smaller
                 sum = subtract(sum, Wide{0U, 1U});
