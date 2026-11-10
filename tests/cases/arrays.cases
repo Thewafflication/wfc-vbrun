@@ -185,3 +185,6 @@ rtcFilter o v8200:4"apple|banana|Apricot|cherry" s"" i-1 i0 => V
 rtcFilter o v8200:4"apple|banana|Apricot|cherry" s"" i-1 i1 => V
 rtcFilter o v8200:4"apple|banana|Apricot|cherry" s"" i0 i0 => V
 rtcFilter o v8200:4"apple|banana|Apricot|cherry" s"" i0 i1 => V
+rtcJoin v8200:3"a|b|c" v10:x80020004 => s
+rtcJoin v8200:1"x" v10:x80020004 => s
+rtcJoin v8200:2"|" v10:x80020004 => s
