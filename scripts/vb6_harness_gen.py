@@ -501,6 +501,159 @@ for name, result in (('__vbaI2Cy', 'w'), ('__vbaI4Cy', 'i'),
                      ('__vbaR8Cy', 'd')):
     experiment(name, 'Y', result, [(a,) for a in CYS])
 
+# Batch three: Like, Len/InStr on Variants and bytes, Hex/Oct to String,
+# Format, the Err variants of the conversions, DateValue, Rnd.
+for name in ('__vbaStrLike', '__vbaStrTextLike'):
+    experiment(name, 'SS', 'w',
+               [(pat, txt) for txt in
+                [('"hello"', 's"hello"'), ('"Hello"', 's"Hello"'),
+                 ('""', 's""'), ('"a1b"', 's"a1b"'), ('"abc"', 's"abc"')]
+                for pat in
+                [('"h*"', 's"h*"'), ('"?ello"', 's"?ello"'),
+                 ('"[a-h]*"', 's"[a-h]*"'), ('"H*"', 's"H*"'),
+                 ('""', 's""'), ('"a#b"', 's"a#b"'), ('"[!a]*"', 's"[!a]*"'),
+                 ('"*"', 's"*"'), ('"hello"', 's"hello"'),
+                 ('"a[0-9]b"', 's"a[0-9]b"'), ('"*l?o"', 's"*l?o"'),
+                 ('"[A-Z]???"', 's"[A-Z]???"')]])
+for name in ('__vbaVarLike', '__vbaVarTextLike'):
+    experiment(name, 'VV', 'w',
+               [(pat, txt) for txt in
+                [('"hello"', 'v8"hello"'), ('"Hello"', 'v8"Hello"'),
+                 ('CLng(123)', 'v3:123'), ('Null', 'v1')]
+                for pat in
+                [('"h*"', 'v8"h*"'), ('"H*"', 'v8"H*"'), ('"1#3"', 'v8"1#3"'),
+                 ('"*"', 'v8"*"')]])
+for name in ('__vbaLenVar', '__vbaLenVarB'):
+    experiment(name, 'VO', 'V', [(v,) for v in SCALARS[:12]] +
+               [(('ChrW(97) & ChrW(233) & ChrW(&H4E2D)', 'v8"a\\u00E9\\u4E2D"'),)])
+for name in ('__vbaInStr', '__vbaInStrB'):
+    experiment(name, 'LSSL', 'i',
+               [((m, 'i' + m), tx, fd, (st, 'i' + st))
+                for m in ('0', '1') for tx in
+                [('"hello world"', 's"hello world"'), ('""', 's""')]
+                for fd in [('"o"', 's"o"'), ('"O"', 's"O"'), ('"zz"', 's"zz"'),
+                           ('""', 's""'), ('"lo w"', 's"lo w"')]
+                for st in ('1', '6', '12')])
+for name in ('rtcHexBstrFromVar', 'rtcOctBstrFromVar'):
+    experiment(name, 'V', 's', [(v,) for v in VARIANTS[:5] + VARIANTS[8:13] +
+                                [('CLng(-1)', 'v3:-1'),
+                                 ('CLng(255)', 'v3:255'),
+                                 ('CInt(-1)', 'v2:-1'),
+                                 ('CLng(65535)', 'v3:65535')]],
+               isolate=True)
+experiment('rtcVarBstrFromByte', 'OL', 'V',
+           [((c, 'i' + c),) for c in ('65', '97', '9', '200', '0')])
+FORMAT_EXPRS = [('CDbl(1234.5678)', 'v5:1234.5678'), ('CDbl(-0.5)', 'v5:-0.5'),
+                ('CLng(7)', 'v3:7'), ('CDbl(0)', 'v5:0'),
+                ('CDate(36526.5)', 'v7:36526.5'), ('"hello"', 'v8"hello"'),
+                ('Null', 'v1'), ('True', 'v11:-1')]
+FORMAT_SPECS = [MISSING, ('""', 'v8""'), ('"0.00"', 'v8"0.00"'),
+                ('"#,##0.0"', 'v8"#,##0.0"'), ('"00000"', 'v8"00000"'),
+                ('"Fixed"', 'v8"Fixed"'), ('"Currency"', 'v8"Currency"'),
+                ('"Percent"', 'v8"Percent"'), ('"General Number"',
+                                               'v8"General Number"'),
+                ('"yyyy-mm-dd hh:nn:ss"', 'v8"yyyy-mm-dd hh:nn:ss"'),
+                ('"dddd mmmm d"', 'v8"dddd mmmm d"'),
+                ('"Long Date"', 'v8"Long Date"'), ('"hh:mm AM/PM"',
+                                                    'v8"hh:mm AM/PM"'),
+                ('"@@@@@@@"', 'v8"@@@@@@@"'), ('">"', 'v8">"'),
+                ('"<"', 'v8"<"'), ('"Yes/No"', 'v8"Yes/No"'),
+                ('"On/Off"', 'v8"On/Off"'), ('"0.0E+00"', 'v8"0.0E+00"'),
+                ('"0;(0)"', 'v8"0;(0)"')]
+experiment('rtcBstrFromFormatVar', 'VVVV', 's',
+           [(e, f, MISSING, MISSING) for e in FORMAT_EXPRS
+            for f in FORMAT_SPECS], isolate=False)
+experiment('rtcVarFromFormatVar', 'OVVVV', 'V',
+           [(e, f, MISSING, MISSING) for e in FORMAT_EXPRS[:6]
+            for f in FORMAT_SPECS[:6]])
+ERRV = MISSING
+ERRGRID = [MISSING, ('CLng(5)', 'v3:5'), ('CDbl(2.5)', 'v5:2.5'),
+           ('"7"', 'v8"7"'), ('Empty', 'v0'), ('Null', 'v1'),
+           ('True', 'v11:-1')]
+for name, result in (('__vbaR8ErrVar', 'd'), ('__vbaR4ErrVar', 'f'),
+                     ('__vbaBoolErrVar', 'w'), ('__vbaCyErrVar', 'c'),
+                     ('__vbaUI1ErrVar', 'i'), ('rtR8FromErrVar', 'd'),
+                     ('rtR4FromErrVar', 'f'), ('rtBoolFromErrVar', 'w'),
+                     ('rtCyFromErrVar', 'c'), ('rtUI1FromErrVar', 'i'),
+                     ('rtI2FromErrVar', 'w'), ('rtI4FromErrVar', 'i'),
+                     ('rtBstrFromErrVar', 's'), ('__vbaStrErrVarCopy', 's')):
+    experiment(name, 'V', result, [(v,) for v in ERRGRID], isolate=True)
+experiment('__vbaI2ErrVar', 'V', 'w', [(v,) for v in ERRGRID], isolate=True)
+experiment('__vbaI4ErrVar', 'V', 'i', [(v,) for v in ERRGRID], isolate=True)
+DATESTR = [('"1/2/2000"', 'v8"1/2/2000"'), ('"12:30"', 'v8"12:30"'),
+           ('"1:45:10 PM"', 'v8"1:45:10 PM"'), ('"Jan 5, 2001"',
+                                                'v8"Jan 5, 2001"'),
+           ('"garbage"', 'v8"garbage"'), ('CDate(36526.5)', 'v7:36526.5'),
+           ('Null', 'v1'), ('Empty', 'v0'), ('CLng(5)', 'v3:5')]
+for name in ('rtcGetDateValue', 'rtcGetTimeValue', 'rtcVarDateFromVar',
+             'rtcVarStrFromVar', 'rtcVarFromVar', 'rtcCVErrFromVar',
+             '__vbaVarDateVar'):
+    experiment(name, 'OV', 'V', [(v,) for v in DATESTR], isolate=True)
+experiment('rtcDateFromVar', 'V', 'd', [(v,) for v in DATESTR], isolate=True)
+for name in ('rtcPackDate',):
+    experiment(name, 'OLLL', 'V', [((y, 'i' + y), (m, 'i' + m), (d, 'i' + d))
+                                  for y, m, d in (('2000', '1', '1'),
+                                                  ('1999', '12', '31'),
+                                                  ('2000', '13', '1'),
+                                                  ('2000', '2', '30'),
+                                                  ('30', '1', '1'),
+                                                  ('2000', '0', '0'))],
+               isolate=True)
+experiment('rtcPackTime', 'OLLL', 'V', [((h, 'i' + h), (m, 'i' + m), (s, 'i' + s))
+                                       for h, m, s in (('13', '45', '10'),
+                                                       ('0', '0', '0'),
+                                                       ('25', '61', '61'),
+                                                       ('-1', '0', '0'))],
+           isolate=True)
+experiment('rtcBstrFromError', 'L', 's', [((e, 'i' + e),) for e in ERRORS],
+           isolate=True)
+experiment('rtcVarFromError', 'OL', 'V', [((e, 'i' + e),) for e in ERRORS],
+           isolate=True)
+# Rnd and Randomize: the generator state carries from call to call.
+RAW['rtcRandom'] = '''    v1 = Miss()
+    For p = 0 To 4
+        q = RawRnd(v1)
+        Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    Next
+    v2 = CSng(0)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v4:x00000000 => d:x" & HexD(q)
+    v2 = CSng(-1)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v4:xBF800000 => d:x" & HexD(q)
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CSng(2)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v4:x40000000 => d:x" & HexD(q)
+    v2 = CSng(-2.5)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v4:xC0200000 => d:x" & HexD(q)
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CDbl(5)
+    RawRandomize v2
+    Rec "rtcRandomize v5:5 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CLng(12345)
+    RawRandomize v2
+    Rec "rtcRandomize v3:12345 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CDbl(-7.5)
+    RawRandomize v2
+    Rec "rtcRandomize v5:-7.5 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CSng(0.5)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v4:x3F000000 => d:x" & HexD(q)
+'''
+experiment('rtcRandom', 'x', 'f', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -584,6 +737,8 @@ Declare Function CloseHandle Lib "kernel32" (ByVal h As Long) As Long
 Declare Function SystemTimeToFileTime Lib "kernel32" (s As Any, f As Any) As Long
 Declare Function LocalFileTimeToFileTime Lib "kernel32" (a As Any, b As Any) As Long
 Declare Function RawDir Lib "msvbvm60.dll" Alias "rtcDir" (ByRef a0 As Variant, ByVal a1 As Long) As Long
+Declare Function RawRnd Lib "msvbvm60.dll" Alias "rtcRandomNext" (ByRef a0 As Variant) As Single
+Declare Sub RawRandomize Lib "msvbvm60.dll" Alias "rtcRandomize" (ByRef a0 As Variant)
 '''
 
 SUPPORT = r'''

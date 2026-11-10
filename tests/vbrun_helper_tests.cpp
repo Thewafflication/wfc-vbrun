@@ -278,11 +278,23 @@ VARIANT* make_variant(const int vt, const std::string& number,
             v->bVal = static_cast<BYTE>(std::stoul(number));
             break;
         case 4:
-            v->fltVal = std::stof(number);
+            if (number.rfind('x', 0) == 0) {  // the bits of the Single
+                const auto bits = static_cast<std::uint32_t>(
+                    std::stoul(number.substr(1), nullptr, 16));
+                std::memcpy(&v->fltVal, &bits, sizeof(bits));
+            } else {
+                v->fltVal = std::stof(number);
+            }
             break;
         case 5:
         case 7:
-            v->dblVal = std::stod(number);
+            if (number.rfind('x', 0) == 0) {  // the bits of the Double
+                const std::uint64_t bits =
+                    std::stoull(number.substr(1), nullptr, 16);
+                std::memcpy(&v->dblVal, &bits, sizeof(bits));
+            } else {
+                v->dblVal = std::stod(number);
+            }
             break;
         case 6:
             v->cyVal.int64 = std::stoll(number);
@@ -889,7 +901,9 @@ std::string run_case(const std::string& line) {
         raw = call_with(proc, arguments);
     }
     std::string result;
-    if (kind == "s") {
+    if (kind == "-") {  // the result is not checked
+        result = "-";
+    } else if (kind == "s") {
         const auto text = reinterpret_cast<BSTR>(raw);
         if (text == nullptr) {
             result = "s0";

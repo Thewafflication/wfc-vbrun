@@ -12,9 +12,9 @@ EXPORTS
     DllRegisterServer @106
     DllUnregisterServer @107
     __vbaAryLock=vbrun_stub_108 @108
-    __vbaBoolErrVar=vbrun_stub_109 @109
+    __vbaBoolErrVar @109
     __vbaRedimVar2=vbrun_stub_110 @110
-    __vbaStrErrVarCopy=vbrun_stub_111 @111
+    __vbaStrErrVarCopy @111
     __vbaVarLateMemCallLd=vbrun_stub_112 @112
     __vbaVarLateMemCallLdRf=vbrun_stub_113 @113
     __vbaVarLateMemCallSt=vbrun_stub_114 @114
@@ -92,7 +92,7 @@ EXPORTS
     ProcCallEngine=vbrun_stub_186 @186
     DllFunctionCall=vbrun_stub_187 @187
     __vbaCyAdd @188
-    __vbaCyErrVar=vbrun_stub_189 @189
+    __vbaCyErrVar @189
     CopyRecord=vbrun_stub_190 @190
     __vbaCyFix @191
     __vbaCyForInit=vbrun_stub_192 @192
@@ -163,14 +163,14 @@ EXPORTS
     __vbaHresultCheckNonvirt=vbrun_stub_257 @257
     __vbaHresultCheckObj=vbrun_stub_258 @258
     __vbaI2Cy @259
-    __vbaI2ErrVar=vbrun_stub_260 @260
+    __vbaI2ErrVar @260
     __vbaI2ForNextCheck=vbrun_stub_261 @261
     __vbaI2Str @262
     __vbaI2Var @263
     __vbaI4Cy @264
     EbResetProjectNormal=vbrun_stub_265 @265
     TipUnloadInstance=vbrun_stub_266 @266
-    __vbaI4ErrVar=vbrun_stub_267 @267
+    __vbaI4ErrVar @267
     EbLibraryLoad=vbrun_stub_268 @268
     EbLibraryUnload=vbrun_stub_269 @269
     __vbaI4ForNextCheck=vbrun_stub_270 @270
@@ -267,13 +267,13 @@ EXPORTS
     __vbaPutOwner3=vbrun_stub_361 @361
     __vbaPutOwner4=vbrun_stub_362 @362
     __vbaR4Cy @363
-    __vbaR4ErrVar=vbrun_stub_364 @364
+    __vbaR4ErrVar @364
     __vbaR4ForNextCheck=vbrun_stub_365 @365
     __vbaR4Sgn=vbrun_stub_366 @366
     __vbaR4Str=vbrun_stub_367 @367
     __vbaR4Var @368
     __vbaR8Cy @369
-    __vbaR8ErrVar=vbrun_stub_370 @370
+    __vbaR8ErrVar @370
     __vbaR8FixI2=vbrun_stub_371 @371
     __vbaR8FixI4=vbrun_stub_372 @372
     __vbaR8ForNextCheck=vbrun_stub_373 @373
@@ -322,13 +322,13 @@ EXPORTS
     __vbaStrFixstr=vbrun_stub_416 @416
     __vbaStrI2 @417
     __vbaStrI4 @418
-    __vbaStrLike=vbrun_stub_419 @419
+    __vbaStrLike @419
     BASIC_DISPINTERFACE_GetTICount=vbrun_stub_420 @420
     BASIC_DISPINTERFACE_GetTypeInfo=vbrun_stub_421 @421
     __vbaStrR4 @422
     __vbaStrR8 @423
     __vbaStrTextCmp @424
-    __vbaStrTextLike=vbrun_stub_425 @425
+    __vbaStrTextLike @425
     __vbaStrToAnsi=vbrun_stub_426 @426
     __vbaStrToUnicode=vbrun_stub_427 @427
     __vbaStrUI1 @428
@@ -345,7 +345,7 @@ EXPORTS
     __vbaUI1Cy @439
     EVENT_SINK2_AddRef=vbrun_stub_440 @440
     EVENT_SINK2_Release=vbrun_stub_441 @441
-    __vbaUI1ErrVar=vbrun_stub_442 @442
+    __vbaUI1ErrVar @442
     __vbaUI1Str @443
     __vbaUI1Var @444
     __vbaUbound=vbrun_stub_445 @445
@@ -362,7 +362,7 @@ EXPORTS
     __vbaVarCmpLe @456
     __vbaVarCmpLt @457
     __vbaVarCmpNe @458
-    __vbaVarDateVar=vbrun_stub_459 @459
+    __vbaVarDateVar @459
     __vbaVarDiv @460
     __vbaVarEqv @461
     __vbaVarErrI4=vbrun_stub_462 @462
@@ -377,7 +377,7 @@ EXPORTS
     __vbaVarIndexStore=vbrun_stub_471 @471
     __vbaVarIndexStoreObj=vbrun_stub_472 @472
     __vbaVarInt @473
-    __vbaVarLike=vbrun_stub_474 @474
+    __vbaVarLike @474
     __vbaVarLikeVar=vbrun_stub_475 @475
     __vbaVarMod @476
     __vbaVarMul @477
@@ -398,7 +398,7 @@ EXPORTS
     __vbaVarTextCmpLe @492
     __vbaVarTextCmpLt @493
     __vbaVarTextCmpNe @494
-    __vbaVarTextLike=vbrun_stub_495 @495
+    __vbaVarTextLike @495
     __vbaVarTextLikeVar=vbrun_stub_496 @496
     __vbaVarTextTstEq @497
     __vbaVarTextTstGe @498
@@ -438,11 +438,11 @@ EXPORTS
     rtcRemoveDir @532
     rtcChangeDrive=vbrun_stub_533 @533
     rtcBeep=vbrun_stub_534 @534
-    rtcGetTimer=vbrun_stub_535 @535
+    rtcGetTimer @535
     rtcStrFromVar @536
     rtcBstrFromAnsi=vbrun_stub_537 @537
     rtcPackDate=vbrun_stub_538 @538
-    rtcPackTime=vbrun_stub_539 @539
+    rtcPackTime @539
     rtcGetDateValue=vbrun_stub_540 @540
     rtcGetTimeValue=vbrun_stub_541 @541
     rtcGetDayOfMonth @542
@@ -475,9 +475,9 @@ EXPORTS
     rtcFileLocation=vbrun_stub_569 @569
     rtcFileLength=vbrun_stub_570 @570
     rtcEndOfFile=vbrun_stub_571 @571
-    rtcHexBstrFromVar=vbrun_stub_572 @572
+    rtcHexBstrFromVar @572
     rtcHexVarFromVar @573
-    rtcOctBstrFromVar=vbrun_stub_574 @574
+    rtcOctBstrFromVar @574
     rtcOctVarFromVar @575
     rtcFileCopy @576
     rtcFileDateTime @577
@@ -496,8 +496,8 @@ EXPORTS
     rtcMacId=vbrun_stub_590 @590
     rtcTypeName @591
     rtcIsMissing @592
-    rtcRandomNext=vbrun_stub_593 @593
-    rtcRandomize=vbrun_stub_594 @594
+    rtcRandomNext @593
+    rtcRandomize @594
     rtcMsgBox=vbrun_stub_595 @595
     rtcInputBox=vbrun_stub_596 @596
     rtcAppActivate=vbrun_stub_597 @597
@@ -516,7 +516,7 @@ EXPORTS
     rtcGetDateVar=vbrun_stub_610 @610
     rtcGetTimeBstr=vbrun_stub_611 @611
     rtcGetTimeVar=vbrun_stub_612 @612
-    rtcVarStrFromVar=vbrun_stub_613 @613
+    rtcVarStrFromVar @613
     rtcSqr @614
     rtcIMEStatus=vbrun_stub_615 @615
     rtcLeftCharBstr @616
@@ -537,16 +537,16 @@ EXPORTS
     rtcMidCharBstr @631
     rtcMidCharVar @632
     rtcInStrChar @633
-    rtBstrFromErrVar=vbrun_stub_634 @634
-    rtBoolFromErrVar=vbrun_stub_635 @635
-    rtCyFromErrVar=vbrun_stub_636 @636
-    rtI2FromErrVar=vbrun_stub_637 @637
-    rtI4FromErrVar=vbrun_stub_638 @638
-    rtR4FromErrVar=vbrun_stub_639 @639
-    rtR8FromErrVar=vbrun_stub_640 @640
-    rtcDateFromVar=vbrun_stub_641 @641
-    rtcVarFromVar=vbrun_stub_642 @642
-    rtcCVErrFromVar=vbrun_stub_643 @643
+    rtBstrFromErrVar @634
+    rtBoolFromErrVar @635
+    rtCyFromErrVar @636
+    rtI2FromErrVar @637
+    rtI4FromErrVar @638
+    rtR4FromErrVar @639
+    rtR8FromErrVar @640
+    rtcDateFromVar @641
+    rtcVarFromVar @642
+    rtcCVErrFromVar @643
     VarPtr @644
     rtcDir @645
     rtcCurrentDirBstr @646
@@ -589,8 +589,8 @@ EXPORTS
     rtcMIRR @683
     rtcNPV @684
     rtcErrObj=vbrun_stub_685 @685
-    rtUI1FromErrVar=vbrun_stub_686 @686
-    rtcVarDateFromVar=vbrun_stub_687 @687
+    rtUI1FromErrVar @686
+    rtcVarDateFromVar @687
     _adj_fdiv_m32=vbrun_stub_688 @688
     rtcGetSetting=vbrun_stub_689 @689
     rtcSaveSetting=vbrun_stub_690 @690

@@ -1,0 +1,21 @@
+# Rnd and Randomize (the generator state carries from case to case, so
+# the order matters). `=> -` ignores the result.
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v4:x00000000 => f
+rtcRandomNext v4:xBF800000 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v4:x40000000 => f
+rtcRandomNext v4:xC0200000 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v5:5 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v3:12345 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v5:-7.5 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v4:x3F000000 => f

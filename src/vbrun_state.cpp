@@ -54,6 +54,8 @@ int error_of_hresult(const HRESULT result) {
             return 6;
         case DISP_E_BADINDEX:
             return 9;
+        case DISP_E_PARAMNOTFOUND:
+            return 448;  // named argument not found (a missing argument)
         case DISP_E_DIVBYZERO:
             return 11;
         default:

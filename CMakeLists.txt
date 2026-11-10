@@ -172,7 +172,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")
-    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings scalars numeric finance dates payments arrays lists system files)
+    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings scalars scalars2 random numeric finance dates payments arrays lists system files)
       add_test(
         NAME TC-MP0009-vbrun-cases-${vbrun_cases}
         COMMAND

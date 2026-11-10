@@ -9,6 +9,9 @@
 // (vbrun::raise_hresult) and the helper returns 0.
 
 #include <cstdint>
+#include <cstring>
+#include <cwctype>
+#include <string>
 
 #include "vbrun_helpers.hpp"
 
@@ -93,6 +96,200 @@ bool date_of_text(const BSTR text, DATE& value) {
     return true;
 }
 
+// The Visual Basic error number of an error Variant (a missing argument is
+// 448).
+int error_number(const VARIANT* const value) {
+    return vbrun::error_of_hresult(value->scode);
+}
+
+// Like change(), but an error Variant reads as its error number.
+bool change_error_variant(const VARIANT* const value, const VARTYPE type,
+                          VARIANT& out) {
+    if (value != nullptr && value->vt == VT_ERROR) {
+        VARIANT number;
+        VariantInit(&number);
+        number.vt = VT_I4;
+        number.lVal = error_number(value);
+        VariantInit(&out);
+        const HRESULT result =
+            VariantChangeTypeEx(&out, &number, language_locale(), 0, type);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+            return false;
+        }
+        return true;
+    }
+    return change(value, type, out);
+}
+
+// The text of a Variant for CStr, where an error Variant reads "Error n".
+BSTR text_of_error_variant(const VARIANT* const value) {
+    if (value != nullptr && value->vt == VT_ERROR) {
+        const std::wstring text =
+            L"Error " + std::to_wstring(error_number(value));
+        return SysAllocStringLen(text.data(), static_cast<UINT>(text.size()));
+    }
+    VARIANT out;
+    VariantInit(&out);
+    if (value == nullptr || (value->vt & VT_TYPEMASK) == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return nullptr;
+    }
+    // A Boolean reads True or False.
+    const HRESULT result =
+        VariantChangeTypeEx(&out, const_cast<VARIANT*>(value),
+                            language_locale(), VARIANT_ALPHABOOL, VT_BSTR);
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(result));
+        return nullptr;
+    }
+    return out.bstrVal;
+}
+
+// Pattern matching of Like.
+wchar_t fold(const wchar_t letter, const bool text) {
+    return text ? static_cast<wchar_t>(std::towlower(letter)) : letter;
+}
+
+bool like_here(const wchar_t* pattern, const wchar_t* const pattern_end,
+               const wchar_t* text, const wchar_t* const text_end,
+               const bool ignore_case, bool& bad) {
+    while (pattern < pattern_end) {
+        const wchar_t letter = *pattern;
+        if (letter == L'?') {
+            if (text == text_end) {
+                return false;
+            }
+            ++pattern;
+            ++text;
+        } else if (letter == L'#') {
+            if (text == text_end || *text < L'0' || *text > L'9') {
+                return false;
+            }
+            ++pattern;
+            ++text;
+        } else if (letter == L'*') {
+            while (pattern < pattern_end && *pattern == L'*') {
+                ++pattern;
+            }
+            if (pattern == pattern_end) {
+                return true;
+            }
+            for (const wchar_t* at = text;; ++at) {
+                if (like_here(pattern, pattern_end, at, text_end, ignore_case,
+                              bad)) {
+                    return true;
+                }
+                if (bad || at == text_end) {
+                    return false;
+                }
+            }
+        } else if (letter == L'[') {
+            const wchar_t* at = pattern + 1;
+            bool negate = false;
+            if (at < pattern_end && *at == L'!') {
+                negate = true;
+                ++at;
+            }
+            const wchar_t current =
+                text == text_end ? L'\0' : fold(*text, ignore_case);
+            bool matched = false;
+            while (at < pattern_end && *at != L']') {
+                const wchar_t low = fold(*at++, ignore_case);
+                wchar_t high = low;
+                if (at + 1 < pattern_end && *at == L'-' && at[1] != L']') {
+                    high = fold(at[1], ignore_case);
+                    at += 2;
+                }
+                if (current >= low && current <= high) {
+                    matched = true;
+                }
+            }
+            if (at == pattern_end) {
+                bad = true;
+                return false;
+            }
+            if (text == text_end || matched == negate) {
+                return false;
+            }
+            pattern = at + 1;
+            ++text;
+        } else {
+            if (text == text_end ||
+                fold(*text, ignore_case) != fold(letter, ignore_case)) {
+                return false;
+            }
+            ++pattern;
+            ++text;
+        }
+    }
+    return text == text_end;
+}
+
+LONG like(const BSTR pattern, const BSTR text, const bool ignore_case) {
+    const UINT pattern_size = pattern == nullptr ? 0U : SysStringLen(pattern);
+    const UINT text_size = text == nullptr ? 0U : SysStringLen(text);
+    bool bad = false;
+    const bool matched = like_here(pattern, pattern + pattern_size, text,
+                                   text + text_size, ignore_case, bad);
+    if (bad) {
+        static_cast<void>(vbrun::raise(93));  // invalid pattern string
+        return 0;
+    }
+    return matched ? -1 : 0;
+}
+
+LONG like_of_variants(const VARIANT* const pattern, const VARIANT* const text,
+                      const bool ignore_case) {
+    if (pattern == nullptr || text == nullptr ||
+        (pattern->vt & VT_TYPEMASK) == VT_NULL ||
+        (text->vt & VT_TYPEMASK) == VT_NULL) {
+        return 0;
+    }
+    VARIANT pattern_text;
+    VARIANT subject;
+    if (!change(pattern, VT_BSTR, pattern_text)) {
+        return 0;
+    }
+    if (!change(text, VT_BSTR, subject)) {
+        VariantClear(&pattern_text);
+        return 0;
+    }
+    const LONG answer =
+        like(pattern_text.bstrVal, subject.bstrVal, ignore_case);
+    VariantClear(&pattern_text);
+    VariantClear(&subject);
+    return answer;
+}
+
+// The generator of Rnd: a 24-bit linear congruence.
+std::uint32_t g_seed = 0x50000U;
+
+float next_random() {
+    g_seed = (g_seed * 0x43FD43FDU + 0xC39EC3U) & 0xFFFFFFU;
+    return static_cast<float>(g_seed) / 16777216.0F;
+}
+
+// Randomize: the seed takes bits of the Double's high word.
+void reseed(const std::uint32_t high_word) {
+    const std::uint32_t mixed =
+        ((high_word & 0xFFFFU) << 8) ^ ((high_word >> 8) & 0xFFFF00U);
+    g_seed = mixed | (g_seed & 0xFF0000FFU);
+}
+
+// Whether a Variant is the missing optional argument.
+bool is_missing(const VARIANT* const value) {
+    return value == nullptr ||
+           (value->vt == VT_ERROR && value->scode == DISP_E_PARAMNOTFOUND);
+}
+
+float seconds_since_midnight() {
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    return static_cast<float>(
+        ((now.wHour * 60 + now.wMinute) * 60 + now.wSecond) +
+        now.wMilliseconds * 0.001);
+}
 }  // namespace
 
 extern "C" {
@@ -382,6 +579,213 @@ VARIANT* WINAPI __vbaVarCat(VARIANT* const result, VARIANT* const right,
         static_cast<void>(vbrun::raise_hresult(status));
     }
     return result;
+}
+
+// The conversions that read an error Variant as its error number (an optional
+// argument that was left out).
+SHORT WINAPI __vbaI2ErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_I2, out) ? out.iVal : 0;
+}
+
+LONG WINAPI __vbaI4ErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_I4, out) ? out.lVal : 0;
+}
+
+BYTE WINAPI __vbaUI1ErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_UI1, out) ? out.bVal : 0;
+}
+
+float WINAPI __vbaR4ErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_R4, out) ? out.fltVal : 0.0F;
+}
+
+double WINAPI __vbaR8ErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_R8, out) ? out.dblVal : 0.0;
+}
+
+SHORT WINAPI __vbaBoolErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_BOOL, out) ? out.boolVal : 0;
+}
+
+LONGLONG WINAPI __vbaCyErrVar(const VARIANT* const value) {
+    VARIANT out;
+    return change_error_variant(value, VT_CY, out) ? out.cyVal.int64 : 0;
+}
+
+SHORT WINAPI rtI2FromErrVar(const VARIANT* const value) {
+    return __vbaI2ErrVar(value);
+}
+
+LONG WINAPI rtI4FromErrVar(const VARIANT* const value) {
+    return __vbaI4ErrVar(value);
+}
+
+BYTE WINAPI rtUI1FromErrVar(const VARIANT* const value) {
+    return __vbaUI1ErrVar(value);
+}
+
+float WINAPI rtR4FromErrVar(const VARIANT* const value) {
+    return __vbaR4ErrVar(value);
+}
+
+double WINAPI rtR8FromErrVar(const VARIANT* const value) {
+    return __vbaR8ErrVar(value);
+}
+
+SHORT WINAPI rtBoolFromErrVar(const VARIANT* const value) {
+    return __vbaBoolErrVar(value);
+}
+
+LONGLONG WINAPI rtCyFromErrVar(const VARIANT* const value) {
+    return __vbaCyErrVar(value);
+}
+
+BSTR WINAPI rtBstrFromErrVar(const VARIANT* const value) {
+    return text_of_error_variant(value);
+}
+
+BSTR WINAPI __vbaStrErrVarCopy(const VARIANT* const value) {
+    return text_of_error_variant(value);
+}
+
+// CDate(v) as a Variant: a Null stays Null.
+VARIANT* WINAPI rtcVarDateFromVar(VARIANT* const result,
+                                  const VARIANT* const value) {
+    VariantClear(result);
+    if (value != nullptr && (value->vt & VT_TYPEMASK) == VT_NULL) {
+        result->vt = VT_NULL;
+        return result;
+    }
+    if (value != nullptr && value->vt == VT_BSTR) {
+        DATE date = 0.0;
+        if (date_of_text(value->bstrVal, date)) {
+            result->vt = VT_DATE;
+            result->date = date;
+        }
+        return result;
+    }
+    VARIANT converted;
+    if (change(value, VT_DATE, converted)) {
+        *result = converted;
+    }
+    return result;
+}
+
+VARIANT* WINAPI __vbaVarDateVar(VARIANT* const result,
+                                const VARIANT* const value) {
+    return rtcVarDateFromVar(result, value);
+}
+
+double WINAPI rtcDateFromVar(const VARIANT* const value) {
+    return __vbaDateVar(value);
+}
+
+// CVar(v): a copy of the value.
+VARIANT* WINAPI rtcVarFromVar(VARIANT* const result,
+                              const VARIANT* const value) {
+    VariantClear(result);
+    const HRESULT status = VariantCopyInd(result, const_cast<VARIANT*>(value));
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+    }
+    return result;
+}
+
+// CVErr(number).
+VARIANT* WINAPI rtcCVErrFromVar(VARIANT* const result,
+                                const VARIANT* const value) {
+    VariantClear(result);
+    vbrun::clear_error();
+    const LONG number = __vbaI4Var(value);
+    if (vbrun::last_error() != 0) {
+        return result;
+    }
+    if (number < 0 || number > 65535) {
+        static_cast<void>(vbrun::raise(5));
+        return result;
+    }
+    result->vt = VT_ERROR;
+    result->scode =
+        static_cast<SCODE>(0x800A0000U | static_cast<unsigned>(number));
+    return result;
+}
+
+// The Like operator: the pattern comes first (right operand first).
+LONG WINAPI __vbaStrLike(const BSTR pattern, const BSTR text) {
+    return like(pattern, text, false);
+}
+
+LONG WINAPI __vbaStrTextLike(const BSTR pattern, const BSTR text) {
+    return like(pattern, text, true);
+}
+
+LONG WINAPI __vbaVarLike(const VARIANT* const pattern,
+                         const VARIANT* const text) {
+    return like_of_variants(pattern, text, false);
+}
+
+LONG WINAPI __vbaVarTextLike(const VARIANT* const pattern,
+                             const VARIANT* const text) {
+    return like_of_variants(pattern, text, true);
+}
+
+// TimeSerial(hour, minute, second).
+VARIANT* WINAPI rtcPackTime(VARIANT* const result, const LONG hours,
+                            const LONG minutes, const LONG seconds) {
+    VariantClear(result);
+    result->vt = VT_DATE;
+    result->date =
+        static_cast<double>(hours * 3600 + minutes * 60 + seconds) / 86400.0;
+    return result;
+}
+
+// Rnd(x) and Randomize(x).
+float WINAPI rtcRandomNext(const VARIANT* const value) {
+    if (is_missing(value)) {
+        return next_random();
+    }
+    VARIANT converted;
+    if (!change(value, VT_R4, converted)) {
+        return 0.0F;
+    }
+    const float number = converted.fltVal;
+    if (number == 0.0F) {
+        return static_cast<float>(g_seed) / 16777216.0F;
+    }
+    if (number < 0.0F) {
+        std::uint32_t bits = 0;
+        std::memcpy(&bits, &number, sizeof(bits));
+        g_seed = (bits + (bits >> 24)) & 0xFFFFFFU;
+    }
+    return next_random();
+}
+
+void WINAPI rtcRandomize(const VARIANT* const value) {
+    if (is_missing(value)) {
+        const float timer = seconds_since_midnight();
+        std::uint32_t bits = 0;
+        std::memcpy(&bits, &timer, sizeof(bits));
+        reseed(bits);
+        return;
+    }
+    VARIANT converted;
+    if (!change(value, VT_R8, converted)) {
+        return;
+    }
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &converted.dblVal, sizeof(bits));
+    reseed(static_cast<std::uint32_t>(bits >> 32));
+}
+
+// Timer: the seconds since midnight.
+float WINAPI rtcGetTimer() {
+    return seconds_since_midnight();
 }
 
 }  // extern "C"

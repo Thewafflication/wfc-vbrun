@@ -494,6 +494,32 @@ VARIANT* WINAPI rtcOctVarFromVar(VARIANT* const result,
     return radix(result, operand, L"%o");
 }
 
+// Hex$(v) and Oct$(v): the text itself; a Null is error 94.
+BSTR radix_text(VARIANT* const operand, const wchar_t* const format) {
+    if (is_null(operand)) {
+        static_cast<void>(vbrun::raise(kInvalidNull));
+        return nullptr;
+    }
+    VARIANT text;
+    VariantInit(&text);
+    radix(&text, operand, format);
+    BSTR taken = nullptr;
+    if (text.vt == VT_BSTR) {
+        taken = text.bstrVal;
+        text.bstrVal = nullptr;
+    }
+    VariantClear(&text);
+    return taken;
+}
+
+BSTR WINAPI rtcHexBstrFromVar(VARIANT* const operand) {
+    return radix_text(operand, L"%X");
+}
+
+BSTR WINAPI rtcOctBstrFromVar(VARIANT* const operand) {
+    return radix_text(operand, L"%o");
+}
+
 VARIANT* WINAPI rtcGetYear(VARIANT* const result, VARIANT* const operand) {
     return part_of(result, operand, Part::year);
 }
@@ -597,6 +623,22 @@ BSTR WINAPI rtcStrFromVar(VARIANT* const operand) {
         }
     }
     return SysAllocStringLen(text.data(), static_cast<UINT>(text.size()));
+}
+
+// Str(v) as a Variant: a Null stays Null.
+VARIANT* WINAPI rtcVarStrFromVar(VARIANT* const result,
+                                 VARIANT* const operand) {
+    if (is_null(operand)) {
+        return give_null(result);
+    }
+    BSTR text = rtcStrFromVar(operand);
+    if (text == nullptr) {
+        return result;
+    }
+    VariantClear(result);
+    result->vt = VT_BSTR;
+    result->bstrVal = text;
+    return result;
 }
 
 }  // extern "C"
