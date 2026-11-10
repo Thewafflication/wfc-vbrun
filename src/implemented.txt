@@ -190,3 +190,5 @@ rtcDir
 rtcCurrentDirBstr
 rtcCurrentDir
 rtcIsMissing
+rtcIRR
+rtcRate

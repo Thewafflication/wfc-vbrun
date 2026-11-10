@@ -797,6 +797,11 @@ std::string run_case(const std::string& line) {
                 double, double, double, double, Word, Word)>(proc)(
                 doubles[0], doubles[1], doubles[2], doubles[3], arguments[0],
                 arguments[1]);
+        } else if (shape == "dddwww") {
+            answer = reinterpret_cast<double(WINAPI*)(double, double, double,
+                                                      Word, Word, Word)>(proc)(
+                doubles[0], doubles[1], doubles[2], arguments[0], arguments[1],
+                arguments[2]);
         } else if (name == "rtcNPV") {
             answer = reinterpret_cast<double(WINAPI*)(double, Word)>(proc)(
                 doubles[0], arguments[0]);

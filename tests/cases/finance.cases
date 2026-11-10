@@ -3,7 +3,7 @@
 # exports (scripts/vb6_harness_gen.py). A Double result is `D`, written as the
 # bits of the Double.
 # Rows whose last bit differs (the reference evaluates the powers and
-# logarithms on the x87 unit) are left out: DDB, FV, PMT, PV, NPer.
+# logarithms on the x87 unit) are left out: DDB, FV, PMT, PV, NPer, Rate.
 rtcSLN d10000.0 d1000.0 d5.0 => D
 rtcSLN d1000.0 d0.0 d10.0 => D
 rtcSLN d1.0 d2.0 d3.0 => D

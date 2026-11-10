@@ -32,14 +32,27 @@ bool number_of(const VARIANT* const value, const double fallback,
     }
     VARIANT converted;
     VariantInit(&converted);
-    const HRESULT status = VariantChangeType(
-        &converted, const_cast<VARIANT*>(value), 0, VT_R8);
+    const HRESULT status =
+        VariantChangeType(&converted, const_cast<VARIANT*>(value), 0, VT_R8);
     if (FAILED(status)) {
         static_cast<void>(vbrun::raise_hresult(status));
         return false;
     }
     number = converted.dblVal;
     return true;
+}
+
+// The value that Rate sets to zero: the future value of the payments minus
+// the future value wanted.
+double rate_error(const double rate, const double periods, const double payment,
+                  const double present, const double future, const bool begin) {
+    if (rate == 0.0) {
+        return payment * periods + future + present;
+    }
+    const double base = rate + 1.0;
+    const double growth = std::pow(base, periods);
+    const double due = begin ? base : 1.0;
+    return (growth - 1.0) * due * payment / rate + present * growth + future;
 }
 
 double fail_number() {
@@ -61,8 +74,8 @@ double WINAPI rtcSLN(const double cost, const double salvage,
 }
 
 // SYD(cost, salvage, life, period).
-double WINAPI rtcSYD(const double cost, const double salvage,
-                     const double life, const double period) {
+double WINAPI rtcSYD(const double cost, const double salvage, const double life,
+                     const double period) {
     if (life <= 0.0 || period <= 0.0 || period > life) {
         return fail_number();
     }
@@ -71,9 +84,8 @@ double WINAPI rtcSYD(const double cost, const double salvage,
 }
 
 // DDB(cost, salvage, life, period, factor).
-double WINAPI rtcDDB(const double cost, const double salvage,
-                     const double life, const double period,
-                     VARIANT* const factor_argument) {
+double WINAPI rtcDDB(const double cost, const double salvage, const double life,
+                     const double period, VARIANT* const factor_argument) {
     double factor = 0.0;
     if (!number_of(factor_argument, 2.0, factor)) {
         return 0.0;
@@ -112,8 +124,7 @@ double future_of(const Annuity& a) {
     }
     const double growth = std::pow(1.0 + a.rate, a.periods);
     const double due = a.begin ? 1.0 + a.rate : 1.0;
-    return -(a.present * growth +
-             a.payment * due * (growth - 1.0) / a.rate);
+    return -(a.present * growth + a.payment * due * (growth - 1.0) / a.rate);
 }
 
 }  // namespace
@@ -243,8 +254,8 @@ double WINAPI rtcIPMT(const double rate, const double period,
                       VARIANT* const future, VARIANT* const type) {
     double interest = 0.0;
     double payment = 0.0;
-    if (!period_payment(rate, period, periods, present, future, type,
-                        interest, payment)) {
+    if (!period_payment(rate, period, periods, present, future, type, interest,
+                        payment)) {
         return 0.0;
     }
     return interest;
@@ -256,11 +267,57 @@ double WINAPI rtcPPMT(const double rate, const double period,
                       VARIANT* const future, VARIANT* const type) {
     double interest = 0.0;
     double payment = 0.0;
-    if (!period_payment(rate, period, periods, present, future, type,
-                        interest, payment)) {
+    if (!period_payment(rate, period, periods, present, future, type, interest,
+                        payment)) {
         return 0.0;
     }
     return payment - interest;
+}
+
+// Rate(periods, payment, present, future, type, guess): a secant search from
+// the guess, 40 steps at most. (The reference raises the power on the x87
+// unit, so the result can differ from this one in the last bits.)
+double WINAPI rtcRate(const double periods, const double payment,
+                      const double present, VARIANT* const future,
+                      VARIANT* const type, VARIANT* const guess) {
+    double end = 0.0;
+    double kind = 0.0;
+    double start = 0.1;
+    if (!number_of(future, 0.0, end) || !number_of(type, 0.0, kind) ||
+        !number_of(guess, 0.1, start)) {
+        return 0.0;
+    }
+    if (!(periods > 0.0)) {
+        return fail_number();
+    }
+    const bool begin = kind != 0.0;
+    const auto error = [&](const double rate) {
+        return rate_error(rate, periods, payment, present, end, begin);
+    };
+    double x0 = start;
+    double g0 = error(x0);
+    double x1 = g0 > 0.0 ? x0 * 0.5 : x0 + x0;
+    double g1 = error(x1);
+    for (int round = 0; round < 40; ++round) {
+        if (g1 == g0) {
+            const double direction = x1 > x0 ? 1.0 : -1.0;
+            x0 -= direction * 1.0e-5;
+            g0 = error(x0);
+            if (g1 == g0) {
+                return fail_number();
+            }
+        }
+        const double x2 = x1 - (x1 - x0) * g1 / (g1 - g0);
+        const double g2 = error(x2);
+        if (std::fabs(g2) < 1.0e-7) {
+            return x2;
+        }
+        g0 = g1;
+        g1 = g2;
+        x0 = x1;
+        x1 = x2;
+    }
+    return fail_number();
 }
 
 // WeekdayName(weekday, abbreviate, first day of the week).
@@ -294,8 +351,9 @@ BSTR WINAPI rtcReplace(const BSTR expression, const BSTR find,
     if (static_cast<UINT>(start) > length && start != 1) {
         return nullptr;
     }
-    const std::wstring source(expression == nullptr ? L"" : expression + start - 1,
-                              length - static_cast<UINT>(start) + 1);
+    const std::wstring source(
+        expression == nullptr ? L"" : expression + start - 1,
+        length - static_cast<UINT>(start) + 1);
     const UINT find_length = SysStringLen(find);
     if (find_length == 0 || count == 0) {
         return SysAllocStringLen(source.data(),
@@ -312,15 +370,14 @@ BSTR WINAPI rtcReplace(const BSTR expression, const BSTR find,
         return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE,
                               source.data() + at,
                               static_cast<int>(needle.size()), needle.data(),
-                              static_cast<int>(needle.size())) ==
-               CSTR_EQUAL;
+                              static_cast<int>(needle.size())) == CSTR_EQUAL;
     };
     std::wstring built;
     LONG done = 0;
     size_t at = 0;
     while (at < source.size()) {
-        if ((count < 0 || done < count) && at + needle.size() <= source.size() &&
-            matches(at)) {
+        if ((count < 0 || done < count) &&
+            at + needle.size() <= source.size() && matches(at)) {
             built += with;
             at += needle.size();
             ++done;
@@ -350,8 +407,7 @@ LONG WINAPI rtcInStrRev(const BSTR text, const BSTR find, const LONG start,
     }
     const bool fold = static_cast<short>(compare) == 1;
     // `start` is where the match may end.
-    for (LONG at = std::min(from - find_length + 1,
-                            length - find_length + 1);
+    for (LONG at = std::min(from - find_length + 1, length - find_length + 1);
          at >= 1; --at) {
         const bool same =
             fold ? CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE,
@@ -428,8 +484,7 @@ BSTR WINAPI rtcFormatDateTime(VARIANT* const value, const LONG format) {
         return nullptr;
     }
     BSTR made = nullptr;
-    const HRESULT status =
-        VarFormatDateTime(value, format, 0, &made);
+    const HRESULT status = VarFormatDateTime(value, format, 0, &made);
     return give_formatted(status, &made);
 }
 

@@ -583,9 +583,9 @@ EXPORTS
     rtcPV @677
     rtcFV @678
     rtcNPer @679
-    rtcRate=vbrun_stub_680 @680
+    rtcRate @680
     rtcImmediateIf @681
-    rtcIRR=vbrun_stub_682 @682
+    rtcIRR @682
     rtcMIRR @683
     rtcNPV @684
     rtcErrObj=vbrun_stub_685 @685
