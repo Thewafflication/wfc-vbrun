@@ -434,6 +434,73 @@ experiment('rtcDirNative', 'x', 'n', [()])
 experiment('rtcDirMix', 'x', 'n', [()])
 experiment('rtcDirMix2', 'x', 'n', [()])
 
+# The scalar conversions of the compiler: Variant to number, number to text,
+# and the String comparison helpers. (Signatures read from the disassembly;
+# each is its own experiment so a wrong one only fails its own run.)
+SCALARS = VARIANTS + [('CDbl(2.5)', 'v5:2.5'), ('CDbl(-2.5)', 'v5:-2.5'),
+                      ('CDbl(1E10)', 'v5:1e10'), ('CDbl(300.7)', 'v5:300.7'),
+                      ('"3.7"', 'v8"3.7"'), ('"&H1F"', 'v8"&H1F"'),
+                      ('False', 'v11:0'), ('CLng(70000)', 'v3:70000'),
+                      ('CByte(255)', 'v17:255')]
+for name, result in (('__vbaI2Var', 'w'), ('__vbaI4Var', 'i'),
+                     ('__vbaUI1Var', 'i'), ('__vbaR4Var', 'f'),
+                     ('__vbaR8Var', 'd'), ('__vbaBoolVar', 'w'),
+                     ('__vbaDateVar', 'd'), ('__vbaCyVar', 'c')):
+    experiment(name, 'V', result, [(v,) for v in SCALARS])
+for name in ('__vbaStrCat', '__vbaStrCmp', '__vbaStrTextCmp',
+             '__vbaStrLike', '__vbaStrTextLike'):
+    pairs = [(a, b) for a in TEXTS for b in TEXTS]
+    if name.endswith('Like'):
+        pairs = [(a, b) for a in TEXTS[:2] + [('"hello"', 's"hello"')]
+                 for b in [('"h*"', 's"h*"'), ('"?ello"', 's"?ello"'),
+                           ('"[a-h]*"', 's"[a-h]*"'), ('"H*"', 's"H*"'),
+                           ('""', 's""'), ('"#"', 's"#"')]]
+    experiment(name, 'SS', 's' if name == '__vbaStrCat' else 'i', pairs)
+experiment('__vbaStrComp', 'LSS', 'i',
+           [((m, 'i' + m), a, b) for m in ('0', '1', '2')
+            for a in TEXTS[3:5] for b in TEXTS[4:]])
+experiment('__vbaStrI2', 'L', 's', [((n, 'i' + n),) for n in
+                                    ('0', '5', '-7', '32767', '-32768')])
+experiment('__vbaStrBool', 'L', 's', [((n, 'i' + n),) for n in
+                                      ('0', '-1', '1')])
+experiment('__vbaStrR4', 'F', 's', [(f,) for f in
+                                    [('0', 'f0'), ('1.5', 'f1.5'),
+                                     ('-2.25', 'f-2.25'), ('1E10', 'f1e10'),
+                                     ('0.1', 'f0.1'), ('1E-5', 'f1e-5')]])
+experiment('__vbaStrR8', 'D', 's', [(d,) for d in DOUBLES + [
+    ('1E+20', 'd1e20'), ('0.1', 'd0.1'), ('123456789.123', 'd123456789.123')]])
+experiment('__vbaStrDate', 'D', 's', [(d,) for d in [
+    ('36526.5', 'd36526.5'), ('0', 'd0'), ('36526', 'd36526'),
+    ('0.75', 'd0.75'), ('40000.25', 'd40000.25')]])
+experiment('__vbaR8Str', 'S', 'd', [(v,) for v in VALS])
+experiment('__vbaDateStr', 'S', 'd', [(v,) for v in VALS + [
+    ('"2000-01-01 13:45:10"', 's"2000-01-01 13:45:10"')]])
+experiment('__vbaVarCat', 'OVV', 'V',
+           [(a, b) for a in SCALARS[:7] + SCALARS[8:10]
+            for b in SCALARS[:3] + SCALARS[5:7] + SCALARS[8:9]])
+
+# Currency arithmetic and conversions (a Currency by value is 8 bytes).
+CYS = [('12.3456', 'y123456'), ('-3.5', 'y-35000'), ('0', 'y0'),
+       ('0.0001', 'y1'), ('100', 'y1000000'), ('-0.5', 'y-5000'),
+       ('7.9999', 'y79999'), ('2.5', 'y25000')]
+for name in ('__vbaCyAdd', '__vbaCySub', '__vbaCyMul'):
+    experiment(name, 'YY', 'c', [(a, b) for a in CYS for b in CYS[:6]])
+for name in ('__vbaCyAbs', '__vbaCyFix', '__vbaCyInt'):
+    experiment(name, 'Y', 'c', [(a,) for a in CYS])
+experiment('__vbaCySgn', 'Y', 'c', [(a,) for a in CYS])
+experiment('__vbaCySgn', 'Y', 'i', [(a,) for a in CYS])
+experiment('__vbaCyMulI2', 'YL', 'c',
+           [(a, (n, 'i' + n)) for a in CYS for n in ('0', '3', '-2')])
+for name in ('__vbaCyI2', '__vbaCyI4', '__vbaCyUI1'):
+    experiment(name, 'L', 'c', [((n, 'i' + n),) for n in
+                                ('0', '5', '-7', '200')])
+experiment('__vbaCyStr', 'S', 'c', [(v,) for v in VALS])
+experiment('__vbaStrCy', 'Y', 's', [(a,) for a in CYS])
+for name, result in (('__vbaI2Cy', 'w'), ('__vbaI4Cy', 'i'),
+                     ('__vbaUI1Cy', 'i'), ('__vbaR4Cy', 'f'),
+                     ('__vbaR8Cy', 'd')):
+    experiment(name, 'Y', result, [(a,) for a in CYS])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
@@ -460,6 +527,9 @@ def vb_call(kind, index, row):
             case.append(item[1])
         elif letter == 'F':
             arguments.append('CSng(%s)' % item[0])
+            case.append(item[1])
+        elif letter == 'Y':
+            arguments.append('CCur(%s)' % item[0])
             case.append(item[1])
         elif letter == 'A':
             numbers = item[0]
@@ -490,13 +560,16 @@ def declare(number, export, kind, result):
             parameters.append('ByVal a%d As Double' % place)
         elif letter == 'F':
             parameters.append('ByVal a%d As Single' % place)
+        elif letter == 'Y':
+            parameters.append('ByVal a%d As Currency' % place)
         else:
             parameters.append('ByVal a%d As Long' % place)
     if kind.startswith('O'):
         ret = 'Long'
     else:
         ret = {'s': 'Long', 'i': 'Long', 'w': 'Integer',
-               'd': 'Double'}.get(result, 'Long')
+               'd': 'Double', 'f': 'Single',
+               'c': 'Currency'}.get(result, 'Long')
     return ('Declare Function E%d_%s Lib "msvbvm60.dll" Alias "%s" (%s) '
             'As %s' % (number, export, export, ', '.join(parameters), ret))
 
@@ -776,7 +849,9 @@ def build(folder):
     text = PROLOGUE
     for number, (export, kind, result, grid) in enumerate(EXPERIMENTS):
         text += declare(number, export, kind, result) + '\n'
-    text += SUPPORT
+    text += (SUPPORT.replace('Private Function', 'Public Function')
+             .replace('Private Sub', 'Public Sub')
+             .replace('Private out', 'Public out'))
     body = ('Public Sub Main()\n    Dim v1 As Variant, v2 As Variant, '
             'v3 As Variant, v4 As Variant, r As Variant, p As Long\n'
             '    out = FreeFile\n'
@@ -790,7 +865,7 @@ def build(folder):
     for number, (export, kind, result, grid) in enumerate(EXPERIMENTS):
         subs += '\nPrivate Sub Run%d()\n' % number
         subs += '    Dim v1 As Variant, v2 As Variant, v3 As Variant, '
-        subs += 'v4 As Variant, v5 As Variant, v6 As Variant, r As Variant, p As Long, q As Double\n'
+        subs += 'v4 As Variant, v5 As Variant, v6 As Variant, r As Variant, p As Long, q As Double, cy As Currency\n'
         subs += '    Dim da1() As Double, da2() As Double, da3() As Double\n'
         subs += '    Dim pa1() As Variant, pa2() As Variant, pa3() As Variant\n'
         subs += '    Dim rs(0 To 99) As String\n'
@@ -819,7 +894,9 @@ def build(folder):
             subs += '    Trace "%s"\n' % label.replace('"', '""')
             subs += '    r = Empty\n    Err.Clear\n'
             call = 'E%d_%s(%s)' % (number, export, ', '.join(arguments))
-            subs += '    %s = %s\n' % ('q' if result == 'd' else 'p', call)
+            subs += '    %s = %s\n' % (
+                'q' if result in ('d', 'f') else 'cy' if result == 'c'
+                else 'p', call)
             subs += '    If Err.Number <> 0 Then\n'
             subs += '        Rec "%s => err" & Err.Number\n' % label.replace(
                 '"', '""')
@@ -837,11 +914,17 @@ def build(folder):
             elif result == 'V':
                 subs += '        Rec "%s => " & Fmt(r)\n' % label.replace(
                     '"', '""')
-            elif result == 'd':
+            elif result == 'c':
+                subs += ('        Rec "%s => c" & CStr(CDec(cy) * 10000)'
+                         + chr(10)) % label.replace('"', '""')
+            elif result in ('d', 'f'):
                 subs += '        Rec "%s => d:x" & HexD(q)\n' % label.replace(
                     '"', '""')
             elif result == 's':
                 subs += '        Rec "%s => " & BstrFmt(p)\n' % label.replace(
+                    '"', '""')
+            elif result == 'w':
+                subs += '        Rec "%s => w" & CStr(p)\n' % label.replace(
                     '"', '""')
             elif result == 'i':
                 subs += '        Rec "%s => i" & CStr(p)\n' % label.replace(
@@ -854,12 +937,29 @@ def build(folder):
             subs += '    Rec "%s => " & rs(%d)\n' % (label.replace('"', '""'),
                                                     place)
         subs += 'End Sub\n'
-    text += '\n' + body + subs
+    text += '\n' + body
+    parts = subs.split('\nPrivate Sub Run')
+    pieces = ['\nPublic Sub Run' + part for part in parts[1:]]
+    modules = []
+    current = ''
+    for piece in pieces:
+        if current and current.count('\n') + piece.count('\n') > 12000:
+            modules.append(current)
+            current = ''
+        current += piece
+    if current:
+        modules.append(current)
+    vbp = 'Type=Exe\r\nStartup="Sub Main"\r\nModule=Hmod; Hmod.bas\r\n'
+    for place, code in enumerate(modules):
+        name = 'Hr%d' % place
+        header = 'Attribute VB_Name = "%s"\nOption Explicit\n' % name
+        open(os.path.join(folder, name + '.bas'), 'w', newline='').write(
+            (header + code).replace('\n', '\r\n'))
+        vbp += 'Module=%s; %s.bas\r\n' % (name, name)
     open(os.path.join(folder, 'Hmod.bas'), 'w', newline='').write(
         text.replace('\n', '\r\n'))
     open(os.path.join(folder, 'Harness.vbp'), 'w', newline='').write(
-        'Type=Exe\r\nStartup="Sub Main"\r\nModule=Hmod; Hmod.bas\r\n'
-        'Name="Harness"\r\n')
+        vbp + 'Name="Harness"\r\n')
     open(os.path.join(folder, 'experiments.txt'), 'w').write(
         '\n'.join('%d %s %s %s' % (n, e[0], e[1], e[2])
                   for n, e in enumerate(EXPERIMENTS)) + '\n')

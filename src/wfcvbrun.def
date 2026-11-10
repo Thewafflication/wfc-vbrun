@@ -78,7 +78,7 @@ EXPORTS
     __vbaAryUnlock=vbrun_stub_172 @172
     __vbaAryVar=vbrun_stub_173 @173
     __vbaBoolStr=vbrun_stub_174 @174
-    __vbaBoolVar=vbrun_stub_175 @175
+    __vbaBoolVar @175
     __vbaBoolVarNull=vbrun_stub_176 @176
     __vbaCVarAryUdt=vbrun_stub_177 @177
     __vbaCastObj=vbrun_stub_178 @178
@@ -88,31 +88,31 @@ EXPORTS
     __vbaChkstk=vbrun_stub_182 @182
     __vbaCopyBytes=vbrun_stub_183 @183
     __vbaCopyBytesZero=vbrun_stub_184 @184
-    __vbaCyAbs=vbrun_stub_185 @185
+    __vbaCyAbs @185
     ProcCallEngine=vbrun_stub_186 @186
     DllFunctionCall=vbrun_stub_187 @187
-    __vbaCyAdd=vbrun_stub_188 @188
+    __vbaCyAdd @188
     __vbaCyErrVar=vbrun_stub_189 @189
     CopyRecord=vbrun_stub_190 @190
-    __vbaCyFix=vbrun_stub_191 @191
+    __vbaCyFix @191
     __vbaCyForInit=vbrun_stub_192 @192
     __vbaCyForNext=vbrun_stub_193 @193
-    __vbaCyI2=vbrun_stub_194 @194
+    __vbaCyI2 @194
     TipGetAddressOfPredeclaredInstance=vbrun_stub_195 @195
-    __vbaCyI4=vbrun_stub_196 @196
-    __vbaCyInt=vbrun_stub_197 @197
-    __vbaCyMul=vbrun_stub_198 @198
+    __vbaCyI4 @196
+    __vbaCyInt @197
+    __vbaCyMul @198
     MethCallEngine=vbrun_stub_199 @199
     __vbaCyMulI2=vbrun_stub_200 @200
-    __vbaCySgn=vbrun_stub_201 @201
-    __vbaCyStr=vbrun_stub_202 @202
-    __vbaCySub=vbrun_stub_203 @203
-    __vbaCyUI1=vbrun_stub_204 @204
-    __vbaCyVar=vbrun_stub_205 @205
+    __vbaCySgn @201
+    __vbaCyStr @202
+    __vbaCySub @203
+    __vbaCyUI1 @204
+    __vbaCyVar @205
     __vbaDateR4=vbrun_stub_206 @206
     __vbaDateR8=vbrun_stub_207 @207
-    __vbaDateStr=vbrun_stub_208 @208
-    __vbaDateVar=vbrun_stub_209 @209
+    __vbaDateStr @208
+    __vbaDateVar @209
     __vbaDerefAry=vbrun_stub_210 @210
     __vbaDerefAry1=vbrun_stub_211 @211
     __vbaEnd=vbrun_stub_212 @212
@@ -162,12 +162,12 @@ EXPORTS
     __vbaHresultCheck=vbrun_stub_256 @256
     __vbaHresultCheckNonvirt=vbrun_stub_257 @257
     __vbaHresultCheckObj=vbrun_stub_258 @258
-    __vbaI2Cy=vbrun_stub_259 @259
+    __vbaI2Cy @259
     __vbaI2ErrVar=vbrun_stub_260 @260
     __vbaI2ForNextCheck=vbrun_stub_261 @261
     __vbaI2Str @262
-    __vbaI2Var=vbrun_stub_263 @263
-    __vbaI4Cy=vbrun_stub_264 @264
+    __vbaI2Var @263
+    __vbaI4Cy @264
     EbResetProjectNormal=vbrun_stub_265 @265
     TipUnloadInstance=vbrun_stub_266 @266
     __vbaI4ErrVar=vbrun_stub_267 @267
@@ -176,7 +176,7 @@ EXPORTS
     __vbaI4ForNextCheck=vbrun_stub_270 @270
     EbLoadRunTime=vbrun_stub_271 @271
     __vbaI4Str @272
-    __vbaI4Var=vbrun_stub_273 @273
+    __vbaI4Var @273
     EbCreateContext=vbrun_stub_274 @274
     EbDestroyContext=vbrun_stub_275 @275
     EbSetContextWorkerThread=vbrun_stub_276 @276
@@ -266,13 +266,13 @@ EXPORTS
     __vbaPutFxStr4=vbrun_stub_360 @360
     __vbaPutOwner3=vbrun_stub_361 @361
     __vbaPutOwner4=vbrun_stub_362 @362
-    __vbaR4Cy=vbrun_stub_363 @363
+    __vbaR4Cy @363
     __vbaR4ErrVar=vbrun_stub_364 @364
     __vbaR4ForNextCheck=vbrun_stub_365 @365
     __vbaR4Sgn=vbrun_stub_366 @366
     __vbaR4Str=vbrun_stub_367 @367
-    __vbaR4Var=vbrun_stub_368 @368
-    __vbaR8Cy=vbrun_stub_369 @369
+    __vbaR4Var @368
+    __vbaR8Cy @369
     __vbaR8ErrVar=vbrun_stub_370 @370
     __vbaR8FixI2=vbrun_stub_371 @371
     __vbaR8FixI4=vbrun_stub_372 @372
@@ -280,8 +280,8 @@ EXPORTS
     __vbaR8IntI2=vbrun_stub_374 @374
     __vbaR8IntI4=vbrun_stub_375 @375
     __vbaR8Sgn=vbrun_stub_376 @376
-    __vbaR8Str=vbrun_stub_377 @377
-    __vbaR8Var=vbrun_stub_378 @378
+    __vbaR8Str @377
+    __vbaR8Var @378
     __vbaRaiseEvent=vbrun_stub_379 @379
     __vbaRecAnsiToUni=vbrun_stub_380 @380
     __vbaRecAssign=vbrun_stub_381 @381
@@ -302,32 +302,32 @@ EXPORTS
     __vbaStr2Vec=vbrun_stub_396 @396
     __vbaStrAryToAnsi=vbrun_stub_397 @397
     __vbaStrAryToUnicode=vbrun_stub_398 @398
-    __vbaStrBool=vbrun_stub_399 @399
+    __vbaStrBool @399
     EVENT_SINK_QueryInterface=vbrun_stub_400 @400
     EVENT_SINK_AddRef=vbrun_stub_401 @401
     EVENT_SINK_Release=vbrun_stub_402 @402
     EVENT_SINK_GetIDsOfNames=vbrun_stub_403 @403
     EVENT_SINK_Invoke=vbrun_stub_404 @404
-    __vbaStrCat=vbrun_stub_405 @405
-    __vbaStrCmp=vbrun_stub_406 @406
-    __vbaStrComp=vbrun_stub_407 @407
+    __vbaStrCat @405
+    __vbaStrCmp @406
+    __vbaStrComp @407
     __vbaStrCompVar=vbrun_stub_408 @408
-    __vbaStrCy=vbrun_stub_409 @409
+    __vbaStrCy @409
     BASIC_CLASS_QueryInterface=vbrun_stub_410 @410
     BASIC_CLASS_AddRef=vbrun_stub_411 @411
     BASIC_CLASS_Release=vbrun_stub_412 @412
     BASIC_CLASS_GetIDsOfNames=vbrun_stub_413 @413
     BASIC_CLASS_Invoke=vbrun_stub_414 @414
-    __vbaStrDate=vbrun_stub_415 @415
+    __vbaStrDate @415
     __vbaStrFixstr=vbrun_stub_416 @416
-    __vbaStrI2=vbrun_stub_417 @417
+    __vbaStrI2 @417
     __vbaStrI4 @418
     __vbaStrLike=vbrun_stub_419 @419
     BASIC_DISPINTERFACE_GetTICount=vbrun_stub_420 @420
     BASIC_DISPINTERFACE_GetTypeInfo=vbrun_stub_421 @421
-    __vbaStrR4=vbrun_stub_422 @422
-    __vbaStrR8=vbrun_stub_423 @423
-    __vbaStrTextCmp=vbrun_stub_424 @424
+    __vbaStrR4 @422
+    __vbaStrR8 @423
+    __vbaStrTextCmp @424
     __vbaStrTextLike=vbrun_stub_425 @425
     __vbaStrToAnsi=vbrun_stub_426 @426
     __vbaStrToUnicode=vbrun_stub_427 @427
@@ -342,12 +342,12 @@ EXPORTS
     Zombie_Invoke=vbrun_stub_436 @436
     __vbaStrVarMove=vbrun_stub_437 @437
     __vbaStrVarVal=vbrun_stub_438 @438
-    __vbaUI1Cy=vbrun_stub_439 @439
+    __vbaUI1Cy @439
     EVENT_SINK2_AddRef=vbrun_stub_440 @440
     EVENT_SINK2_Release=vbrun_stub_441 @441
     __vbaUI1ErrVar=vbrun_stub_442 @442
     __vbaUI1Str @443
-    __vbaUI1Var=vbrun_stub_444 @444
+    __vbaUI1Var @444
     __vbaUbound=vbrun_stub_445 @445
     __vbaUdtVar=vbrun_stub_446 @446
     __vbaUnkVar=vbrun_stub_447 @447
@@ -355,7 +355,7 @@ EXPORTS
     __vbaVarAbs @449
     __vbaVarAdd @450
     __vbaVarAnd @451
-    __vbaVarCat=vbrun_stub_452 @452
+    __vbaVarCat @452
     __vbaVarCmpEq @453
     __vbaVarCmpGe @454
     __vbaVarCmpGt @455

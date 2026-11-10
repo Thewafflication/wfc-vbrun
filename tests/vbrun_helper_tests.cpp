@@ -611,6 +611,7 @@ std::string run_case(const std::string& line) {
     bool has_double = false;
     std::vector<double> doubles;  // every Double argument, in order
     std::vector<float> singles;   // f1.5: a Single passed by value
+    std::vector<long long> cys;   // y123456: a Currency by value
     while (!rest.empty()) {
         while (!rest.empty() && rest.front() == ' ') {
             rest.erase(0, 1);
@@ -758,6 +759,10 @@ std::string run_case(const std::string& line) {
             std::size_t used = 0;
             singles.push_back(std::stof(rest.substr(1), &used));
             rest.erase(0, used + 1U);
+        } else if (rest.front() == 'y') {
+            std::size_t used = 0;  // y123456: a Currency by value (scaled)
+            cys.push_back(std::stoll(rest.substr(1), &used));
+            rest.erase(0, used + 1U);
         } else if (rest.front() == 'x') {
             std::size_t used = 0;
             const unsigned long value = std::stoul(rest.substr(1), &used, 16);
@@ -771,6 +776,46 @@ std::string run_case(const std::string& line) {
     const FARPROC proc = GetProcAddress(g_library, name.c_str());
     if (proc == nullptr) {
         return "not exported";
+    }
+    if (kind == "c") {  // a Currency result (the scaled integer)
+        long long answer = 0;
+        if (cys.size() == 2) {
+            answer = reinterpret_cast<long long(WINAPI*)(long long, long long)>(
+                proc)(cys[0], cys[1]);
+        } else if (cys.size() == 1) {
+            answer =
+                reinterpret_cast<long long(WINAPI*)(long long)>(proc)(cys[0]);
+        } else {
+            answer = reinterpret_cast<long long(WINAPI*)(Word)>(proc)(
+                arguments.empty() ? 0 : arguments[0]);
+        }
+        for (BSTR b : allocated) {
+            SysFreeString(b);
+        }
+        return "c" + std::to_string(answer);
+    }
+    if (kind == "f") {  // a Single result, shown as the bits of the Double
+        float single = 0.0F;
+        if (cys.size() == 1) {
+            single = reinterpret_cast<float(WINAPI*)(long long)>(proc)(cys[0]);
+        } else {
+            single = reinterpret_cast<float(WINAPI*)(Word)>(proc)(
+                arguments.empty() ? 0 : arguments[0]);
+        }
+        const double widened = single;
+        std::uint64_t single_bits = 0;
+        std::memcpy(&single_bits, &widened, sizeof(single_bits));
+        for (BSTR b : allocated) {
+            SysFreeString(b);
+        }
+        return "d:" + hex_text("x%016llX", single_bits);
+    }
+    if (kind == "D" && cys.size() == 1) {
+        const double answer =
+            reinterpret_cast<double(WINAPI*)(long long)>(proc)(cys[0]);
+        std::uint64_t bits = 0;
+        std::memcpy(&bits, &answer, sizeof(bits));
+        return "d:" + hex_text("x%016llX", bits);
     }
     if (kind == "D") {  // a Double result
         // The Doubles come first, then the other arguments (Variants).
@@ -829,6 +874,12 @@ std::string run_case(const std::string& line) {
         // Choose(result, index as a Single, array)
         raw = reinterpret_cast<Word(WINAPI*)(Word, float, Word)>(proc)(
             arguments[0], singles[0], arguments[1]);
+    } else if (cys.size() == 1 && arguments.empty()) {
+        raw = reinterpret_cast<Word(WINAPI*)(long long)>(proc)(cys[0]);
+    } else if (doubles.size() == 1 && arguments.empty()) {
+        raw = reinterpret_cast<Word(WINAPI*)(double)>(proc)(doubles[0]);
+    } else if (singles.size() == 1 && arguments.empty()) {
+        raw = reinterpret_cast<Word(WINAPI*)(float)>(proc)(singles[0]);
     } else if (doubles.size() == 1 && arguments.size() == 3) {
         // A Double between the arguments: DateAdd(result, interval, number,
         // date).
