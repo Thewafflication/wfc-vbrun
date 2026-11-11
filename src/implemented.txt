@@ -271,3 +271,14 @@ rtcPackDate
 __vbaCyMulI2
 __vbaLenVar
 __vbaLenVarB
+__vbaFileOpen
+__vbaFileClose
+__vbaFileCloseAll
+rtcFreeFile
+rtcFileLength
+rtcFileSeek
+rtcFileLocation
+__vbaFileSeek
+rtcEndOfFile
+__vbaLineInputStr
+__vbaLineInputVar

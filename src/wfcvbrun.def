@@ -132,14 +132,14 @@ EXPORTS
     __vbaFPInt=vbrun_stub_226 @226
     TipUnloadProject=vbrun_stub_227 @227
     __vbaFailedFriend=vbrun_stub_228 @228
-    __vbaFileClose=vbrun_stub_229 @229
+    __vbaFileClose @229
     TipCreateInstanceProject2=vbrun_stub_230 @230
     EbResetProject=vbrun_stub_231 @231
     EbGetHandleOfExecutingProject=vbrun_stub_232 @232
-    __vbaFileCloseAll=vbrun_stub_233 @233
+    __vbaFileCloseAll @233
     __vbaFileLock=vbrun_stub_234 @234
-    __vbaFileOpen=vbrun_stub_235 @235
-    __vbaFileSeek=vbrun_stub_236 @236
+    __vbaFileOpen @235
+    __vbaFileSeek @236
     __vbaFixstrConstruct=vbrun_stub_237 @237
     __vbaForEachAry=vbrun_stub_238 @238
     __vbaForEachCollAd=vbrun_stub_239 @239
@@ -234,8 +234,8 @@ EXPORTS
     __vbaLenBstrB @328
     __vbaLenVar @329
     __vbaLenVarB @330
-    __vbaLineInputStr=vbrun_stub_331 @331
-    __vbaLineInputVar=vbrun_stub_332 @332
+    __vbaLineInputStr @331
+    __vbaLineInputVar @332
     __vbaLsetFixstr=vbrun_stub_333 @333
     __vbaLsetFixstrFree=vbrun_stub_334 @334
     __vbaMidStmtBstr=vbrun_stub_335 @335
@@ -471,10 +471,10 @@ EXPORTS
     rtcFileWidth=vbrun_stub_565 @565
     rtcInputCount=vbrun_stub_566 @566
     rtcInputCountVar=vbrun_stub_567 @567
-    rtcFileSeek=vbrun_stub_568 @568
-    rtcFileLocation=vbrun_stub_569 @569
-    rtcFileLength=vbrun_stub_570 @570
-    rtcEndOfFile=vbrun_stub_571 @571
+    rtcFileSeek @568
+    rtcFileLocation @569
+    rtcFileLength @570
+    rtcEndOfFile @571
     rtcHexBstrFromVar @572
     rtcHexVarFromVar @573
     rtcOctBstrFromVar @574
@@ -551,7 +551,7 @@ EXPORTS
     rtcDir @645
     rtcCurrentDirBstr @646
     rtcCurrentDir @647
-    rtcFreeFile=vbrun_stub_648 @648
+    rtcFreeFile @648
     rtcCompareBstr=vbrun_stub_649 @649
     rtcBstrFromFormatVar @650
     rtcBstrFromError @651

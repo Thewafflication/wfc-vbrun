@@ -68,6 +68,7 @@ set(
   src/helpers_lists.cpp
   src/helpers_system.cpp
   src/helpers_files.cpp
+  src/helpers_openfiles.cpp
   src/helpers_varops.cpp
 )
 
@@ -170,6 +171,26 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
         PROPERTIES LABELS "unit;mp-0009;vbrun"
       )
     endforeach()
+    # The open-file table: a sequence of file statements against the results
+    # of a Visual Basic 6 program.
+    add_executable(
+      vbrun_file_tests
+      tests/vbrun_file_tests.cpp
+      src/helpers_openfiles.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_file_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_file_tests)
+    add_test(
+      NAME TC-MP0009-vbrun-openfiles
+      COMMAND vbrun_file_tests
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/openfiles.expected"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set_tests_properties(
+      TC-MP0009-vbrun-openfiles
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")

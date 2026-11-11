@@ -734,6 +734,147 @@ RAW['rtcRandom2'] = '''    v1 = Miss()
 '''
 experiment('rtcRandom2', 'x', 'f', [()])
 
+# Batch five: the open-file table. Visual Basic's own file statements, one
+# observable per line (what Open/Close/FreeFile/LOF/Loc/Seek/EOF and the
+# error numbers do); the export cases mirror these sequences.
+RAW['fileTable'] = '''    Dim fa As Integer, fb As Integer, fs As String, fn As Long, ft As Long
+    On Error Resume Next
+    Kill "wfcio_a.tmp"
+    Kill "wfcio_b.tmp"
+    Err.Clear
+    Rec "free0 => " & FreeFile
+    Open "wfcio_a.tmp" For Output As #21
+    Rec "openOut err => " & Err.Number
+    Rec "free1 => " & FreeFile
+    Rec "freeRange2 => " & FreeFile(1)
+    Rec "out lof => " & LOF(21)
+    Rec "out loc => " & Loc(21)
+    Rec "out seek => " & Seek(21)
+    Rec "out eof => " & EOF(21)
+    Err.Clear
+    Print #21, "hello"
+    Rec "print err => " & Err.Number
+    Rec "out lof2 => " & LOF(21)
+    Rec "out loc2 => " & Loc(21)
+    Rec "out seek2 => " & Seek(21)
+    Print #21, "wor"; "ld"
+    Print #21, 12; -3.5; True
+    Write #21, "q", 7, 2.5
+    Rec "out lof3 => " & LOF(21)
+    Rec "out loc3 => " & Loc(21)
+    Rec "out seek3 => " & Seek(21)
+    Err.Clear
+    Close #21
+    Rec "close err => " & Err.Number
+    Err.Clear
+    Rec "lof closed => " & LOF(21)
+    Rec "lof closed err => " & Err.Number
+    Err.Clear
+    Close #21
+    Rec "close again err => " & Err.Number
+    Rec "filelen => " & FileLen("wfcio_a.tmp")
+    Open "wfcio_a.tmp" For Input As #22
+    Rec "in free => " & FreeFile
+    Rec "in lof => " & LOF(22)
+    Rec "in loc => " & Loc(22)
+    Rec "in seek => " & Seek(22)
+    Rec "in eof => " & EOF(22)
+    Line Input #22, fs
+    Rec "line1 => [" & fs & "]"
+    Rec "in loc1 => " & Loc(22)
+    Rec "in seek1 => " & Seek(22)
+    Rec "in eof1 => " & EOF(22)
+    Line Input #22, fs
+    Rec "line2 => [" & fs & "]"
+    Line Input #22, fs
+    Rec "line3 => [" & fs & "]"
+    Line Input #22, fs
+    Rec "line4 => [" & fs & "]"
+    Rec "in eof4 => " & EOF(22)
+    Rec "in loc4 => " & Loc(22)
+    Rec "in seek4 => " & Seek(22)
+    Err.Clear
+    Line Input #22, fs
+    Rec "line5 err => " & Err.Number
+    Seek #22, 3
+    Rec "after seek loc => " & Loc(22)
+    Rec "after seek pos => " & Seek(22)
+    Line Input #22, fs
+    Rec "line from 3 => [" & fs & "]"
+    Close #22
+    Open "wfcio_a.tmp" For Input As #22
+    Input #22, fs
+    Rec "input str => [" & fs & "]"
+    Close #22
+    Open "wfcio_a.tmp" For Append As #23
+    Rec "app lof => " & LOF(23)
+    Rec "app loc => " & Loc(23)
+    Rec "app seek => " & Seek(23)
+    Print #23, "tail"
+    Rec "app lof2 => " & LOF(23)
+    Close #23
+    Open "wfcio_b.tmp" For Binary As #24
+    Rec "bin lof => " & LOF(24)
+    Rec "bin loc => " & Loc(24)
+    Rec "bin seek => " & Seek(24)
+    Rec "bin eof => " & EOF(24)
+    fn = &H12345678
+    Put #24, , fn
+    Rec "bin put lof => " & LOF(24)
+    Rec "bin put loc => " & Loc(24)
+    Rec "bin put seek => " & Seek(24)
+    Rec "bin put eof => " & EOF(24)
+    fa = 513
+    Put #24, 10, fa
+    Rec "bin put10 lof => " & LOF(24)
+    Rec "bin put10 loc => " & Loc(24)
+    Rec "bin put10 seek => " & Seek(24)
+    Get #24, 1, ft
+    Rec "bin get => " & Hex$(ft)
+    Rec "bin get seek => " & Seek(24)
+    Rec "bin get eof => " & EOF(24)
+    Get #24, 10, fb
+    Rec "bin get10 => " & fb
+    Rec "bin get10 eof => " & EOF(24)
+    Err.Clear
+    Get #24, 11, fb
+    Rec "bin get past err => " & Err.Number
+    Close #24
+    Open "wfcio_b.tmp" For Random As #25 Len = 6
+    Rec "rnd lof => " & LOF(25)
+    Rec "rnd loc => " & Loc(25)
+    Rec "rnd seek => " & Seek(25)
+    Rec "rnd eof => " & EOF(25)
+    Get #25, 2, fb
+    Rec "rnd get2 => " & fb
+    Rec "rnd loc2 => " & Loc(25)
+    Rec "rnd seek2 => " & Seek(25)
+    Put #25, 5, fa
+    Rec "rnd lof5 => " & LOF(25)
+    Rec "rnd loc5 => " & Loc(25)
+    Rec "rnd seek5 => " & Seek(25)
+    Close #21, #22, #23, #24, #25
+    Rec "closeall free => " & FreeFile
+    Err.Clear
+    Open "wfcio_b.tmp" For Input As #0
+    Rec "open #0 err => " & Err.Number
+    Open "wfcio_b.tmp" For Input As #513
+    Rec "open #513 err => " & Err.Number
+    Open "nodir\\x.tmp" For Input As #21
+    Rec "open missing err => " & Err.Number
+    Open "wfcio_b.tmp" For Input As #21
+    Open "wfcio_b.tmp" For Input As #21
+    Rec "open twice err => " & Err.Number
+    Close #21
+    Open "wfcio_a.tmp" For Output As #21
+    Open "wfcio_a.tmp" For Input As #22
+    Rec "share err => " & Err.Number
+    Close #21, #22, #23, #24, #25
+    Kill "wfcio_a.tmp"
+    Kill "wfcio_b.tmp"
+'''
+experiment('fileTable', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
