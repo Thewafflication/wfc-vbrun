@@ -51,8 +51,6 @@ constexpr int kPathNotFound = 76;
 constexpr int kInvalidProcedureCall = 5;
 
 constexpr int kFileCount = 512;
-// The smallest decimal exponent Print writes in full (smaller ones use E).
-constexpr int kSmallestPlain = 20;
 constexpr unsigned kMissingScode = 0x80020004U;  // DISP_E_PARAMNOTFOUND
 
 struct FileSlot {
@@ -230,7 +228,10 @@ std::string number_text(const double value, const int digits,
         mantissa.pop_back();
     }
     std::string text = value < 0.0 ? "-" : "";
-    if (exponent >= largest_plain || exponent < -kSmallestPlain) {
+    // Written in full while it has no more than `digits` integer digits and
+    // no more than `digits` decimals; otherwise with an exponent.
+    const int decimals = static_cast<int>(mantissa.size()) - 1 - exponent;
+    if (exponent >= largest_plain || decimals > digits) {
         text += mantissa[0];
         if (mantissa.size() > 1) {
             text += '.';
@@ -326,17 +327,13 @@ std::string date_write_text(const double value) {
     char buffer[48];
     const bool has_time =
         time.wHour != 0 || time.wMinute != 0 || time.wSecond != 0;
-    const bool has_date = std::floor(value) != 0.0;
-    if (has_date && has_time) {
+    if (has_time) {
         std::snprintf(buffer, sizeof(buffer), "#%04d-%02d-%02d %02d:%02d:%02d#",
                       time.wYear, time.wMonth, time.wDay, time.wHour,
                       time.wMinute, time.wSecond);
-    } else if (has_date) {
+    } else {
         std::snprintf(buffer, sizeof(buffer), "#%04d-%02d-%02d#", time.wYear,
                       time.wMonth, time.wDay);
-    } else {
-        std::snprintf(buffer, sizeof(buffer), "#%02d:%02d:%02d#", time.wHour,
-                      time.wMinute, time.wSecond);
     }
     return buffer;
 }

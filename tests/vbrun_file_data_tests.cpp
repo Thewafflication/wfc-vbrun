@@ -9,7 +9,9 @@
 
 #include <oleauto.h>
 
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -95,6 +97,7 @@ VARIANT typed(const VARTYPE type, const T value) {
 
 std::string g_print;
 std::string g_input;
+std::string g_numbers;
 
 void record(std::string& to, const std::string& label,
             const std::string& value) {
@@ -488,6 +491,61 @@ void input_statements() {
     DeleteFileA("wfcio_g.tmp");
 }
 
+struct NumberValue {
+    char kind;
+    unsigned long long bits;
+};
+
+constexpr NumberValue kNumberValues[] = {
+#include "cases/filenumbers_values.inc"
+};
+
+// Every value printed and then written, as the Visual Basic program did.
+void number_statements() {
+    open(kOutput, 21, "wfcio_n.tmp");
+    const unsigned char d_single[] = {1, 0, kSingle | kNewline};
+    const unsigned char d_double[] = {1, 0, kDouble | kNewline};
+    const unsigned char d_date[] = {1, 0, kDate | kNewline};
+    for (const NumberValue& item : kNumberValues) {
+        for (int pass = 0; pass < 2; ++pass) {
+            const auto emit = [&](const unsigned char* descriptor, auto value) {
+                if (pass == 0) {
+                    __vbaPrintFile(descriptor, 21, value);
+                } else {
+                    __vbaWriteFile(descriptor, 21, value);
+                }
+            };
+            if (item.kind == 'f') {
+                const auto word = static_cast<std::uint32_t>(item.bits);
+                float single = 0;
+                std::memcpy(&single, &word, sizeof(single));
+                emit(d_single, single);
+            } else {
+                double real = 0;
+                std::memcpy(&real, &item.bits, sizeof(real));
+                emit(item.kind == 'd' ? d_double : d_date, real);
+            }
+        }
+    }
+    __vbaFileClose(21);
+    std::string rest = read_file("wfcio_n.tmp");
+    DeleteFileA("wfcio_n.tmp");
+    std::string cleaned;
+    for (const char c : rest) {
+        if (c != '\r') {
+            cleaned.push_back(c);
+        }
+    }
+    int number = 1;
+    std::size_t at = 0;
+    while (at < cleaned.size()) {
+        const std::size_t end = cleaned.find('\n', at);
+        const std::string line = cleaned.substr(at, end - at);
+        record(g_numbers, "n" + std::to_string(number++), "[" + line + "]");
+        at = end == std::string::npos ? cleaned.size() : end + 1;
+    }
+}
+
 bool matches(const char* const path, const std::string& got,
              const char* const name) {
     std::ifstream in(path, std::ios::binary);
@@ -530,13 +588,15 @@ bool matches(const char* const path, const std::string& got,
 }  // namespace
 
 int main(const int argument_count, const char* const arguments[]) {
-    if (argument_count != 3) {
+    if (argument_count != 4) {
         std::fprintf(stderr, "usage: vbrun_file_data_tests <print> <input>\n");
         return 2;
     }
     print_statements();
     input_statements();
+    number_statements();
     const bool printed = matches(arguments[1], g_print, "Print and Write");
     const bool input = matches(arguments[2], g_input, "Input, Get and Put");
-    return printed && input ? 0 : 1;
+    const bool numbers = matches(arguments[3], g_numbers, "Number text");
+    return printed && input && numbers ? 0 : 1;
 }

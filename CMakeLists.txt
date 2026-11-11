@@ -205,6 +205,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       COMMAND vbrun_file_data_tests
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileprint.expected"
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileinput.expected"
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filenumbers.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
     set_tests_properties(
