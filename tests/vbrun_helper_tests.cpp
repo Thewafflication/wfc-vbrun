@@ -794,6 +794,9 @@ std::string run_case(const std::string& line) {
         if (cys.size() == 2) {
             answer = reinterpret_cast<long long(WINAPI*)(long long, long long)>(
                 proc)(cys[0], cys[1]);
+        } else if (cys.size() == 1 && arguments.size() == 1) {
+            answer = reinterpret_cast<long long(WINAPI*)(Word, long long)>(
+                proc)(arguments[0], cys[0]);
         } else if (cys.size() == 1) {
             answer =
                 reinterpret_cast<long long(WINAPI*)(long long)>(proc)(cys[0]);

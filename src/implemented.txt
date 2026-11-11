@@ -261,3 +261,13 @@ rtcGetTimer
 rtcHexBstrFromVar
 rtcOctBstrFromVar
 rtcVarStrFromVar
+__vbaInStr
+__vbaInStrB
+rtcBstrFromFormatVar
+rtcVarFromFormatVar
+rtcBstrFromError
+rtcVarFromError
+rtcPackDate
+__vbaCyMulI2
+__vbaLenVar
+__vbaLenVarB

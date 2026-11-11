@@ -103,7 +103,7 @@ EXPORTS
     __vbaCyInt @197
     __vbaCyMul @198
     MethCallEngine=vbrun_stub_199 @199
-    __vbaCyMulI2=vbrun_stub_200 @200
+    __vbaCyMulI2 @200
     __vbaCySgn @201
     __vbaCyStr @202
     __vbaCySub @203
@@ -180,8 +180,8 @@ EXPORTS
     EbCreateContext=vbrun_stub_274 @274
     EbDestroyContext=vbrun_stub_275 @275
     EbSetContextWorkerThread=vbrun_stub_276 @276
-    __vbaInStr=vbrun_stub_277 @277
-    __vbaInStrB=vbrun_stub_278 @278
+    __vbaInStr @277
+    __vbaInStrB @278
     __vbaInStrVar=vbrun_stub_279 @279
     __vbaInStrVarB=vbrun_stub_280 @280
     __vbaInputFile=vbrun_stub_281 @281
@@ -232,8 +232,8 @@ EXPORTS
     __vbaLdZeroAry=vbrun_stub_326 @326
     __vbaLenBstr @327
     __vbaLenBstrB @328
-    __vbaLenVar=vbrun_stub_329 @329
-    __vbaLenVarB=vbrun_stub_330 @330
+    __vbaLenVar @329
+    __vbaLenVarB @330
     __vbaLineInputStr=vbrun_stub_331 @331
     __vbaLineInputVar=vbrun_stub_332 @332
     __vbaLsetFixstr=vbrun_stub_333 @333
@@ -441,7 +441,7 @@ EXPORTS
     rtcGetTimer @535
     rtcStrFromVar @536
     rtcBstrFromAnsi=vbrun_stub_537 @537
-    rtcPackDate=vbrun_stub_538 @538
+    rtcPackDate @538
     rtcPackTime @539
     rtcGetDateValue=vbrun_stub_540 @540
     rtcGetTimeValue=vbrun_stub_541 @541
@@ -553,9 +553,9 @@ EXPORTS
     rtcCurrentDir @647
     rtcFreeFile=vbrun_stub_648 @648
     rtcCompareBstr=vbrun_stub_649 @649
-    rtcBstrFromFormatVar=vbrun_stub_650 @650
-    rtcBstrFromError=vbrun_stub_651 @651
-    rtcVarFromError=vbrun_stub_652 @652
+    rtcBstrFromFormatVar @650
+    rtcBstrFromError @651
+    rtcVarFromError @652
     rtcLenCharVar @653
     rtcLenVar @654
     rtcFixVar @655
@@ -563,7 +563,7 @@ EXPORTS
     rtcIntVar @657
     rtcSgnVar @658
     _adj_fdiv_m16i=vbrun_stub_659 @659
-    rtcVarFromFormatVar=vbrun_stub_660 @660
+    rtcVarFromFormatVar @660
     rtcDateAdd @661
     rtcDateDiff @662
     rtcDatePart @663

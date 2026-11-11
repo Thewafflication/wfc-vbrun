@@ -41,10 +41,9 @@ VARIANT* give_null(VARIANT* const result) {
 bool text_of(const VARIANT* const operand, std::wstring& text) {
     VARIANT converted;
     VariantInit(&converted);
-    const HRESULT status = VariantChangeTypeEx(
-        &converted, const_cast<VARIANT*>(operand), language_locale(),
-        VARIANT_ALPHABOOL,
-        VT_BSTR);
+    const HRESULT status =
+        VariantChangeTypeEx(&converted, const_cast<VARIANT*>(operand),
+                            language_locale(), VARIANT_ALPHABOOL, VT_BSTR);
     if (FAILED(status)) {
         static_cast<void>(vbrun::raise_hresult(status));
         return false;
@@ -166,13 +165,20 @@ VARIANT* WINAPI rtcLenCharVar(VARIANT* const result, VARIANT* const operand) {
     return length_of(result, operand, false);
 }
 
-VARIANT* WINAPI rtcLowerCaseVar(VARIANT* const result,
-                                VARIANT* const operand) {
+// Len(v) and LenB(v) as the compiler calls them (result, operand).
+VARIANT* WINAPI __vbaLenVar(VARIANT* const result, VARIANT* const operand) {
+    return length_of(result, operand, false);
+}
+
+VARIANT* WINAPI __vbaLenVarB(VARIANT* const result, VARIANT* const operand) {
+    return length_of(result, operand, true);
+}
+
+VARIANT* WINAPI rtcLowerCaseVar(VARIANT* const result, VARIANT* const operand) {
     return mapped(result, operand, LCMAP_LOWERCASE);
 }
 
-VARIANT* WINAPI rtcUpperCaseVar(VARIANT* const result,
-                                VARIANT* const operand) {
+VARIANT* WINAPI rtcUpperCaseVar(VARIANT* const result, VARIANT* const operand) {
     return mapped(result, operand, LCMAP_UPPERCASE);
 }
 
@@ -180,13 +186,11 @@ VARIANT* WINAPI rtcTrimVar(VARIANT* const result, VARIANT* const operand) {
     return trimmed(result, operand, true, true);
 }
 
-VARIANT* WINAPI rtcLeftTrimVar(VARIANT* const result,
-                               VARIANT* const operand) {
+VARIANT* WINAPI rtcLeftTrimVar(VARIANT* const result, VARIANT* const operand) {
     return trimmed(result, operand, true, false);
 }
 
-VARIANT* WINAPI rtcRightTrimVar(VARIANT* const result,
-                                VARIANT* const operand) {
+VARIANT* WINAPI rtcRightTrimVar(VARIANT* const result, VARIANT* const operand) {
     return trimmed(result, operand, false, true);
 }
 

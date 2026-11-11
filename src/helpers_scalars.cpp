@@ -290,6 +290,134 @@ float seconds_since_midnight() {
         ((now.wHour * 60 + now.wMinute) * 60 + now.wSecond) +
         now.wMilliseconds * 0.001);
 }
+
+// InStr on Strings: the position of `needle` in `haystack` from `start` (1
+// based); 0 when it is not found. An empty needle gives `start`.
+LONG find_in_text(const LONG mode, const BSTR needle, const BSTR haystack,
+                  const LONG start) {
+    const UINT haystack_size =
+        haystack == nullptr ? 0U : SysStringLen(haystack);
+    const UINT needle_size = needle == nullptr ? 0U : SysStringLen(needle);
+    if (haystack_size == 0U) {
+        return 0;
+    }
+    if (needle_size == 0U) {
+        return start;
+    }
+    if (start < 1) {
+        static_cast<void>(vbrun::raise(5));
+        return 0;
+    }
+    if (mode != 0 && mode != 1) {
+        static_cast<void>(vbrun::raise(5));
+        return 0;
+    }
+    if (static_cast<UINT>(start) > haystack_size ||
+        needle_size > haystack_size) {
+        return 0;
+    }
+    for (UINT at = static_cast<UINT>(start) - 1U;
+         at + needle_size <= haystack_size; ++at) {
+        if (mode == 0) {
+            bool same = true;
+            for (UINT offset = 0; offset < needle_size; ++offset) {
+                if (haystack[at + offset] != needle[offset]) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same) {
+                return static_cast<LONG>(at) + 1;
+            }
+        } else if (CompareStringW(
+                       language_locale(),
+                       NORM_IGNORECASE | NORM_IGNOREKANATYPE | NORM_IGNOREWIDTH,
+                       haystack + at, static_cast<int>(needle_size), needle,
+                       static_cast<int>(needle_size)) == CSTR_EQUAL) {
+            return static_cast<LONG>(at) + 1;
+        }
+    }
+    return 0;
+}
+
+// InStrB: the same on the bytes.
+LONG find_in_bytes(const BSTR needle, const BSTR haystack, const LONG start) {
+    const UINT haystack_size =
+        haystack == nullptr ? 0U : SysStringByteLen(haystack);
+    const UINT needle_size = needle == nullptr ? 0U : SysStringByteLen(needle);
+    if (haystack_size == 0U) {
+        return 0;
+    }
+    if (start >= 1 && static_cast<UINT>(start) > haystack_size) {
+        return 0;
+    }
+    if (needle_size == 0U) {
+        return start;
+    }
+    if (start < 1) {
+        static_cast<void>(vbrun::raise(5));
+        return 0;
+    }
+    if (needle_size > haystack_size) {
+        return 0;
+    }
+    const auto* const bytes = reinterpret_cast<const unsigned char*>(haystack);
+    const auto* const wanted = reinterpret_cast<const unsigned char*>(needle);
+    for (UINT at = static_cast<UINT>(start) - 1U;
+         at + needle_size <= haystack_size; ++at) {
+        if (std::memcmp(bytes + at, wanted, needle_size) == 0) {
+            return static_cast<LONG>(at) + 1;
+        }
+    }
+    return 0;
+}
+
+// The days from 1970-01-01 of a date of the proleptic Gregorian calendar.
+std::int64_t days_from_civil(std::int64_t year, const int month,
+                             const int day) {
+    year -= month <= 2 ? 1 : 0;
+    const std::int64_t era = (year >= 0 ? year : year - 399) / 400;
+    const std::int64_t year_of_era = year - era * 400;
+    const std::int64_t day_of_year =
+        (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+    const std::int64_t day_of_era =
+        year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    return era * 146097 + day_of_era - 719468;
+}
+
+// The year of a two-digit year: the century that ends at the system's
+// TwoDigitYearMax.
+std::int64_t full_year(const std::int64_t year) {
+    DWORD limit = 0;
+    if (GetCalendarInfoW(LOCALE_USER_DEFAULT, CAL_GREGORIAN,
+                         CAL_ITWODIGITYEARMAX | CAL_RETURN_NUMBER, nullptr, 0,
+                         &limit) == 0 ||
+        limit < 99) {
+        limit = 2029;
+    }
+    const std::int64_t base = static_cast<std::int64_t>(limit) - 99;
+    return base + ((year - base % 100 + 100) % 100);
+}
+
+BSTR formatted(const VARIANT* const value, const VARIANT* const format,
+               const LONG first_day, const LONG first_week) {
+    BSTR pattern = nullptr;
+    if (format != nullptr && !is_missing(format)) {
+        if (format->vt != VT_BSTR) {
+            static_cast<void>(vbrun::raise(5));
+            return nullptr;
+        }
+        pattern = format->bstrVal;
+    }
+    BSTR text = nullptr;
+    const HRESULT status = VarFormat(const_cast<VARIANT*>(value), pattern,
+                                     first_day, first_week, 0, &text);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+        return nullptr;
+    }
+    return text;
+}
 }  // namespace
 
 extern "C" {
@@ -786,6 +914,101 @@ void WINAPI rtcRandomize(const VARIANT* const value) {
 // Timer: the seconds since midnight.
 float WINAPI rtcGetTimer() {
     return seconds_since_midnight();
+}
+
+// InStr(start, text, find, compare): the operands arrive right first (the text
+// to find comes before the text searched).
+LONG WINAPI __vbaInStr(const LONG mode, const BSTR needle, const BSTR haystack,
+                       const LONG start) {
+    return find_in_text(mode, needle, haystack, start);
+}
+
+LONG WINAPI __vbaInStrB(const LONG mode, const BSTR needle, const BSTR haystack,
+                        const LONG start) {
+    static_cast<void>(mode);
+    return find_in_bytes(needle, haystack, start);
+}
+
+// Format(expression, format, first day of week, first week of year).
+BSTR WINAPI rtcBstrFromFormatVar(const VARIANT* const value,
+                                 const VARIANT* const format,
+                                 const LONG first_day, const LONG first_week) {
+    return formatted(value, format, first_day, first_week);
+}
+
+VARIANT* WINAPI rtcVarFromFormatVar(VARIANT* const result,
+                                    const VARIANT* const value,
+                                    const VARIANT* const format,
+                                    const LONG first_day,
+                                    const LONG first_week) {
+    VariantClear(result);
+    BSTR text = formatted(value, format, first_day, first_week);
+    if (text != nullptr) {
+        result->vt = VT_BSTR;
+        result->bstrVal = text;
+    }
+    return result;
+}
+
+// Error$(number): the message of a run-time error; the number is a Variant.
+BSTR WINAPI rtcBstrFromError(const VARIANT* const number) {
+    const LONG value = __vbaI4Var(number);
+    const wchar_t* const message = vbrun::error_message(value);
+    return message == nullptr ? nullptr : SysAllocString(message);
+}
+
+VARIANT* WINAPI rtcVarFromError(VARIANT* const result,
+                                const VARIANT* const number) {
+    VariantClear(result);
+    const LONG value = __vbaI4Var(number);
+    const wchar_t* const message = vbrun::error_message(value);
+    result->vt = VT_BSTR;
+    result->bstrVal = SysAllocString(message == nullptr ? L"" : message);
+    return result;
+}
+
+// DateSerial(year, month, day).
+VARIANT* WINAPI rtcPackDate(VARIANT* const result, const LONG year_value,
+                            const LONG month, const LONG day) {
+    VariantClear(result);
+    std::int64_t year = year_value;
+    if (year >= -99 && year < 0) {
+        year += 100;
+    }
+    if (year >= 0 && year <= 99) {
+        year = full_year(year);
+    }
+    const std::int64_t months = year * 12 + (month - 1);
+    std::int64_t whole_years = months / 12;
+    std::int64_t month_of_year = months % 12;
+    if (month_of_year < 0) {
+        month_of_year += 12;
+        --whole_years;
+    }
+    const std::int64_t days =
+        days_from_civil(whole_years, static_cast<int>(month_of_year) + 1, 1) +
+        (static_cast<std::int64_t>(day) - 1);
+    const std::int64_t serial = days - days_from_civil(1899, 12, 30);
+    const std::int64_t earliest =
+        days_from_civil(100, 1, 1) - days_from_civil(1899, 12, 30);
+    const std::int64_t latest =
+        days_from_civil(9999, 12, 31) - days_from_civil(1899, 12, 30);
+    if (serial < earliest || serial > latest) {
+        static_cast<void>(vbrun::raise(5));
+        return result;
+    }
+    result->vt = VT_DATE;
+    result->date = static_cast<double>(serial);
+    return result;
+}
+
+// A Currency times an Integer.
+LONGLONG WINAPI __vbaCyMulI2(const SHORT factor, const LONGLONG value) {
+    CY in;
+    CY out;
+    in.int64 = value;
+    out.int64 = 0;
+    return worked(VarCyMulI4(in, factor, &out)) ? out.int64 : 0;
 }
 
 }  // extern "C"

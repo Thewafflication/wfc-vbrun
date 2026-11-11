@@ -654,6 +654,86 @@ RAW['rtcRandom'] = '''    v1 = Miss()
 '''
 experiment('rtcRandom', 'x', 'f', [()])
 
+# Batch four: every error message, InStr with the operands in the right order,
+# Len of a Variant, Format with Long arguments, DateSerial years, Randomize
+# arguments.
+for first in range(0, 1100, 60):
+    experiment('rtcBstrFromError', 'L', 's',
+               [((str(e), 'i%d' % e),) for e in range(first, min(first + 60, 1100))])
+for name in ('__vbaInStr', '__vbaInStrB'):
+    experiment(name, 'LSSL', 'i',
+               [((m, 'i' + m), nd, hy, (st, 'i' + st))
+                for m in ('0', '1') for nd in
+                [('"o"', 's"o"'), ('"O"', 's"O"'), ('"zz"', 's"zz"'),
+                 ('""', 's""'), ('"lo w"', 's"lo w"'), ('"l"', 's"l"')]
+                for hy in [('"hello world"', 's"hello world"'),
+                           ('""', 's""'), ('"HELLO"', 's"HELLO"')]
+                for st in ('1', '5', '8', '12', '0')])
+for name in ('__vbaLenVar', '__vbaLenVarB'):
+    experiment(name, 'OV', 'V', [(v,) for v in SCALARS[:12]] +
+               [(('ChrW(97) & ChrW(233) & ChrW(&H4E2D)',
+                  'v8"a\\u00E9\\u4E2D"'),)])
+experiment('rtcBstrFromFormatVar', 'VVLL', 's',
+           [(e, f, ('0', 'i0'), ('0', 'i0')) for e in FORMAT_EXPRS
+            for f in FORMAT_SPECS])
+experiment('rtcBstrFromFormatVar', 'VVLL', 's',
+           [(FORMAT_EXPRS[4], f, (d, 'i' + d), (w, 'i' + w))
+            for f in [('"dddd ww"', 'v8"dddd ww"'), ('"w"', 'v8"w"'),
+                      ('"ddd"', 'v8"ddd"')]
+            for d in ('0', '1', '2', '7') for w in ('0', '1', '2', '3')])
+experiment('rtcVarFromFormatVar', 'OVVLL', 'V',
+           [(e, f, ('0', 'i0'), ('0', 'i0')) for e in FORMAT_EXPRS[:6]
+            for f in FORMAT_SPECS[:6]])
+experiment('rtcPackDate', 'OLLL', 'V',
+           [((y, 'i' + y), ('1', 'i1'), ('1', 'i1'))
+            for y in ('0', '1', '29', '30', '49', '50', '99', '100', '1752',
+                      '1899', '1900', '9999', '10000', '-1')],
+           isolate=True)
+experiment('__vbaCyMulI2', 'LY', 'c',
+           [((n, 'i' + n), a) for a in CYS for n in ('0', '3', '-2')])
+RAW['rtcRandom2'] = '''    v1 = Miss()
+    v2 = CDbl(1.1)
+    RawRandomize v2
+    Rec "rtcRandomize v5:1.1 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CSng(2.5)
+    RawRandomize v2
+    Rec "rtcRandomize v4:2.5 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CInt(7)
+    RawRandomize v2
+    Rec "rtcRandomize v2:7 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CLng(70000)
+    RawRandomize v2
+    Rec "rtcRandomize v3:70000 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = "7"
+    RawRandomize v2
+    Rec "rtcRandomize v8""7"" => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CDbl(123456789.123)
+    RawRandomize v2
+    Rec "rtcRandomize v5:123456789.123 => -"
+    q = RawRnd(v1)
+    Rec "rtcRandomNext v10:x80020004 => d:x" & HexD(q)
+    v2 = CDbl(-1)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v5:-1 => d:x" & HexD(q)
+    v2 = CLng(3)
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v3:3 => d:x" & HexD(q)
+    v2 = "5"
+    q = RawRnd(v2)
+    Rec "rtcRandomNext v8""5"" => d:x" & HexD(q)
+'''
+experiment('rtcRandom2', 'x', 'f', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

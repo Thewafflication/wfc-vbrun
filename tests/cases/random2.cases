@@ -1,0 +1,17 @@
+# Randomize with other argument types (a fresh process: the first seed
+# is the default one). `=> -` ignores the result.
+rtcRandomize v5:1.1 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v4:2.5 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v2:7 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v3:70000 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v8"7" => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomize v5:123456789.123 => -
+rtcRandomNext v10:x80020004 => f
+rtcRandomNext v5:-1 => f
+rtcRandomNext v3:3 => f
+rtcRandomNext v8"5" => f

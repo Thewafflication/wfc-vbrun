@@ -32,4 +32,8 @@ int error_of_hresult(HRESULT result);
 // Raises the error for a failed HRESULT; returns the HRESULT to hand back.
 HRESULT raise_hresult(HRESULT result);
 
+// The message of a Visual Basic error number (the generic one when there is
+// none; null for 0).
+const wchar_t* error_message(int number);
+
 }  // namespace vbrun
