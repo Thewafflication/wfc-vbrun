@@ -161,7 +161,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_helper_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_helper_tests)
     add_dependencies(vbrun_helper_tests wfc_vbrun)
-    foreach(vbrun_family memory)
+    foreach(vbrun_family memory clock)
       add_test(
         NAME TC-MP0009-vbrun-helpers-${vbrun_family}
         COMMAND vbrun_helper_tests "$<TARGET_FILE:wfc_vbrun>" ${vbrun_family}
@@ -215,7 +215,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")
-    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings scalars scalars2 scalars3 random random2 numeric finance dates payments arrays lists system files)
+    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings scalars scalars2 scalars3 random random2 numeric finance dates dates2 payments arrays lists system files)
       add_test(
         NAME TC-MP0009-vbrun-cases-${vbrun_cases}
         COMMAND

@@ -11,6 +11,7 @@
 #include <oleauto.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -825,6 +826,14 @@ std::string run_case(const std::string& line) {
         }
         return "d:" + hex_text("x%016llX", single_bits);
     }
+    if (kind == "D" && singles.size() == 1 && arguments.empty()) {
+        // A Double from a Single (a Date from a Single).
+        const double answer =
+            reinterpret_cast<double(WINAPI*)(float)>(proc)(singles[0]);
+        std::uint64_t bits = 0;
+        std::memcpy(&bits, &answer, sizeof(bits));
+        return "d:" + hex_text("x%016llX", bits);
+    }
     if (kind == "D" && cys.size() == 1) {
         const double answer =
             reinterpret_cast<double(WINAPI*)(long long)>(proc)(cys[0]);
@@ -957,6 +966,100 @@ std::string run_case(const std::string& line) {
     return result;
 }
 
+// ----- The clock: Date$, Time$, Date, Time and Now ---------------------------
+
+SYSTEMTIME clock_now() {
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    now.wMilliseconds = 0;
+    return now;
+}
+
+double clock_serial_of(SYSTEMTIME time, const bool with_date,
+                       const bool with_time) {
+    if (!with_time) {
+        time.wHour = 0;
+        time.wMinute = 0;
+        time.wSecond = 0;
+    }
+    double serial = 0.0;
+    SystemTimeToVariantTime(&time, &serial);
+    return with_date ? serial : serial - std::floor(serial);
+}
+
+std::string narrow_text(const BSTR text) {
+    std::string out;
+    for (UINT i = 0; text != nullptr && i < SysStringLen(text); ++i) {
+        out.push_back(static_cast<char>(text[i]));
+    }
+    return out;
+}
+
+// The clock exports against GetLocalTime read before and after the call (the
+// second may change in between).
+void clock_family() {
+    using TextCall = BSTR(WINAPI*)();
+    using VariantCall = VARIANT*(WINAPI*)(VARIANT*);
+    const auto date_text = export_of<TextCall>("rtcGetDateBstr");
+    const auto time_text = export_of<TextCall>("rtcGetTimeBstr");
+    if (date_text == nullptr || time_text == nullptr) {
+        return;
+    }
+    const auto expect_text = [](const char* const format, const SYSTEMTIME& a,
+                                const SYSTEMTIME& b, const BSTR got,
+                                const char* const what) {
+        char first[32];
+        char second[32];
+        const auto fill = [&](char* out, const SYSTEMTIME& t) {
+            if (format[0] == 'd') {
+                std::snprintf(out, 32, "%02d-%02d-%04d", t.wMonth, t.wDay,
+                              t.wYear);
+            } else {
+                std::snprintf(out, 32, "%02d:%02d:%02d", t.wHour, t.wMinute,
+                              t.wSecond);
+            }
+        };
+        fill(first, a);
+        fill(second, b);
+        const std::string text = narrow_text(got);
+        check(text == first || text == second, what);
+    };
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        const SYSTEMTIME before = clock_now();
+        BSTR d = date_text();
+        BSTR t = time_text();
+        const SYSTEMTIME after = clock_now();
+        expect_text("d", before, after, d, "Date$ is mm-dd-yyyy of today");
+        expect_text("t", before, after, t, "Time$ is hh:mm:ss now");
+        SysFreeString(d);
+        SysFreeString(t);
+    }
+    const struct {
+        const char* name;
+        bool with_date;
+        bool with_time;
+    } variants[] = {{"rtcGetDateVar", true, false},
+                    {"rtcGetTimeVar", false, true},
+                    {"rtcGetPresentDate", true, true}};
+    for (const auto& item : variants) {
+        const auto call = export_of<VariantCall>(item.name);
+        if (call == nullptr) {
+            continue;
+        }
+        const SYSTEMTIME before = clock_now();
+        VARIANT result;
+        VariantInit(&result);
+        call(&result);
+        const SYSTEMTIME after = clock_now();
+        check(result.vt == VT_DATE, item.name);
+        check(result.date ==
+                      clock_serial_of(before, item.with_date, item.with_time) ||
+                  result.date ==
+                      clock_serial_of(after, item.with_date, item.with_time),
+              item.name);
+    }
+}
+
 void cases_family(const char* const cases, const char* const expected) {
     std::ifstream case_stream(cases);
     std::ifstream expected_stream(expected);
@@ -1008,6 +1111,8 @@ int main(const int argument_count, const char* const arguments[]) {
     const std::string family = arguments[2];
     if (family == "memory") {
         memory_family();
+    } else if (family == "clock") {
+        clock_family();
     } else if (family == "cases" && argument_count == 5) {
         cases_family(arguments[3], arguments[4]);
     } else {

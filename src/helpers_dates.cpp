@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <cwchar>
 #include <cwctype>
 #include <string>
 
@@ -36,16 +37,36 @@ Interval interval_of(const BSTR text) {
     for (wchar_t& c : name) {
         c = static_cast<wchar_t>(std::towlower(c));
     }
-    if (name == L"yyyy") return Interval::year;
-    if (name == L"q") return Interval::quarter;
-    if (name == L"m") return Interval::month;
-    if (name == L"y") return Interval::day_of_year;
-    if (name == L"d") return Interval::day;
-    if (name == L"w") return Interval::weekday;
-    if (name == L"ww") return Interval::week;
-    if (name == L"h") return Interval::hour;
-    if (name == L"n") return Interval::minute;
-    if (name == L"s") return Interval::second;
+    if (name == L"yyyy") {
+        return Interval::year;
+    }
+    if (name == L"q") {
+        return Interval::quarter;
+    }
+    if (name == L"m") {
+        return Interval::month;
+    }
+    if (name == L"y") {
+        return Interval::day_of_year;
+    }
+    if (name == L"d") {
+        return Interval::day;
+    }
+    if (name == L"w") {
+        return Interval::weekday;
+    }
+    if (name == L"ww") {
+        return Interval::week;
+    }
+    if (name == L"h") {
+        return Interval::hour;
+    }
+    if (name == L"n") {
+        return Interval::minute;
+    }
+    if (name == L"s") {
+        return Interval::second;
+    }
     return Interval::unknown;
 }
 
@@ -97,8 +118,8 @@ int days_in(const int year, const int month) {
     return month == 2 && leap ? 29 : lengths[month - 1];
 }
 
-bool join(const int year, const int month, const int day,
-          const double fraction, DATE& date) {
+bool join(const int year, const int month, const int day, const double fraction,
+          DATE& date) {
     SYSTEMTIME time = {};
     time.wYear = static_cast<WORD>(year);
     time.wMonth = static_cast<WORD>(month);
@@ -271,8 +292,7 @@ VARIANT* WINAPI rtcDateDiff(VARIANT* const result, const BSTR interval,
                      (ta.wYear * 4 + (ta.wMonth - 1) / 3);
             break;
         case Interval::month:
-            answer =
-                (tb.wYear * 12 + tb.wMonth) - (ta.wYear * 12 + ta.wMonth);
+            answer = (tb.wYear * 12 + tb.wMonth) - (ta.wYear * 12 + ta.wMonth);
             break;
         case Interval::day_of_year:
         case Interval::day:
@@ -376,6 +396,108 @@ VARIANT* WINAPI rtcDatePart(VARIANT* const result, const BSTR interval,
     result->vt = VT_I2;
     result->iVal = static_cast<SHORT>(part);
     return result;
+}
+
+// A Date from a Single or a Double: the range of a Date, else error 6.
+static DATE date_in_range(const double value) {
+    if (!(value >= -657434.9999999999) || !(value <= 2958465.9999999995)) {
+        static_cast<void>(vbrun::raise(6));
+        return 0.0;
+    }
+    return value;
+}
+
+DATE WINAPI __vbaDateR8(const double value) {
+    return date_in_range(value);
+}
+
+DATE WINAPI __vbaDateR4(const float value) {
+    return date_in_range(static_cast<double>(value));
+}
+
+// DateValue(text) and TimeValue(text): the text as a Date with only its date
+// (flag 2) or only its time (flag 1).
+static VARIANT* date_part_of_text(VARIANT* const result, const BSTR text,
+                                  const ULONG flags) {
+    VariantClear(result);
+    DATE value = 0.0;
+    const HRESULT status = VarDateFromStr(text == nullptr ? L"" : text,
+                                          GetUserDefaultLCID(), flags, &value);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+        return result;
+    }
+    result->vt = VT_DATE;
+    result->date = value;
+    return result;
+}
+
+VARIANT* WINAPI rtcGetDateValue(VARIANT* const result, const BSTR text) {
+    return date_part_of_text(result, text, VAR_DATEVALUEONLY);
+}
+
+VARIANT* WINAPI rtcGetTimeValue(VARIANT* const result, const BSTR text) {
+    return date_part_of_text(result, text, VAR_TIMEVALUEONLY);
+}
+
+// The clock (to the second): Date$, Time$, Date, Time and Now.
+BSTR WINAPI rtcGetDateBstr() {
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    wchar_t text[16];
+    std::swprintf(text, sizeof(text) / sizeof(text[0]), L"%02d-%02d-%04d",
+                  now.wMonth, now.wDay, now.wYear);
+    return SysAllocString(text);
+}
+
+BSTR WINAPI rtcGetTimeBstr() {
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    wchar_t text[16];
+    std::swprintf(text, sizeof(text) / sizeof(text[0]), L"%02d:%02d:%02d",
+                  now.wHour, now.wMinute, now.wSecond);
+    return SysAllocString(text);
+}
+
+namespace {
+
+double clock_serial(const bool with_date, const bool with_time) {
+    SYSTEMTIME now;
+    GetLocalTime(&now);
+    now.wMilliseconds = 0;
+    if (!with_time) {
+        now.wHour = 0;
+        now.wMinute = 0;
+        now.wSecond = 0;
+    }
+    double serial = 0.0;
+    SystemTimeToVariantTime(&now, &serial);
+    if (!with_date) {
+        serial -= std::floor(serial);
+    }
+    return serial;
+}
+
+VARIANT* clock_variant(VARIANT* const result, const bool with_date,
+                       const bool with_time) {
+    VariantClear(result);
+    result->vt = VT_DATE;
+    result->date = clock_serial(with_date, with_time);
+    return result;
+}
+
+}  // namespace
+
+VARIANT* WINAPI rtcGetDateVar(VARIANT* const result) {
+    return clock_variant(result, true, false);
+}
+
+VARIANT* WINAPI rtcGetTimeVar(VARIANT* const result) {
+    return clock_variant(result, false, true);
+}
+
+VARIANT* WINAPI rtcGetPresentDate(VARIANT* const result) {
+    return clock_variant(result, true, true);
 }
 
 }  // extern "C"

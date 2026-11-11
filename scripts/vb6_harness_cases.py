@@ -26,8 +26,13 @@ FILE_EXPORTS = {'rtcCurrentDirBstr', 'rtcCurrentDir', 'rtcFileLen', 'rtcGetFileA
 
 
 def main(folder, family, cases, only=None):
-    experiments = [line.split() for line in open(
-        os.path.join(folder, 'experiments.txt')).read().splitlines()]
+    experiments = []
+    for line in open(os.path.join(folder, 'experiments.txt')).read().splitlines():
+        parts = line.split()
+        if len(parts) == 3:
+            # An export without arguments has no kind.
+            parts = [parts[0], parts[1], '', parts[2]]
+        experiments.append(parts)
     lines = []
     errors = collections.Counter()
     crashed = []

@@ -109,8 +109,8 @@ EXPORTS
     __vbaCySub @203
     __vbaCyUI1 @204
     __vbaCyVar @205
-    __vbaDateR4=vbrun_stub_206 @206
-    __vbaDateR8=vbrun_stub_207 @207
+    __vbaDateR4 @206
+    __vbaDateR8 @207
     __vbaDateStr @208
     __vbaDateVar @209
     __vbaDerefAry=vbrun_stub_210 @210
@@ -443,13 +443,13 @@ EXPORTS
     rtcBstrFromAnsi=vbrun_stub_537 @537
     rtcPackDate @538
     rtcPackTime @539
-    rtcGetDateValue=vbrun_stub_540 @540
-    rtcGetTimeValue=vbrun_stub_541 @541
+    rtcGetDateValue @540
+    rtcGetTimeValue @541
     rtcGetDayOfMonth @542
     rtcGetHourOfDay @543
     rtcGetMinuteOfHour @544
     rtcGetMonthOfYear @545
-    rtcGetPresentDate=vbrun_stub_546 @546
+    rtcGetPresentDate @546
     rtcGetSecondOfMinute @547
     rtcSetDateVar=vbrun_stub_548 @548
     rtcSetDateBstr=vbrun_stub_549 @549
@@ -512,10 +512,10 @@ EXPORTS
     rtcStringBstr=vbrun_stub_606 @606
     rtcStringVar @607
     rtcVarBstrFromAnsi=vbrun_stub_608 @608
-    rtcGetDateBstr=vbrun_stub_609 @609
-    rtcGetDateVar=vbrun_stub_610 @610
-    rtcGetTimeBstr=vbrun_stub_611 @611
-    rtcGetTimeVar=vbrun_stub_612 @612
+    rtcGetDateBstr @609
+    rtcGetDateVar @610
+    rtcGetTimeBstr @611
+    rtcGetTimeVar @612
     rtcVarStrFromVar @613
     rtcSqr @614
     rtcIMEStatus=vbrun_stub_615 @615

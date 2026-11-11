@@ -1184,6 +1184,36 @@ _body += [
 RAW['fileNumbers'] = '\n'.join(_body) + '\n'
 experiment('fileNumbers', 'x', 'n', [()])
 
+# Batch seven: DateValue and TimeValue take the String (not a Variant) and
+# the Date and Time getters read the clock; Date from a Single or a Double.
+DATETEXT = ['1/2/2000', '12/31/9999', '1/1/100', '1/2/00', '1/2/29', '1/2/30',
+            '1/2/2000 3:04 PM', '3:04:05 PM', '15:04', '12:30', '12:00 AM',
+            '23:59:59', '24:00:00', '1:45:10 PM', 'January 2, 2000',
+            'Jan 5, 2001', '2000-01-02', '2/29/2000', '2/29/1999', '13/45/2000',
+            '  1/2/2000  ', 'garbage', '', '1/2', 'Jan 5', '5 Jan', '1/2/2000 25:00',
+            '1/2/2000 12:00:00 AM', 'Monday', 'noon', '#1/2/2000#', '1.5', '36526',
+            '2000/1/2', '1 2 2000', '1-2-2000', 'Jan 5 2001 3pm', '4/5/6',
+            '12/30/1899', '12/31/1899 6:00 PM', '1/1/1900 12:00:01 AM']
+for name in ('rtcGetDateValue', 'rtcGetTimeValue'):
+    experiment(name, 'OS', 'V',
+               [(('"%s"' % t, 's"%s"' % t),) for t in DATETEXT], isolate=True)
+for name, kind, values in (
+        ('__vbaDateR4', 'F', ('0', '1.5', '-1.5', '36526.75', '2958465', '2958466',
+                              '-657434', '-657435', '1E10', '-1E10', '0.5',
+                              '1234567.9')),
+        ('__vbaDateR8', 'D', ('0', '1.5', '-1.5', '36526.75', '2958465.99999',
+                              '2958466', '-657434', '-657435', '-657434.5',
+                              '1E30', '-1E30', '0.123456789', '2958465.999999'))):
+    experiment(name, kind, 'd', [((v, ('f' if kind == 'F' else 'd') + v),)
+                                 for v in values], isolate=True)
+for name in ('rtcGetDateBstr', 'rtcGetTimeBstr'):
+    experiment(name, '', 's', [()])
+for name in ('rtcGetDateVar', 'rtcGetTimeVar', 'rtcGetPresentDate'):
+    experiment(name, 'O', 'V', [()])
+RAW['clockNative'] = '''    Rec "native => " & Date$ & " " & Time$ & " " & CStr(CDbl(Date)) & " " & CStr(CDbl(Time)) & " " & CStr(CDbl(Now)) & " " & Format$(Now, "yyyy-mm-dd hh:nn:ss")
+'''
+experiment('clockNative', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

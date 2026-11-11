@@ -290,3 +290,12 @@ __vbaPut4
 __vbaGet3
 __vbaGet4
 __vbaPutFxStr4
+__vbaDateR4
+__vbaDateR8
+rtcGetDateValue
+rtcGetTimeValue
+rtcGetDateBstr
+rtcGetTimeBstr
+rtcGetDateVar
+rtcGetTimeVar
+rtcGetPresentDate
