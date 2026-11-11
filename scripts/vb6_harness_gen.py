@@ -875,6 +875,315 @@ RAW['fileTable'] = '''    Dim fa As Integer, fb As Integer, fs As String, fn As 
 '''
 experiment('fileTable', 'x', 'n', [()])
 
+# Batch six: Print, Write, Input, Get and Put. Each Print/Write statement
+# writes one line (a marker line follows a statement that does not end its
+# line); the file is read back as text and every line is recorded escaped.
+RAW['filePrint'] = '''    Dim pi As Integer, pl As Long, ps As Single, pd As Double, pc As Currency
+    Dim pdt As Date, pbo As Boolean, pby As Byte, pv As Variant, pstr As String
+    Dim pq As String, pn As Long, pl2 As Long
+    On Error Resume Next
+    Kill "wfcio_p.tmp"
+    Open "wfcio_p.tmp" For Output As #21
+    pi = 5
+    Print #21, pi
+    pi = -5
+    Print #21, pi
+    pl = 70000
+    Print #21, pl
+    ps = 1.5
+    Print #21, ps
+    ps = 0.1
+    Print #21, ps
+    ps = 1234567.9
+    Print #21, ps
+    ps = 1E+20
+    Print #21, ps
+    pd = 1.5
+    Print #21, pd
+    pd = 0.1
+    Print #21, pd
+    pd = 1234567.891
+    Print #21, pd
+    pd = 1E+20
+    Print #21, pd
+    pd = -1E-10
+    Print #21, pd
+    pc = 12.5
+    Print #21, pc
+    pc = -3
+    Print #21, pc
+    pdt = #1/2/2000#
+    Print #21, pdt
+    pdt = #1/2/2000 3:04:05 PM#
+    Print #21, pdt
+    pdt = #3:04:05 PM#
+    Print #21, pdt
+    pbo = True
+    Print #21, pbo
+    pbo = False
+    Print #21, pbo
+    pby = 7
+    Print #21, pby
+    pv = Null
+    Print #21, pv
+    pv = Empty
+    Print #21, pv
+    pv = CDbl(5.5)
+    Print #21, pv
+    pv = "text"
+    Print #21, pv
+    pv = CVErr(5)
+    Print #21, pv
+    pstr = "abc"
+    Print #21, pstr
+    Print #21, "a", "b", "c"
+    Print #21, "abc", 5, 3
+    Print #21, 1; 2; 3
+    Print #21, "a"; Tab(10); "b"
+    Print #21, "a"; Spc(3); "b"
+    Print #21, "a"; Tab; "b"
+    Print #21, "x";
+    Print #21, "y"
+    Print #21, "m",
+    Print #21, "n"
+    Print #21,
+    Print #21, ""
+    Print #21, "tab"; Tab(2); "x"
+    Print #21, 123456789; Tab(5); "x"
+    Print #21, pi; pl; pd; pstr
+    Write #21, "a", 5, -2.5, True
+    pdt = #1/2/2000#
+    Write #21, pdt
+    pdt = #1/2/2000 3:04:05 PM#
+    Write #21, pdt
+    Write #21, Null
+    pv = Empty
+    Write #21, pv
+    Write #21, CVErr(5)
+    pc = 3.5
+    Write #21, pc
+    pby = 2
+    Write #21, pby
+    pd = 1E+20
+    Write #21, pd
+    ps = 0.1
+    Write #21, ps
+    pd = 0.1
+    Write #21, pd
+    Write #21, "a"; "b"
+    Write #21,
+    Write #21, "say ""hi"""
+    Write #21, "y"
+    Write #21, "a", "b"
+    pbo = False
+    Write #21, pbo
+    Close #21
+    Open "wfcio_p.tmp" For Binary As #22
+    pstr = Space$(LOF(22))
+    Get #22, , pstr
+    Close #22
+    pstr = Replace(pstr, vbCr, "\\r")
+    pstr = Replace(pstr, vbLf, "\\n#")
+    pq = pstr
+    pn = 1
+    Do While Len(pq) > 0
+        pl2 = InStr(pq, "#")
+        If pl2 = 0 Then
+            Rec "line" & pn & " => [" & pq & "]"
+            pq = ""
+        Else
+            Rec "line" & pn & " => [" & Left$(pq, pl2 - 1) & "]"
+            pq = Mid$(pq, pl2 + 1)
+        End If
+        pn = pn + 1
+    Loop
+    Kill "wfcio_p.tmp"
+'''
+experiment('filePrint', 'x', 'n', [()])
+
+# Input # and Get/Put: values read back from text, and the bytes Put writes.
+RAW['fileInput'] = '''    Dim ia As Integer, ib As Long, ic As Single, id As Double, ie As Currency
+    Dim ig As Date, ih As Boolean, ii As Byte, iv As Variant, iv2 As Variant
+    Dim is1 As String, is2 As String, ik As Long, pstr As String
+    Dim hx As String, hi As Long, rx As String * 4
+    On Error Resume Next
+    Kill "wfcio_i.tmp"
+    Open "wfcio_i.tmp" For Output As #21
+    Print #21, "12, -7, 3.5, 1E+20, 2.25, #1/2/2000#, True, 9, abc, ""q,r"""
+    Print #21, "  42  ,  hello world  ,7"
+    Print #21, "1,2"
+    Print #21, "3 4"
+    Print #21, "-1.5E2,"
+    Print #21, "x,#2000-01-02#,#TRUE#,#NULL#,#ERROR 5#"
+    Print #21, ""
+    Print #21, "99999"
+    Print #21, "&H1F,&O17"
+    Close #21
+    Open "wfcio_i.tmp" For Input As #22
+    Input #22, ia, ib, ic, id, ie, ig, ih, ii, is1, is2
+    Rec "in1 => " & ia & "|" & ib & "|" & ic & "|" & id & "|" & ie & "|" & ig & "|" & ih & "|" & ii & "|" & is1 & "|" & is2 & " err " & Err.Number
+    Err.Clear
+    Input #22, iv, is1, iv2
+    Rec "in2 => " & iv & "|" & TypeName(iv) & "|" & is1 & "|" & iv2 & "|" & TypeName(iv2) & " err " & Err.Number
+    Err.Clear
+    Input #22, ia, ib
+    Rec "in3 => " & ia & "|" & ib & " err " & Err.Number
+    Err.Clear
+    Input #22, ia, ib
+    Rec "in4 => " & ia & "|" & ib & " err " & Err.Number
+    Err.Clear
+    Input #22, id, is1
+    Rec "in5 => " & id & "|[" & is1 & "] err " & Err.Number
+    Err.Clear
+    Input #22, iv, iv2, ih, ik
+    Rec "in6 => " & iv & "|" & TypeName(iv) & "|" & iv2 & "|" & TypeName(iv2) & "|" & ih & "|" & ik & " err " & Err.Number
+    Err.Clear
+    Input #22, iv
+    Rec "in7 => [" & iv & "] " & TypeName(iv) & " err " & Err.Number
+    Err.Clear
+    Input #22, ia
+    Rec "in8 => " & ia & " err " & Err.Number
+    Err.Clear
+    Input #22, ia, ib
+    Rec "in9 => " & ia & "|" & ib & " err " & Err.Number
+    Err.Clear
+    Input #22, ia
+    Rec "in10 => " & ia & " err " & Err.Number
+    Rec "in eof => " & EOF(22)
+    Close #22
+    Kill "wfcio_i.tmp"
+    Kill "wfcio_g.tmp"
+    Open "wfcio_g.tmp" For Binary As #24
+    ii = 200
+    Put #24, , ii
+    ia = -2
+    Put #24, , ia
+    ib = &H12345678
+    Put #24, , ib
+    ic = 1.5
+    Put #24, , ic
+    id = 2.5
+    Put #24, , id
+    ie = 3.25
+    Put #24, , ie
+    ig = #1/2/2000#
+    Put #24, , ig
+    ih = True
+    Put #24, , ih
+    is1 = "abc"
+    Put #24, , is1
+    iv = CInt(7)
+    Put #24, , iv
+    iv = "vs"
+    Put #24, , iv
+    ik = LOF(24)
+    Rec "bin lof => " & ik
+    Close #24
+    Open "wfcio_g.tmp" For Binary As #24
+    pstr = Space$(LOF(24))
+    Get #24, , pstr
+    For hi = 1 To Len(pstr)
+        hx = hx & Right$("0" & Hex$(Asc(Mid$(pstr, hi, 1))), 2)
+    Next
+    Rec "bin bytes => " & hx
+    Seek #24, 1
+    Get #24, , ii
+    Get #24, , ia
+    Get #24, , ib
+    Get #24, , ic
+    Get #24, , id
+    Get #24, , ie
+    Get #24, , ig
+    Get #24, , ih
+    is2 = Space$(3)
+    Get #24, , is2
+    Rec "bin get => " & ii & "|" & ia & "|" & Hex$(ib) & "|" & ic & "|" & id & "|" & ie & "|" & ig & "|" & ih & "|" & is2
+    Get #24, , iv
+    Rec "bin getv => " & iv & "|" & TypeName(iv)
+    Get #24, , iv
+    Rec "bin getv2 => " & iv & "|" & TypeName(iv)
+    Rec "bin eof => " & EOF(24)
+    Get #24, , ia
+    Rec "bin past => " & ia & " err " & Err.Number & " eof " & EOF(24)
+    Close #24
+    Kill "wfcio_g.tmp"
+    Open "wfcio_g.tmp" For Random As #25 Len = 20
+    ia = 11
+    Put #25, 3, ia
+    Rec "rnd lof => " & LOF(25)
+    is1 = "hello"
+    Put #25, 1, is1
+    Rec "rnd lof2 => " & LOF(25) & " loc " & Loc(25)
+    rx = "wxyz"
+    Put #25, 2, rx
+    Rec "rnd lof3 => " & LOF(25)
+    Close #25
+    Open "wfcio_g.tmp" For Binary As #25
+    pstr = Space$(LOF(25))
+    Get #25, , pstr
+    hx = ""
+    For hi = 1 To Len(pstr)
+        hx = hx & Right$("0" & Hex$(Asc(Mid$(pstr, hi, 1))), 2)
+    Next
+    Rec "rnd bytes => " & hx
+    Close #25
+    Kill "wfcio_g.tmp"
+'''
+experiment('fileInput', 'x', 'n', [()])
+
+# The formats of Print # and Write # across magnitudes: where a Double, a
+# Single or a Currency switches to an exponent, and unusual dates.
+_NUMBER_STATEMENTS = []
+for _lit in ('1E-4', '1E-5', '1E-6', '1E-7', '1E-8', '1E-10', '1E-14', '1E-15',
+             '1E-16', '1E-17', '1E-20', '1E-30', '0.000123456', '0.00012345678901234567',
+             '1E13', '1E14', '1E15', '1E16', '123456789012345', '1234567890123456',
+             '12345678901234567', '0.1', '1/3', '2/3', '100000', '1234.5678901234567',
+             '-0.5', '3.0000000000000004', '1.7976931348623157E+308', '4.94065645841247E-324'):
+    _NUMBER_STATEMENTS.append(('pd', 'pd = ' + _lit))
+for _lit in ('1E-4', '1E-5', '1E-6', '1E-8', '1E-10', '1E-20', '1234567', '12345678',
+             '123456789', '0.000123456', '1/3', '2/3', '1E6', '1E7', '1E8', '100000',
+             '16777216', '1E15', '3.4E+38', '1.4E-45', '-0.5', '0.3'):
+    _NUMBER_STATEMENTS.append(('ps', 'ps = CSng(' + _lit + ')'))
+for _lit in ('922337203685477.5807', '-922337203685477.5808', '0.0001', '0.00005',
+             '123456789.1234', '1', '0', '1000000', '-0.0001', '1E+10'):
+    _NUMBER_STATEMENTS.append(('pc', 'pc = CCur(' + _lit + ')'))
+for _lit in ('#12/31/9999#', '#1/1/0100#', '#12/30/1899#', '#12/30/1899 12:00:00 AM#',
+             '#12/30/1899 6:00:00 PM#', '#1/1/1900#', '#1/1/1900 12:00:01 AM#',
+             '#12/29/1899#', '#12/29/1899 6:00:00 PM#', '#1/1/2000 12:00:00 AM#',
+             '#1/1/2000 11:59:59 PM#', '#6/15/1850 3:00:00 PM#'):
+    _NUMBER_STATEMENTS.append(('pdt', 'pdt = ' + _lit))
+_body = ['    Dim pd As Double, ps As Single, pc As Currency, pdt As Date',
+         '    Dim pstr As String, pq As String, pn As Long, pl2 As Long',
+         '    On Error Resume Next', '    Kill "wfcio_n.tmp"',
+         '    Open "wfcio_n.tmp" For Output As #21']
+for _var, _stmt in _NUMBER_STATEMENTS:
+    _body.append('    ' + _stmt)
+    _body.append('    Print #21, ' + _var)
+    _body.append('    Write #21, ' + _var)
+_body += [
+    '    Close #21',
+    '    Open "wfcio_n.tmp" For Binary As #22',
+    '    pstr = Space$(LOF(22))',
+    '    Get #22, , pstr',
+    '    Close #22',
+    '    pstr = Replace(pstr, vbCr, "")',
+    '    pq = pstr',
+    '    pn = 1',
+    '    Do While Len(pq) > 0',
+    '        pl2 = InStr(pq, vbLf)',
+    '        If pl2 = 0 Then',
+    '            Rec "n" & pn & " => [" & pq & "]"',
+    '            pq = ""',
+    '        Else',
+    '            Rec "n" & pn & " => [" & Left$(pq, pl2 - 1) & "]"',
+    '            pq = Mid$(pq, pl2 + 1)',
+    '        End If',
+    '        pn = pn + 1',
+    '    Loop',
+    '    Kill "wfcio_n.tmp"']
+RAW['fileNumbers'] = '\n'.join(_body) + '\n'
+experiment('fileNumbers', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

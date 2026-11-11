@@ -191,6 +191,26 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       TC-MP0009-vbrun-openfiles
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
+    # Print, Write, Input, Get and Put against a Visual Basic 6 program.
+    add_executable(
+      vbrun_file_data_tests
+      tests/vbrun_file_data_tests.cpp
+      src/helpers_openfiles.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_file_data_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_file_data_tests)
+    add_test(
+      NAME TC-MP0009-vbrun-filedata
+      COMMAND vbrun_file_data_tests
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileprint.expected"
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileinput.expected"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set_tests_properties(
+      TC-MP0009-vbrun-filedata
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")

@@ -282,3 +282,11 @@ __vbaFileSeek
 rtcEndOfFile
 __vbaLineInputStr
 __vbaLineInputVar
+__vbaPrintFile
+__vbaWriteFile
+__vbaInputFile
+__vbaPut3
+__vbaPut4
+__vbaGet3
+__vbaGet4
+__vbaPutFxStr4

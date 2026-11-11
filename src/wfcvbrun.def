@@ -150,8 +150,8 @@ EXPORTS
     __vbaFreeStrList=vbrun_stub_244 @244
     __vbaFreeVarList=vbrun_stub_245 @245
     __vbaGenerateBoundsError=vbrun_stub_246 @246
-    __vbaGet3=vbrun_stub_247 @247
-    __vbaGet4=vbrun_stub_248 @248
+    __vbaGet3 @247
+    __vbaGet4 @248
     __vbaGetFxStr3=vbrun_stub_249 @249
     __vbaGetFxStr4=vbrun_stub_250 @250
     __vbaGetOwner3=vbrun_stub_251 @251
@@ -184,7 +184,7 @@ EXPORTS
     __vbaInStrB @278
     __vbaInStrVar=vbrun_stub_279 @279
     __vbaInStrVarB=vbrun_stub_280 @280
-    __vbaInputFile=vbrun_stub_281 @281
+    __vbaInputFile @281
     __vbaLateIdCall=vbrun_stub_282 @282
     __vbaLateIdCallLd=vbrun_stub_283 @283
     EbGetErrorInfo=vbrun_stub_284 @284
@@ -258,12 +258,12 @@ EXPORTS
     __vbaOnError=vbrun_stub_352 @352
     __vbaOnGoCheck=vbrun_stub_353 @353
     __vbaPowerR8=vbrun_stub_354 @354
-    __vbaPrintFile=vbrun_stub_355 @355
+    __vbaPrintFile @355
     __vbaPrintObj=vbrun_stub_356 @356
-    __vbaPut3=vbrun_stub_357 @357
-    __vbaPut4=vbrun_stub_358 @358
+    __vbaPut3 @357
+    __vbaPut4 @358
     __vbaPutFxStr3=vbrun_stub_359 @359
-    __vbaPutFxStr4=vbrun_stub_360 @360
+    __vbaPutFxStr4 @360
     __vbaPutOwner3=vbrun_stub_361 @361
     __vbaPutOwner4=vbrun_stub_362 @362
     __vbaR4Cy @363
@@ -526,7 +526,7 @@ EXPORTS
     rtcInputCharCount=vbrun_stub_620 @620
     rtcInputCharCountVar=vbrun_stub_621 @621
     rtcStrConvVar @622
-    __vbaWriteFile=vbrun_stub_623 @623
+    __vbaWriteFile @623
     rtcGetHostLCID=vbrun_stub_624 @624
     rtcCreateObject=vbrun_stub_625 @625
     rtcGetObject=vbrun_stub_626 @626
