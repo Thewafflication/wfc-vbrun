@@ -338,3 +338,7 @@ __vbaR4Sgn
 __vbaR8Sgn
 rtDecFromVar
 __vbaPowerR8
+__vbaCopyBytes
+__vbaCopyBytesZero
+__vbaFixstrConstruct
+__vbaObjIs

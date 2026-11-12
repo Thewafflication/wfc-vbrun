@@ -639,6 +639,56 @@ double WINAPI __vbaPowerR8(const double base, const double exponent) {
     return answer;
 }
 
+// Record copies: `count` bytes from `source` to `target` (the target comes
+// back); the Zero form clears the source afterwards.
+void* WINAPI __vbaCopyBytes(const LONG count, void* const target,
+                            const void* const source) {
+    std::memmove(target, source, static_cast<std::size_t>(count));
+    return target;
+}
+
+void* WINAPI __vbaCopyBytesZero(const LONG count, void* const target,
+                                void* const source) {
+    std::memmove(target, source, static_cast<std::size_t>(count));
+    std::memset(source, 0, static_cast<std::size_t>(count));
+    return target;
+}
+
+// A fixed-length String variable: `count` characters, all NUL at first.
+void WINAPI __vbaFixstrConstruct(const LONG count, BSTR* const slot) {
+    *slot = SysAllocStringLen(nullptr, static_cast<UINT>(count));
+    if (*slot == nullptr) {
+        static_cast<void>(vbrun::raise(14));
+        return;
+    }
+    std::memset(*slot, 0, static_cast<std::size_t>(count) * 2U);
+}
+
+// `a Is b`: True when both are the same object (compared by their IUnknown),
+// or both Nothing.
+LONG WINAPI __vbaObjIs(IUnknown* const left, IUnknown* const right) {
+    if (left == nullptr || right == nullptr) {
+        return left == nullptr && right == nullptr ? -1 : 0;
+    }
+    IUnknown* left_identity = nullptr;
+    if (FAILED(left->QueryInterface(IID_IUnknown,
+                                    reinterpret_cast<void**>(&left_identity))) ||
+        left_identity == nullptr) {
+        return 0;
+    }
+    IUnknown* right_identity = nullptr;
+    if (FAILED(right->QueryInterface(
+            IID_IUnknown, reinterpret_cast<void**>(&right_identity))) ||
+        right_identity == nullptr) {
+        left_identity->Release();
+        return 0;
+    }
+    const LONG same = left_identity == right_identity ? -1 : 0;
+    left_identity->Release();
+    right_identity->Release();
+    return same;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

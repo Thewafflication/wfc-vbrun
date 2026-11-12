@@ -86,8 +86,8 @@ EXPORTS
     __vbaCheckType=vbrun_stub_180 @180
     __vbaCheckTypeVar=vbrun_stub_181 @181
     __vbaChkstk=vbrun_stub_182 @182
-    __vbaCopyBytes=vbrun_stub_183 @183
-    __vbaCopyBytesZero=vbrun_stub_184 @184
+    __vbaCopyBytes @183
+    __vbaCopyBytesZero @184
     __vbaCyAbs @185
     ProcCallEngine=vbrun_stub_186 @186
     DllFunctionCall=vbrun_stub_187 @187
@@ -140,7 +140,7 @@ EXPORTS
     __vbaFileLock @234
     __vbaFileOpen @235
     __vbaFileSeek @236
-    __vbaFixstrConstruct=vbrun_stub_237 @237
+    __vbaFixstrConstruct @237
     __vbaForEachAry=vbrun_stub_238 @238
     __vbaForEachCollAd=vbrun_stub_239 @239
     __vbaForEachCollObj=vbrun_stub_240 @240
@@ -251,7 +251,7 @@ EXPORTS
     __vbaNextEachCollVar=vbrun_stub_345 @345
     __vbaNextEachVar=vbrun_stub_346 @346
     __vbaObjAddref=vbrun_stub_347 @347
-    __vbaObjIs=vbrun_stub_348 @348
+    __vbaObjIs @348
     __vbaObjSet=vbrun_stub_349 @349
     __vbaObjSetAddref=vbrun_stub_350 @350
     __vbaObjVar=vbrun_stub_351 @351
