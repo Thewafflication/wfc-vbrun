@@ -342,3 +342,9 @@ __vbaCopyBytes
 __vbaCopyBytesZero
 __vbaFixstrConstruct
 __vbaObjIs
+__vbaObjSet
+__vbaObjSetAddref
+__vbaObjAddref
+__vbaVerifyVarObj
+__vbaObjVar
+__vbaUnkVar

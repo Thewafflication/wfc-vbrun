@@ -689,6 +689,77 @@ LONG WINAPI __vbaObjIs(IUnknown* const left, IUnknown* const right) {
     return same;
 }
 
+// Object variables. `Set dest = source`: the old object is released; the
+// Addref form takes its own reference to the new one, the plain form takes
+// over one the caller already holds. The answer is the new value.
+static IUnknown* store_object(IUnknown** const destination,
+                              IUnknown* const source, const bool add_reference) {
+    if (add_reference && source != nullptr) {
+        source->AddRef();
+    }
+    IUnknown* const old = *destination;
+    *destination = source;
+    if (old != nullptr) {
+        old->Release();
+    }
+    return *destination;
+}
+
+IUnknown* WINAPI __vbaObjSet(IUnknown** const destination,
+                             IUnknown* const source) {
+    return store_object(destination, source, false);
+}
+
+IUnknown* WINAPI __vbaObjSetAddref(IUnknown** const destination,
+                                   IUnknown* const source) {
+    return store_object(destination, source, true);
+}
+
+IUnknown* WINAPI __vbaObjAddref(IUnknown* const object) {
+    if (object != nullptr) {
+        object->AddRef();
+    }
+    return object;
+}
+
+// A Variant that must hold an object (error 424 otherwise).
+VARIANT* WINAPI __vbaVerifyVarObj(VARIANT* const value) {
+    const unsigned vt = value->vt & 0xBFFFU;
+    if (vt != VT_DISPATCH && vt != VT_UNKNOWN) {
+        static_cast<void>(vbrun::raise(424));
+    }
+    return value;
+}
+
+// The object inside a Variant (an IDispatch; a by-reference Variant is
+// followed). Anything else is error 424.
+IUnknown* WINAPI __vbaObjVar(VARIANT* const value) {
+    if (value == nullptr) {
+        static_cast<void>(vbrun::raise(424));
+        return nullptr;
+    }
+    unsigned vt = value->vt;
+    IUnknown* object = value->punkVal;
+    if ((vt & VT_BYREF) != 0) {
+        object = *value->ppunkVal;
+        vt &= ~static_cast<unsigned>(VT_BYREF);
+    }
+    if (vt != VT_DISPATCH) {
+        static_cast<void>(vbrun::raise(424));
+        return nullptr;
+    }
+    return object;
+}
+
+// The IUnknown or IDispatch inside a Variant.
+IUnknown* WINAPI __vbaUnkVar(VARIANT* const value) {
+    if (value->vt != VT_DISPATCH && value->vt != VT_UNKNOWN) {
+        static_cast<void>(vbrun::raise(424));
+        return nullptr;
+    }
+    return value->punkVal;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

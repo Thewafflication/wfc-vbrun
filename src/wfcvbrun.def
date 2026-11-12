@@ -250,11 +250,11 @@ EXPORTS
     __vbaNextEachCollObj=vbrun_stub_344 @344
     __vbaNextEachCollVar=vbrun_stub_345 @345
     __vbaNextEachVar=vbrun_stub_346 @346
-    __vbaObjAddref=vbrun_stub_347 @347
+    __vbaObjAddref @347
     __vbaObjIs @348
-    __vbaObjSet=vbrun_stub_349 @349
-    __vbaObjSetAddref=vbrun_stub_350 @350
-    __vbaObjVar=vbrun_stub_351 @351
+    __vbaObjSet @349
+    __vbaObjSetAddref @350
+    __vbaObjVar @351
     __vbaOnError=vbrun_stub_352 @352
     __vbaOnGoCheck=vbrun_stub_353 @353
     __vbaPowerR8 @354
@@ -350,7 +350,7 @@ EXPORTS
     __vbaUI1Var @444
     __vbaUbound=vbrun_stub_445 @445
     __vbaUdtVar=vbrun_stub_446 @446
-    __vbaUnkVar=vbrun_stub_447 @447
+    __vbaUnkVar @447
     __vbaVar2Vec=vbrun_stub_448 @448
     __vbaVarAbs @449
     __vbaVarAdd @450
@@ -507,7 +507,7 @@ EXPORTS
     rtcArray @601
     __vbaVargUnk=vbrun_stub_602 @602
     __vbaVargUnkAddref=vbrun_stub_603 @603
-    __vbaVerifyVarObj=vbrun_stub_604 @604
+    __vbaVerifyVarObj @604
     rtcGetErl=vbrun_stub_605 @605
     rtcStringBstr @606
     rtcStringVar @607
