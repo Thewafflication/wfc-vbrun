@@ -1698,6 +1698,53 @@ RAW['midStmt'] = '''    Dim ms As String, mf As String * 5, mv As Variant, mn As
 '''
 experiment('midStmt', 'x', 'n', [()])
 
+# Seek, Loc and EOF of a sequential file around Ctrl-Z and NUL bytes.
+RAW['fileCtrl2'] = '''    Dim cs As String, cb As String, cx As String, ch As Long, ck As Long
+    On Error Resume Next
+    For ck = 1 To 6
+        Kill "wfcio_d.tmp"
+        Err.Clear
+        Open "wfcio_d.tmp" For Binary As #25
+        Select Case ck
+            Case 1: cs = "abc" & Chr$(26) & "def"
+            Case 2: cs = Chr$(26) & "abc"
+            Case 3: cs = "abc" & Chr$(26)
+            Case 4: cs = "ab" & Chr$(0) & "cd"
+            Case 5: cs = "abc" & Chr$(26) & "def" & vbCrLf & "ghi" & vbCrLf
+            Case 6: cs = Chr$(0) & Chr$(0)
+        End Select
+        Put #25, , cs
+        Close #25
+        Open "wfcio_d.tmp" For Input As #22
+        Rec "case" & ck & " start => eof " & EOF(22) & " seek " & Seek(22) & " loc " & Loc(22) & " lof " & LOF(22)
+        Line Input #22, cb
+        cx = ""
+        For ch = 1 To Len(cb)
+            cx = cx & AscW(Mid$(cb, ch, 1)) & ","
+        Next
+        Rec "case" & ck & " line1 => " & cx & " err " & Err.Number & " eof " & EOF(22) & " seek " & Seek(22) & " loc " & Loc(22)
+        Err.Clear
+        Line Input #22, cb
+        Rec "case" & ck & " line2 => " & Len(cb) & " err " & Err.Number & " eof " & EOF(22) & " seek " & Seek(22) & " loc " & Loc(22)
+        Err.Clear
+        Close #22
+        Open "wfcio_d.tmp" For Input As #22
+        cb = Input$(2, #22)
+        Rec "case" & ck & " in2 => " & Len(cb) & " err " & Err.Number & " eof " & EOF(22) & " seek " & Seek(22) & " loc " & Loc(22)
+        Err.Clear
+        cb = Input$(1, #22)
+        Rec "case" & ck & " in1 => " & Len(cb) & " err " & Err.Number & " eof " & EOF(22) & " seek " & Seek(22) & " loc " & Loc(22)
+        Err.Clear
+        Close #22
+    Next
+    Kill "wfcio_d.tmp"
+    Dim mq As Variant, mr As Variant
+    mq = Null: mr = "x"
+    mr = "abc": mq = Null: Mid$(mr, 1) = mq: Rec "nullrepl => " & mr & " err " & Err.Number
+    Err.Clear
+'''
+experiment('fileCtrl2', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
