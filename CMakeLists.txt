@@ -212,6 +212,22 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       TC-MP0009-vbrun-filedata
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
+    # StrComp on Variants, Command$, DoEvents and the small host exports.
+    add_executable(
+      vbrun_system_misc_tests
+      tests/vbrun_system_misc_tests.cpp
+      src/helpers_scalars.cpp
+      src/helpers_system.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_system_misc_tests PRIVATE oleaut32 user32)
+    wfc_vbrun_harden(vbrun_system_misc_tests)
+    add_test(NAME TC-MP0009-vbrun-systemmisc COMMAND vbrun_system_misc_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-systemmisc
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # The Mid$ statement.
     add_executable(
       vbrun_midstmt_tests

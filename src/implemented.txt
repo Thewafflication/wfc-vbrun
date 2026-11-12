@@ -315,3 +315,14 @@ __vbaMidStmtBstr
 __vbaMidStmtBstrB
 __vbaMidStmtVar
 __vbaMidStmtVarB
+rtcBeep
+rtcDoEvents
+rtcGetHostLCID
+rtcGetCurrentCalendar
+rtcBstrFromAnsi
+rtcVarBstrFromAnsi
+rtcVarBstrFromByte
+__vbaStrCompVar
+rtcCompareBstr
+rtcCommandBstr
+rtcCommandVar

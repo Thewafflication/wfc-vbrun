@@ -1745,6 +1745,36 @@ RAW['fileCtrl2'] = '''    Dim cs As String, cb As String, cx As String, ch As Lo
 '''
 experiment('fileCtrl2', 'x', 'n', [()])
 
+# Command$ and DoEvents (run with different arguments: Harness.exe "778 a  b").
+RAW['cmdLine'] = '''    Dim cm As String
+    cm = Command$
+    Rec "cmd => [" & cm & "] len " & Len(cm) & " " & TypeName(Command)
+    Rec "doevents => " & DoEvents & " " & TypeName(DoEvents)
+    Dim sa As Variant, sb As Variant, sr As Variant
+    On Error Resume Next
+    sa = "abc": sb = "ABC"
+    sr = StrComp(sa, sb): Rec "sc binary => " & sr & " " & TypeName(sr) & " err " & Err.Number
+    sr = StrComp(sa, sb, vbTextCompare): Rec "sc text => " & sr & " " & TypeName(sr)
+    sr = StrComp(sb, sa): Rec "sc rev => " & sr
+    sr = StrComp(sa, sb, vbDatabaseCompare): Rec "sc db => " & sr & " err " & Err.Number
+    Err.Clear
+    sa = Null: sr = StrComp(sa, sb): Rec "sc nullL => " & TypeName(sr) & " err " & Err.Number
+    Err.Clear
+    sa = "x": sb = Null: sr = StrComp(sa, sb): Rec "sc nullR => " & TypeName(sr) & " err " & Err.Number
+    Err.Clear
+    sa = Empty: sb = "": sr = StrComp(sa, sb): Rec "sc empty => " & sr & " " & TypeName(sr) & " err " & Err.Number
+    Err.Clear
+    sa = 12: sb = "12": sr = StrComp(sa, sb): Rec "sc num => " & sr
+    sa = 2: sb = 10: sr = StrComp(sa, sb): Rec "sc nums => " & sr
+    sa = "a": sb = "b": sr = StrComp(sa, sb): Rec "sc lt => " & sr
+    sa = "b": sb = "a": sr = StrComp(sa, sb): Rec "sc gt => " & sr
+    Rec "chr => " & AscW(Chr$(65)) & " " & AscW(Chr$(200)) & " " & LenB(ChrB$(200)) & " " & AscB(ChrB$(200))
+    Rec "chrv => " & TypeName(Chr(65)) & " " & TypeName(ChrB(65)) & " " & LenB(ChrB(65))
+    Beep
+    Rec "beep => " & Err.Number
+'''
+experiment('cmdLine', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

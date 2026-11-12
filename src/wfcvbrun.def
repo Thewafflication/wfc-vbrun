@@ -311,7 +311,7 @@ EXPORTS
     __vbaStrCat @405
     __vbaStrCmp @406
     __vbaStrComp @407
-    __vbaStrCompVar=vbrun_stub_408 @408
+    __vbaStrCompVar @408
     __vbaStrCy @409
     BASIC_CLASS_QueryInterface=vbrun_stub_410 @410
     BASIC_CLASS_AddRef=vbrun_stub_411 @411
@@ -437,10 +437,10 @@ EXPORTS
     rtcMakeDir @531
     rtcRemoveDir @532
     rtcChangeDrive=vbrun_stub_533 @533
-    rtcBeep=vbrun_stub_534 @534
+    rtcBeep @534
     rtcGetTimer @535
     rtcStrFromVar @536
-    rtcBstrFromAnsi=vbrun_stub_537 @537
+    rtcBstrFromAnsi @537
     rtcPackDate @538
     rtcPackTime @539
     rtcGetDateValue @540
@@ -501,7 +501,7 @@ EXPORTS
     rtcMsgBox=vbrun_stub_595 @595
     rtcInputBox=vbrun_stub_596 @596
     rtcAppActivate=vbrun_stub_597 @597
-    rtcDoEvents=vbrun_stub_598 @598
+    rtcDoEvents @598
     rtcSendKeys=vbrun_stub_599 @599
     rtcShell=vbrun_stub_600 @600
     rtcArray=vbrun_stub_601 @601
@@ -511,7 +511,7 @@ EXPORTS
     rtcGetErl=vbrun_stub_605 @605
     rtcStringBstr=vbrun_stub_606 @606
     rtcStringVar @607
-    rtcVarBstrFromAnsi=vbrun_stub_608 @608
+    rtcVarBstrFromAnsi @608
     rtcGetDateBstr @609
     rtcGetDateVar @610
     rtcGetTimeBstr @611
@@ -527,7 +527,7 @@ EXPORTS
     rtcInputCharCountVar @621
     rtcStrConvVar @622
     __vbaWriteFile @623
-    rtcGetHostLCID=vbrun_stub_624 @624
+    rtcGetHostLCID @624
     rtcCreateObject=vbrun_stub_625 @625
     rtcGetObject=vbrun_stub_626 @626
     rtcAppleScript=vbrun_stub_627 @627
@@ -552,7 +552,7 @@ EXPORTS
     rtcCurrentDirBstr @646
     rtcCurrentDir @647
     rtcFreeFile @648
-    rtcCompareBstr=vbrun_stub_649 @649
+    rtcCompareBstr @649
     rtcBstrFromFormatVar @650
     rtcBstrFromError @651
     rtcVarFromError @652
@@ -572,8 +572,8 @@ EXPORTS
     rtcEnvironVar @666
     rtcEnvironBstr @667
     rtcSwitch @668
-    rtcCommandBstr=vbrun_stub_669 @669
-    rtcCommandVar=vbrun_stub_670 @670
+    rtcCommandBstr @669
+    rtcCommandVar @670
     rtcSLN @671
     rtcSYD @672
     rtcDDB @673
@@ -598,12 +598,12 @@ EXPORTS
     rtcGetAllSettings=vbrun_stub_692 @692
     rtcByteValueBstr @693
     rtcBstrFromByte @694
-    rtcVarBstrFromByte=vbrun_stub_695 @695
+    rtcVarBstrFromByte @695
     rtcCharValueBstr @696
     rtcBstrFromChar @697
     rtcVarBstrFromChar @698
     rtcSetCurrentCalendar=vbrun_stub_699 @699
-    rtcGetCurrentCalendar=vbrun_stub_700 @700
+    rtcGetCurrentCalendar @700
     _adj_fdiv_m32i=vbrun_stub_701 @701
     rtcFormatNumber @702
     rtcFormatCurrency @703

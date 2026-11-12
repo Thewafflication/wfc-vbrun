@@ -1012,3 +1012,67 @@ LONGLONG WINAPI __vbaCyMulI2(const SHORT factor, const LONGLONG value) {
 }
 
 }  // extern "C"
+
+// StrComp on Variants: each side reads as a String; a Null on either side
+// gives a Null result. The result is an Integer Variant.
+namespace {
+
+// 1: a String (`text` allocated), 0: a Null, -1: raised.
+int string_of_variant(const VARIANT* const value, BSTR& text) {
+    VARIANT source = *value;
+    if ((source.vt & VT_BYREF) != 0) {
+        VariantInit(&source);
+        if (FAILED(VariantCopyInd(&source, const_cast<VARIANT*>(value)))) {
+            static_cast<void>(vbrun::raise(13));
+            return -1;
+        }
+    }
+    if (source.vt == VT_NULL) {
+        return 0;
+    }
+    VARIANT converted;
+    VariantInit(&converted);
+    const HRESULT status = VariantChangeTypeEx(
+        &converted, &source, language_locale(), VARIANT_ALPHABOOL, VT_BSTR);
+    if (source.vt != value->vt) {
+        VariantClear(&source);
+    }
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+        return -1;
+    }
+    text = converted.bstrVal;
+    return 1;
+}
+
+}  // namespace
+
+extern "C" {
+
+VARIANT* WINAPI __vbaStrCompVar(VARIANT* const result, const LONG mode,
+                                VARIANT* const right, VARIANT* const left) {
+    VariantInit(result);
+    BSTR right_text = nullptr;
+    BSTR left_text = nullptr;
+    const int right_state = string_of_variant(right, right_text);
+    const int left_state =
+        right_state < 0 ? -1 : string_of_variant(left, left_text);
+    if (right_state > 0 && left_state > 0) {
+        const LONG order = __vbaStrComp(mode, right_text, left_text);
+        result->vt = VT_I2;
+        result->iVal = static_cast<SHORT>(order);
+    } else if (right_state >= 0 && left_state >= 0) {
+        result->vt = VT_NULL;
+    }
+    SysFreeString(right_text);
+    SysFreeString(left_text);
+    return result;
+}
+
+// StrComp(left, right, mode) as the compiler calls it for Variants.
+VARIANT* WINAPI rtcCompareBstr(VARIANT* const result, VARIANT* const left,
+                               VARIANT* const right, const LONG mode) {
+    return __vbaStrCompVar(result, mode, right, left);
+}
+
+}  // extern "C"
