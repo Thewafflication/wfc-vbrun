@@ -587,6 +587,150 @@ void fixed_statements() {
     DeleteFileA("wfcio_m.tmp");
 }
 
+// Control bytes in text files: the statements of experiments fileCtrl and
+// fileCtrl2.
+std::string g_text;  // the String the Visual Basic program keeps (cb)
+
+std::string codes_of(const std::string& chars) {
+    std::string out;
+    for (const unsigned char c : chars) {
+        out += std::to_string(c) + ",";
+    }
+    return out;
+}
+
+// Input$(count, #number) into g_text; the error of the call.
+int input_into(const LONG count, const SHORT number, const bool bytes) {
+    vbrun::clear_error();
+    BSTR got =
+        bytes ? rtcInputCount(count, number) : rtcInputCharCount(count, number);
+    if (got != nullptr) {
+        g_text.clear();
+        for (UINT i = 0; i < SysStringLen(got); ++i) {
+            g_text.push_back(static_cast<char>(got[i]));
+        }
+        SysFreeString(got);
+    }
+    return vbrun::last_error();
+}
+
+int line_into(const SHORT number) {
+    vbrun::clear_error();
+    BSTR got = nullptr;
+    __vbaLineInputStr(&got, number);
+    if (got != nullptr) {
+        g_text.clear();
+        for (UINT i = 0; i < SysStringLen(got); ++i) {
+            g_text.push_back(static_cast<char>(got[i]));
+        }
+        SysFreeString(got);
+    }
+    return vbrun::last_error();
+}
+
+std::string where_text(const SHORT number) {
+    return "eof " + yes_no(rtcEndOfFile(number) != 0) + " seek " +
+           std::to_string(rtcFileSeek(number)) + " loc " +
+           std::to_string(rtcFileLocation(number));
+}
+
+void control_statements() {
+    const std::string first =
+        std::string("ab\0cd", 5) + "\x1A" + "ef\r\ngh" + "\x1A" + "ij";
+    write_file("wfcio_c.tmp", first);
+    record("len", std::to_string(first.size()));
+    open(kInput, 22, "wfcio_c.tmp");
+    int err = input_into(5, 22, false);
+    record("in5", codes_of(g_text) + " len " + std::to_string(g_text.size()) +
+                      " err " + std::to_string(err) + " loc " +
+                      std::to_string(rtcFileLocation(22)) + " seek " +
+                      std::to_string(rtcFileSeek(22)) + " eof " +
+                      yes_no(rtcEndOfFile(22) != 0));
+    err = input_into(3, 22, false);
+    record("in3", codes_of(g_text) + " len " + std::to_string(g_text.size()) +
+                      " err " + std::to_string(err) + " seek " +
+                      std::to_string(rtcFileSeek(22)) + " eof " +
+                      yes_no(rtcEndOfFile(22) != 0));
+    err = input_into(1, 22, false);
+    record("in1", std::to_string(g_text.size()) + " err " +
+                      std::to_string(err) + " seek " +
+                      std::to_string(rtcFileSeek(22)) + " eof " +
+                      yes_no(rtcEndOfFile(22) != 0));
+    __vbaFileClose(22);
+    g_text.clear();
+    open(kInput, 22, "wfcio_c.tmp");
+    err = line_into(22);
+    record("line1", codes_of(g_text) + " err " + std::to_string(err) +
+                        " seek " + std::to_string(rtcFileSeek(22)) + " eof " +
+                        yes_no(rtcEndOfFile(22) != 0));
+    err = line_into(22);
+    record("line2", std::to_string(g_text.size()) + " err " +
+                        std::to_string(err) + " seek " +
+                        std::to_string(rtcFileSeek(22)) + " eof " +
+                        yes_no(rtcEndOfFile(22) != 0));
+    __vbaFileClose(22);
+    open(kBinary, 22, "wfcio_c.tmp");
+    err = input_into(13, 22, false);
+    record("bin13", codes_of(g_text) + " len " + std::to_string(g_text.size()) +
+                        " err " + std::to_string(err) + " seek " +
+                        std::to_string(rtcFileSeek(22)) + " eof " +
+                        yes_no(rtcEndOfFile(22) != 0));
+    err = input_into(20, 22, false);
+    record("binrest", std::to_string(g_text.size()) + " err " +
+                          std::to_string(err) + " eof " +
+                          yes_no(rtcEndOfFile(22) != 0));
+    __vbaFileClose(22);
+    open(kRandom, 22, "wfcio_c.tmp", 4);
+    record("rndin err", std::to_string(input_into(1, 22, false)));
+    __vbaFileClose(22);
+    DeleteFileA("wfcio_c.tmp");
+
+    for (int k = 1; k <= 6; ++k) {
+        std::string bytes;
+        switch (k) {
+            case 1:
+                bytes = std::string("abc\x1A") + "def";
+                break;
+            case 2:
+                bytes = std::string("\x1A") + "abc";
+                break;
+            case 3:
+                bytes = std::string("abc\x1A");
+                break;
+            case 4:
+                bytes = std::string("ab\0cd", 5);
+                break;
+            case 5:
+                bytes = std::string("abc\x1A") + "def\r\nghi\r\n";
+                break;
+            default:
+                bytes = std::string("\0\0", 2);
+                break;
+        }
+        write_file("wfcio_d.tmp", bytes);
+        const std::string tag = "case" + std::to_string(k);
+        open(kInput, 22, "wfcio_d.tmp");
+        record(tag + " start",
+               where_text(22) + " lof " + std::to_string(bytes.size()));
+        err = line_into(22);
+        record(tag + " line1", codes_of(g_text) + " err " +
+                                   std::to_string(err) + " " + where_text(22));
+        err = line_into(22);
+        record(tag + " line2", std::to_string(g_text.size()) + " err " +
+                                   std::to_string(err) + " " + where_text(22));
+        __vbaFileClose(22);
+        open(kInput, 22, "wfcio_d.tmp");
+        err = input_into(2, 22, false);
+        record(tag + " in2", std::to_string(g_text.size()) + " err " +
+                                 std::to_string(err) + " " + where_text(22));
+        err = input_into(1, 22, false);
+        record(tag + " in1", std::to_string(g_text.size()) + " err " +
+                                 std::to_string(err) + " " + where_text(22));
+        __vbaFileClose(22);
+    }
+    DeleteFileA("wfcio_d.tmp");
+}
+
 }  // namespace
 
 int main(const int argument_count, const char* const arguments[]) {
@@ -602,6 +746,7 @@ int main(const int argument_count, const char* const arguments[]) {
     width_more_statements();
     lock_statements();
     fixed_statements();
+    control_statements();
     std::ofstream actual("filemisc.actual", std::ios::binary);
     actual << g_lines;
     actual.close();

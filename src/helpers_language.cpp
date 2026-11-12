@@ -239,6 +239,10 @@ BSTR* variant_string_slot(VARIANT* const target) {
         }
         return target->pbstrVal;
     }
+    if (target->vt == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return nullptr;
+    }
     if (target->vt != VT_BSTR) {
         const HRESULT status = VariantChangeTypeEx(
             target, target, GetUserDefaultLCID(), VARIANT_ALPHABOOL, VT_BSTR);
@@ -259,6 +263,10 @@ void mid_variant_statement(VARIANT* const replacement, const LONG length_bytes,
     VARIANT converted;
     VariantInit(&converted);
     const VARIANT* source = replacement;
+    if (replacement->vt == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return;
+    }
     if (replacement->vt != VT_BSTR) {
         const HRESULT status =
             VariantChangeTypeEx(&converted, replacement, GetUserDefaultLCID(),

@@ -144,6 +144,31 @@ int main() {
         SysFreeString(text);
         VariantClear(&replacement);
     }
+    {
+        VARIANT target;
+        VARIANT replacement;
+        VariantInit(&target);
+        VariantInit(&replacement);
+        replacement.vt = VT_BSTR;
+        replacement.bstrVal = SysAllocString(L"ab");
+        vbrun::clear_error();
+        __vbaMidStmtVar(&replacement, kNone, 1, &target);
+        expect(vbrun::last_error() == 5, "variant empty target");
+        target.vt = VT_NULL;
+        vbrun::clear_error();
+        __vbaMidStmtVar(&replacement, kNone, 1, &target);
+        expect(vbrun::last_error() == 94, "variant null target");
+        VariantClear(&replacement);
+        replacement.vt = VT_NULL;
+        target.vt = VT_BSTR;
+        target.bstrVal = SysAllocString(L"abc");
+        vbrun::clear_error();
+        __vbaMidStmtVar(&replacement, kNone, 1, &target);
+        expect(
+            vbrun::last_error() == 94 && std::wstring(target.bstrVal) == L"abc",
+            "variant null replacement");
+        VariantClear(&target);
+    }
     if (failures == 0) {
         std::printf("midstmt ok\n");
     }

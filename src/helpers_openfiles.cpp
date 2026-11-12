@@ -109,13 +109,15 @@ int open_error(const DWORD code) {
     }
 }
 
-// One byte of a sequential file; false at the end.
-bool read_byte(FileSlot& file, unsigned char& value) {
+bool raw_byte(FileSlot& file, unsigned char& value, const bool quiet = false) {
     LARGE_INTEGER where;
     where.QuadPart = file.position;
     DWORD got = 0;
     if (SetFilePointerEx(file.handle, where, nullptr, FILE_BEGIN) == 0 ||
         ReadFile(file.handle, &value, 1, &got, nullptr) == 0 || got != 1) {
+        if (quiet) {
+            return false;
+        }
         file.hit_end = true;
         if (GetLastError() == ERROR_LOCK_VIOLATION) {
             file.denied = true;
@@ -123,7 +125,40 @@ bool read_byte(FileSlot& file, unsigned char& value) {
         }
         return false;
     }
+    return true;
+}
+
+// A text file (Input mode) passes over NUL bytes, and a Ctrl-Z ends it. The
+// reference does this right after the Open and after every byte it reads, so
+// EOF and Seek already show it. Past a Ctrl-Z the position is the size of the
+// file plus the offset of the Ctrl-Z plus one.
+void settle_text(FileSlot& file) {
+    unsigned char value = 0;
+    while (raw_byte(file, value, true)) {
+        if (value == 0) {
+            ++file.position;
+            continue;
+        }
+        if (value == 0x1A) {
+            file.position += size_of(file) + 1;
+            file.hit_end = true;
+        }
+        return;
+    }
+}
+
+// One byte of a file; false at the end.
+bool read_byte(FileSlot& file, unsigned char& value) {
+    if (file.mode == kModeInput) {
+        settle_text(file);
+    }
+    if (!raw_byte(file, value)) {
+        return false;
+    }
     ++file.position;
+    if (file.mode == kModeInput) {
+        settle_text(file);
+    }
     return true;
 }
 
@@ -1182,6 +1217,9 @@ void __cdecl __vbaFileOpen(const DWORD flags, const int record_length,
     if (mode == kModeRandom && file.record_length < 1) {
         close_entry(file);
         static_cast<void>(vbrun::raise(kInvalidProcedureCall));
+    }
+    if (mode == kModeInput && file.used) {
+        settle_text(file);
     }
 }
 
