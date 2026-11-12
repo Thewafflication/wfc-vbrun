@@ -120,7 +120,7 @@ EXPORTS
     __vbaEraseKeepData=vbrun_stub_214 @214
     __vbaEraseNoPop=vbrun_stub_215 @215
     __vbaError=vbrun_stub_216 @216
-    __vbaErrorOverflow=vbrun_stub_217 @217
+    __vbaErrorOverflow @217
     __vbaExceptHandler=vbrun_stub_218 @218
     __vbaExitEachAry=vbrun_stub_219 @219
     TipSetOption=vbrun_stub_220 @220
@@ -149,7 +149,7 @@ EXPORTS
     __vbaFreeObjList=vbrun_stub_243 @243
     __vbaFreeStrList=vbrun_stub_244 @244
     __vbaFreeVarList=vbrun_stub_245 @245
-    __vbaGenerateBoundsError=vbrun_stub_246 @246
+    __vbaGenerateBoundsError @246
     __vbaGet3 @247
     __vbaGet4 @248
     __vbaGetFxStr3 @249
@@ -164,7 +164,7 @@ EXPORTS
     __vbaHresultCheckObj=vbrun_stub_258 @258
     __vbaI2Cy @259
     __vbaI2ErrVar @260
-    __vbaI2ForNextCheck=vbrun_stub_261 @261
+    __vbaI2ForNextCheck @261
     __vbaI2Str @262
     __vbaI2Var @263
     __vbaI4Cy @264
@@ -173,7 +173,7 @@ EXPORTS
     __vbaI4ErrVar @267
     EbLibraryLoad=vbrun_stub_268 @268
     EbLibraryUnload=vbrun_stub_269 @269
-    __vbaI4ForNextCheck=vbrun_stub_270 @270
+    __vbaI4ForNextCheck @270
     EbLoadRunTime=vbrun_stub_271 @271
     __vbaI4Str @272
     __vbaI4Var @273
@@ -256,7 +256,7 @@ EXPORTS
     __vbaObjSetAddref @350
     __vbaObjVar @351
     __vbaOnError=vbrun_stub_352 @352
-    __vbaOnGoCheck=vbrun_stub_353 @353
+    __vbaOnGoCheck @353
     __vbaPowerR8 @354
     __vbaPrintFile @355
     __vbaPrintObj=vbrun_stub_356 @356
@@ -268,7 +268,7 @@ EXPORTS
     __vbaPutOwner4=vbrun_stub_362 @362
     __vbaR4Cy @363
     __vbaR4ErrVar @364
-    __vbaR4ForNextCheck=vbrun_stub_365 @365
+    __vbaR4ForNextCheck @365
     __vbaR4Sgn @366
     __vbaR4Str @367
     __vbaR4Var @368
@@ -276,7 +276,7 @@ EXPORTS
     __vbaR8ErrVar @370
     __vbaR8FixI2=vbrun_stub_371 @371
     __vbaR8FixI4=vbrun_stub_372 @372
-    __vbaR8ForNextCheck=vbrun_stub_373 @373
+    __vbaR8ForNextCheck @373
     __vbaR8IntI2=vbrun_stub_374 @374
     __vbaR8IntI4=vbrun_stub_375 @375
     __vbaR8Sgn @376

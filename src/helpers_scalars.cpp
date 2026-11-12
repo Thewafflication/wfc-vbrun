@@ -760,6 +760,52 @@ IUnknown* WINAPI __vbaUnkVar(VARIANT* const value) {
     return value->punkVal;
 }
 
+// For ... Next: -1 while the loop goes on (the counter has not passed the
+// limit in the direction of the step), 0 once it has.
+static LONG loop_goes_on(const double counter, const double limit,
+                         const double step) {
+    const double low = step < 0.0 ? limit : counter;
+    const double high = step < 0.0 ? counter : limit;
+    return low <= high ? -1 : 0;
+}
+
+LONG WINAPI __vbaI2ForNextCheck(const SHORT counter, const SHORT limit,
+                                const SHORT step) {
+    return loop_goes_on(counter, limit, step);
+}
+
+LONG WINAPI __vbaI4ForNextCheck(const LONG counter, const LONG limit,
+                                const LONG step) {
+    return loop_goes_on(static_cast<double>(counter),
+                        static_cast<double>(limit), static_cast<double>(step));
+}
+
+LONG WINAPI __vbaR4ForNextCheck(const float counter, const float limit,
+                                const float step) {
+    return loop_goes_on(counter, limit, step);
+}
+
+LONG WINAPI __vbaR8ForNextCheck(const double counter, const double limit,
+                                const double step) {
+    return loop_goes_on(counter, limit, step);
+}
+
+// On n GoTo / GoSub: the index must be 0 to 255 (error 5 otherwise).
+SHORT WINAPI __vbaOnGoCheck(const SHORT index) {
+    if (index < 0 || index > 255) {
+        static_cast<void>(vbrun::raise(5));
+    }
+    return index;
+}
+
+void WINAPI __vbaErrorOverflow() {
+    static_cast<void>(vbrun::raise(6));
+}
+
+void WINAPI __vbaGenerateBoundsError() {
+    static_cast<void>(vbrun::raise(9));
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

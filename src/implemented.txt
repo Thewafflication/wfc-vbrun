@@ -348,3 +348,10 @@ __vbaObjAddref
 __vbaVerifyVarObj
 __vbaObjVar
 __vbaUnkVar
+__vbaI2ForNextCheck
+__vbaI4ForNextCheck
+__vbaR4ForNextCheck
+__vbaR8ForNextCheck
+__vbaOnGoCheck
+__vbaErrorOverflow
+__vbaGenerateBoundsError

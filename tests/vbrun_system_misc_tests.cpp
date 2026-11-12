@@ -42,6 +42,12 @@ IUnknown* WINAPI __vbaObjAddref(IUnknown* object);
 VARIANT* WINAPI __vbaVerifyVarObj(VARIANT* value);
 IUnknown* WINAPI __vbaObjVar(VARIANT* value);
 IUnknown* WINAPI __vbaUnkVar(VARIANT* value);
+LONG WINAPI __vbaI2ForNextCheck(SHORT counter, SHORT limit, SHORT step);
+LONG WINAPI __vbaI4ForNextCheck(LONG counter, LONG limit, LONG step);
+LONG WINAPI __vbaR4ForNextCheck(float counter, float limit, float step);
+LONG WINAPI __vbaR8ForNextCheck(double counter, double limit,
+                                double step);
+SHORT WINAPI __vbaOnGoCheck(SHORT index);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);
