@@ -25,6 +25,8 @@ VARIANT* WINAPI __vbaVarLikeVar(VARIANT* result, const VARIANT* pattern,
                                 const VARIANT* text);
 VARIANT* WINAPI __vbaVarTextLikeVar(VARIANT* result, const VARIANT* pattern,
                                     const VARIANT* text);
+SHORT WINAPI __vbaBoolStr(BSTR text);
+VARIANT* WINAPI rtcArray(VARIANT* result, SAFEARRAY** arguments);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);

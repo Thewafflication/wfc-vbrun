@@ -331,3 +331,5 @@ __vbaInStrVarB
 rtcStringBstr
 __vbaVarLikeVar
 __vbaVarTextLikeVar
+__vbaBoolStr
+rtcArray

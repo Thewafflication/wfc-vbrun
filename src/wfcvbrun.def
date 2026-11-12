@@ -77,7 +77,7 @@ EXPORTS
     __vbaAryRecMove=vbrun_stub_171 @171
     __vbaAryUnlock=vbrun_stub_172 @172
     __vbaAryVar=vbrun_stub_173 @173
-    __vbaBoolStr=vbrun_stub_174 @174
+    __vbaBoolStr @174
     __vbaBoolVar @175
     __vbaBoolVarNull=vbrun_stub_176 @176
     __vbaCVarAryUdt=vbrun_stub_177 @177
@@ -504,7 +504,7 @@ EXPORTS
     rtcDoEvents @598
     rtcSendKeys=vbrun_stub_599 @599
     rtcShell=vbrun_stub_600 @600
-    rtcArray=vbrun_stub_601 @601
+    rtcArray @601
     __vbaVargUnk=vbrun_stub_602 @602
     __vbaVargUnkAddref=vbrun_stub_603 @603
     __vbaVerifyVarObj=vbrun_stub_604 @604

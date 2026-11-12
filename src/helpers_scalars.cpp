@@ -539,6 +539,39 @@ double WINAPI __vbaR8Str(const BSTR text) {
     return value;
 }
 
+// CBool(text): "True" and "False" (or a number) read as a Boolean.
+SHORT WINAPI __vbaBoolStr(const BSTR text) {
+    VARIANT_BOOL value = VARIANT_FALSE;
+    if (!worked(VarBoolFromStr(text, language_locale(), 0, &value))) {
+        return 0;
+    }
+    return value;
+}
+
+// Array(a, b, c): the ParamArray arrives as a descriptor of Variants; the
+// answer is a Variant holding a new zero-based array with a copy of each.
+VARIANT* WINAPI rtcArray(VARIANT* const result, SAFEARRAY** const arguments) {
+    const SAFEARRAY* const source = arguments != nullptr ? *arguments : nullptr;
+    const ULONG count = source != nullptr ? source->rgsabound[0].cElements : 0;
+    SAFEARRAY* const made =
+        SafeArrayCreateVector(VT_VARIANT, 0, static_cast<ULONG>(count));
+    if (made == nullptr) {
+        static_cast<void>(vbrun::raise(7));
+        return result;
+    }
+    const VARIANT* const from =
+        count != 0 ? static_cast<const VARIANT*>(source->pvData) : nullptr;
+    VARIANT* const to = static_cast<VARIANT*>(made->pvData);
+    for (ULONG at = 0; at < count; ++at) {
+        VariantInit(&to[at]);
+        VariantCopyInd(&to[at], &from[at]);
+    }
+    VariantInit(result);
+    result->vt = VT_ARRAY | VT_VARIANT;
+    result->parray = made;
+    return result;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;
