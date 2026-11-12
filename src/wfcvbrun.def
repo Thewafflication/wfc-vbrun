@@ -182,8 +182,8 @@ EXPORTS
     EbSetContextWorkerThread=vbrun_stub_276 @276
     __vbaInStr @277
     __vbaInStrB @278
-    __vbaInStrVar=vbrun_stub_279 @279
-    __vbaInStrVarB=vbrun_stub_280 @280
+    __vbaInStrVar @279
+    __vbaInStrVarB @280
     __vbaInputFile @281
     __vbaLateIdCall=vbrun_stub_282 @282
     __vbaLateIdCallLd=vbrun_stub_283 @283

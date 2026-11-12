@@ -326,3 +326,5 @@ __vbaStrCompVar
 rtcCompareBstr
 rtcCommandBstr
 rtcCommandVar
+__vbaInStrVar
+__vbaInStrVarB

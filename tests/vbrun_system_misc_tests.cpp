@@ -17,6 +17,10 @@ VARIANT* WINAPI __vbaStrCompVar(VARIANT* result, LONG mode, VARIANT* right,
                                 VARIANT* left);
 VARIANT* WINAPI rtcCompareBstr(VARIANT* result, VARIANT* left, VARIANT* right,
                                LONG mode);
+VARIANT* WINAPI __vbaInStrVar(VARIANT* result, LONG mode, VARIANT* needle,
+                              VARIANT* haystack, LONG start);
+VARIANT* WINAPI __vbaInStrVarB(VARIANT* result, LONG mode, VARIANT* needle,
+                               VARIANT* haystack, LONG start);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);
 SHORT WINAPI rtcDoEvents();
@@ -81,6 +85,27 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        VARIANT hay = text_variant(L"Hello World");
+        VARIANT pin = text_variant(L"WORLD");
+        VARIANT out;
+        __vbaInStrVar(&out, 1, &pin, &hay, 1);
+        expect(out.vt == VT_I4 && out.lVal == 7, "instr variant text");
+        __vbaInStrVar(&out, 0, &pin, &hay, 1);
+        expect(out.vt == VT_I4 && out.lVal == 0, "instr variant binary");
+        __vbaInStrVarB(&out, 0, &pin, &hay, 1);
+        expect(out.vt == VT_I4 && out.lVal == 0, "instr variant bytes");
+        VARIANT nul = null_variant();
+        __vbaInStrVar(&out, 0, &pin, &nul, 1);
+        expect(out.vt == VT_NULL, "instr variant null");
+        VARIANT num;
+        VariantInit(&num);
+        num.vt = VT_I4;
+        num.lVal = 12345;
+        VARIANT three = text_variant(L"34");
+        __vbaInStrVar(&out, 0, &three, &num, 1);
+        expect(out.vt == VT_I4 && out.lVal == 3, "instr variant number");
+    }
     expect(compare(text_variant(L"abc"), text_variant(L"ABC"), 0) == "I2:1",
            "binary");
     expect(compare(text_variant(L"abc"), text_variant(L"ABC"), 1) == "I2:0",

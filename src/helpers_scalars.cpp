@@ -1075,4 +1075,39 @@ VARIANT* WINAPI rtcCompareBstr(VARIANT* const result, VARIANT* const left,
     return __vbaStrCompVar(result, mode, right, left);
 }
 
+// InStr on Variants: a Null on either side gives Null; anything else is read
+// as text and the answer is a Long.
+static VARIANT* in_str_variant(VARIANT* const result, const LONG mode,
+                               VARIANT* const needle, VARIANT* const haystack,
+                               const LONG start, const bool bytes) {
+    VariantInit(result);
+    BSTR needle_text = nullptr;
+    BSTR haystack_text = nullptr;
+    const int haystack_state = string_of_variant(haystack, haystack_text);
+    const int needle_state =
+        haystack_state < 0 ? -1 : string_of_variant(needle, needle_text);
+    if (haystack_state > 0 && needle_state > 0) {
+        result->vt = VT_I4;
+        result->lVal = bytes ? __vbaInStrB(mode, needle_text, haystack_text, start)
+                             : __vbaInStr(mode, needle_text, haystack_text, start);
+    } else if (haystack_state >= 0 && needle_state >= 0) {
+        result->vt = VT_NULL;
+    }
+    SysFreeString(needle_text);
+    SysFreeString(haystack_text);
+    return result;
+}
+
+VARIANT* WINAPI __vbaInStrVar(VARIANT* const result, const LONG mode,
+                              VARIANT* const needle, VARIANT* const haystack,
+                              const LONG start) {
+    return in_str_variant(result, mode, needle, haystack, start, false);
+}
+
+VARIANT* WINAPI __vbaInStrVarB(VARIANT* const result, const LONG mode,
+                               VARIANT* const needle, VARIANT* const haystack,
+                               const LONG start) {
+    return in_str_variant(result, mode, needle, haystack, start, true);
+}
+
 }  // extern "C"
