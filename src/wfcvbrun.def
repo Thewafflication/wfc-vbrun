@@ -269,8 +269,8 @@ EXPORTS
     __vbaR4Cy @363
     __vbaR4ErrVar @364
     __vbaR4ForNextCheck=vbrun_stub_365 @365
-    __vbaR4Sgn=vbrun_stub_366 @366
-    __vbaR4Str=vbrun_stub_367 @367
+    __vbaR4Sgn @366
+    __vbaR4Str @367
     __vbaR4Var @368
     __vbaR8Cy @369
     __vbaR8ErrVar @370
@@ -279,7 +279,7 @@ EXPORTS
     __vbaR8ForNextCheck=vbrun_stub_373 @373
     __vbaR8IntI2=vbrun_stub_374 @374
     __vbaR8IntI4=vbrun_stub_375 @375
-    __vbaR8Sgn=vbrun_stub_376 @376
+    __vbaR8Sgn @376
     __vbaR8Str @377
     __vbaR8Var @378
     __vbaRaiseEvent=vbrun_stub_379 @379
@@ -467,7 +467,7 @@ EXPORTS
     rtcIsNumeric @561
     rtcIsObject @562
     rtcVarType @563
-    rtDecFromVar=vbrun_stub_564 @564
+    rtDecFromVar @564
     rtcFileWidth @565
     rtcInputCount @566
     rtcInputCountVar @567

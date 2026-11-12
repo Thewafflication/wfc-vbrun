@@ -572,6 +572,46 @@ VARIANT* WINAPI rtcArray(VARIANT* const result, SAFEARRAY** const arguments) {
     return result;
 }
 
+// CSng(text).
+float WINAPI __vbaR4Str(const BSTR text) {
+    float value = 0.0F;
+    if (!worked(VarR4FromStr(text, language_locale(), 0, &value))) {
+        return 0.0F;
+    }
+    return value;
+}
+
+// Sgn(x) on a Single and on a Double: -1, 0 or 1 (a NaN reads as 0).
+SHORT WINAPI __vbaR4Sgn(const float value) {
+    return value > 0.0F ? 1 : (value < 0.0F ? -1 : 0);
+}
+
+SHORT WINAPI __vbaR8Sgn(const double value) {
+    return value > 0.0 ? 1 : (value < 0.0 ? -1 : 0);
+}
+
+// CDec(v): the Variant as a Decimal, written to the 16 bytes at `target`.
+LONG WINAPI rtDecFromVar(VARIANT* const source, DECIMAL* const target) {
+    if ((source->vt & ~static_cast<unsigned>(VT_BYREF)) == VT_DECIMAL) {
+        const DECIMAL* const from = (source->vt & VT_BYREF) != 0
+                                        ? static_cast<DECIMAL*>(source->pdecVal)
+                                        : &source->decVal;
+        *target = *from;
+        return 0;
+    }
+    VARIANT made;
+    VariantInit(&made);
+    const HRESULT status =
+        VariantChangeTypeEx(&made, source, language_locale(), 0, VT_DECIMAL);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+        return 0;
+    }
+    *target = made.decVal;
+    target->wReserved = VT_DECIMAL;
+    return 0;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

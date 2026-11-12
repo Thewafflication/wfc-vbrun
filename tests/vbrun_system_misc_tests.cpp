@@ -27,6 +27,10 @@ VARIANT* WINAPI __vbaVarTextLikeVar(VARIANT* result, const VARIANT* pattern,
                                     const VARIANT* text);
 SHORT WINAPI __vbaBoolStr(BSTR text);
 VARIANT* WINAPI rtcArray(VARIANT* result, SAFEARRAY** arguments);
+float WINAPI __vbaR4Str(BSTR text);
+SHORT WINAPI __vbaR4Sgn(float value);
+SHORT WINAPI __vbaR8Sgn(double value);
+LONG WINAPI rtDecFromVar(VARIANT* source, DECIMAL* target);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);

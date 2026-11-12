@@ -333,3 +333,7 @@ __vbaVarLikeVar
 __vbaVarTextLikeVar
 __vbaBoolStr
 rtcArray
+__vbaR4Str
+__vbaR4Sgn
+__vbaR8Sgn
+rtDecFromVar
