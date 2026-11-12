@@ -509,7 +509,7 @@ EXPORTS
     __vbaVargUnkAddref=vbrun_stub_603 @603
     __vbaVerifyVarObj=vbrun_stub_604 @604
     rtcGetErl=vbrun_stub_605 @605
-    rtcStringBstr=vbrun_stub_606 @606
+    rtcStringBstr @606
     rtcStringVar @607
     rtcVarBstrFromAnsi @608
     rtcGetDateBstr @609

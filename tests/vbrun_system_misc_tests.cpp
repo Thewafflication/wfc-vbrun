@@ -21,6 +21,7 @@ VARIANT* WINAPI __vbaInStrVar(VARIANT* result, LONG mode, VARIANT* needle,
                               VARIANT* haystack, LONG start);
 VARIANT* WINAPI __vbaInStrVarB(VARIANT* result, LONG mode, VARIANT* needle,
                                VARIANT* haystack, LONG start);
+BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);
 SHORT WINAPI rtcDoEvents();
@@ -85,6 +86,21 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        VARIANT ch = text_variant(L"xy");
+        BSTR made = rtcStringBstr(3, &ch);
+        expect(made != nullptr && std::wstring(made) == L"xxx", "string$ text");
+        SysFreeString(made);
+        VARIANT code;
+        VariantInit(&code);
+        code.vt = VT_I4;
+        code.lVal = 65;
+        made = rtcStringBstr(2, &code);
+        expect(made != nullptr && std::wstring(made) == L"AA", "string$ code");
+        SysFreeString(made);
+        made = rtcStringBstr(-1, &code);
+        expect(made == nullptr, "string$ negative");
+    }
     {
         VARIANT hay = text_variant(L"Hello World");
         VARIANT pin = text_variant(L"WORLD");

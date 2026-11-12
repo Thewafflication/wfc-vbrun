@@ -328,3 +328,4 @@ rtcCommandBstr
 rtcCommandVar
 __vbaInStrVar
 __vbaInStrVarB
+rtcStringBstr

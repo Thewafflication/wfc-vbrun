@@ -429,6 +429,20 @@ VARIANT* WINAPI rtcStringVar(VARIANT* const result, const LONG count,
                      std::wstring(static_cast<std::size_t>(count), unit));
 }
 
+// String$(count, character): the same as String, as a plain string.
+BSTR WINAPI rtcStringBstr(const LONG count, VARIANT* const character) {
+    VARIANT made;
+    VariantInit(&made);
+    rtcStringVar(&made, count, character);
+    BSTR text = nullptr;
+    if (made.vt == VT_BSTR) {
+        text = made.bstrVal;
+        made.vt = VT_EMPTY;
+    }
+    VariantClear(&made);
+    return text;
+}
+
 // StrConv(text, conversion): upper (1), lower (2), proper (3) case, and
 // Unicode (64), which widens every byte of the text to a character.
 VARIANT* WINAPI rtcStrConvVar(VARIANT* const result, VARIANT* const operand,

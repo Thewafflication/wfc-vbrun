@@ -218,6 +218,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       tests/vbrun_system_misc_tests.cpp
       src/helpers_scalars.cpp
       src/helpers_system.cpp
+      src/helpers_varstrings.cpp
       src/helpers_errors.cpp
       src/vbrun_state.cpp
     )
