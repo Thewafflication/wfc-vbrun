@@ -329,3 +329,5 @@ rtcCommandVar
 __vbaInStrVar
 __vbaInStrVarB
 rtcStringBstr
+__vbaVarLikeVar
+__vbaVarTextLikeVar

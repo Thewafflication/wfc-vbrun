@@ -21,6 +21,10 @@ VARIANT* WINAPI __vbaInStrVar(VARIANT* result, LONG mode, VARIANT* needle,
                               VARIANT* haystack, LONG start);
 VARIANT* WINAPI __vbaInStrVarB(VARIANT* result, LONG mode, VARIANT* needle,
                                VARIANT* haystack, LONG start);
+VARIANT* WINAPI __vbaVarLikeVar(VARIANT* result, const VARIANT* pattern,
+                                const VARIANT* text);
+VARIANT* WINAPI __vbaVarTextLikeVar(VARIANT* result, const VARIANT* pattern,
+                                    const VARIANT* text);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);
@@ -86,6 +90,18 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        VARIANT subject = text_variant(L"Hello");
+        VARIANT pattern = text_variant(L"h*o");
+        VARIANT out;
+        __vbaVarLikeVar(&out, &pattern, &subject);
+        expect(out.vt == VT_BOOL && out.boolVal == VARIANT_FALSE, "like case");
+        __vbaVarTextLikeVar(&out, &pattern, &subject);
+        expect(out.vt == VT_BOOL && out.boolVal == VARIANT_TRUE, "like text");
+        VARIANT nul = null_variant();
+        __vbaVarLikeVar(&out, &pattern, &nul);
+        expect(out.vt == VT_NULL, "like null");
+    }
     {
         VARIANT ch = text_variant(L"xy");
         BSTR made = rtcStringBstr(3, &ch);

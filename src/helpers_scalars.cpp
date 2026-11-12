@@ -863,6 +863,39 @@ LONG WINAPI __vbaVarTextLike(const VARIANT* const pattern,
     return like_of_variants(pattern, text, true);
 }
 
+// Like on Variants as a Variant: a Null on either side gives Null.
+VARIANT* WINAPI __vbaVarLikeVar(VARIANT* const result,
+                                const VARIANT* const pattern,
+                                const VARIANT* const text) {
+    VariantInit(result);
+    if ((pattern->vt & VT_TYPEMASK) == VT_NULL ||
+        (text->vt & VT_TYPEMASK) == VT_NULL) {
+        result->vt = VT_NULL;
+        return result;
+    }
+    result->vt = VT_BOOL;
+    result->boolVal = like_of_variants(pattern, text, false) != 0
+                          ? VARIANT_TRUE
+                          : VARIANT_FALSE;
+    return result;
+}
+
+VARIANT* WINAPI __vbaVarTextLikeVar(VARIANT* const result,
+                                    const VARIANT* const pattern,
+                                    const VARIANT* const text) {
+    VariantInit(result);
+    if ((pattern->vt & VT_TYPEMASK) == VT_NULL ||
+        (text->vt & VT_TYPEMASK) == VT_NULL) {
+        result->vt = VT_NULL;
+        return result;
+    }
+    result->vt = VT_BOOL;
+    result->boolVal = like_of_variants(pattern, text, true) != 0
+                          ? VARIANT_TRUE
+                          : VARIANT_FALSE;
+    return result;
+}
+
 // TimeSerial(hour, minute, second).
 VARIANT* WINAPI rtcPackTime(VARIANT* const result, const LONG hours,
                             const LONG minutes, const LONG seconds) {

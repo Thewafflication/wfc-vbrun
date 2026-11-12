@@ -378,7 +378,7 @@ EXPORTS
     __vbaVarIndexStoreObj=vbrun_stub_472 @472
     __vbaVarInt @473
     __vbaVarLike @474
-    __vbaVarLikeVar=vbrun_stub_475 @475
+    __vbaVarLikeVar @475
     __vbaVarMod @476
     __vbaVarMul @477
     __vbaVarNeg @478
@@ -399,7 +399,7 @@ EXPORTS
     __vbaVarTextCmpLt @493
     __vbaVarTextCmpNe @494
     __vbaVarTextLike @495
-    __vbaVarTextLikeVar=vbrun_stub_496 @496
+    __vbaVarTextLikeVar @496
     __vbaVarTextTstEq @497
     __vbaVarTextTstGe @498
     __vbaVarTextTstGt @499
