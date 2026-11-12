@@ -212,6 +212,25 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       TC-MP0009-vbrun-filedata
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
+    # Width, FileAttr, Name, Lock, Input$ and fixed length strings.
+    add_executable(
+      vbrun_file_misc_tests
+      tests/vbrun_file_misc_tests.cpp
+      src/helpers_openfiles.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_file_misc_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_file_misc_tests)
+    add_test(
+      NAME TC-MP0009-vbrun-filemisc
+      COMMAND vbrun_file_misc_tests
+              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filemisc.expected"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set_tests_properties(
+      TC-MP0009-vbrun-filemisc
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")

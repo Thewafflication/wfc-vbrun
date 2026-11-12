@@ -1215,6 +1215,452 @@ RAW['clockNative'] = '''    Rec "native => " & Date$ & " " & Time$ & " " & CStr(
 experiment('clockNative', 'x', 'n', [()])
 
 
+# Width, FileAttr, Name, Reset, Lock, Input$ and fixed length strings.
+def _dump(label, name):
+    return ('''    Open "%s" For Binary As #25
+    pstr = Space$(LOF(25))
+    Get #25, , pstr
+    Close #25
+    hx = ""
+    For hi = 1 To Len(pstr)
+        hx = hx & Right$("0" & Hex$(Asc(Mid$(pstr, hi, 1))), 2)
+    Next
+    Rec "%s => " & hx
+''' % (name, label))
+
+
+RAW['fileMisc'] = '''    Dim ma As Integer, ml As Long, ms As String, mv As Variant, fx As String * 6, fy As String * 3
+    Dim hx As String, hi As Long, pstr As String
+    On Error Resume Next
+    Kill "wfcio_m.tmp"
+    Kill "wfcio_n.tmp"
+    Kill "wfcio_o.tmp"
+    Err.Clear
+    Open "wfcio_m.tmp" For Output As #21
+    Rec "fa out => " & FileAttr(21, 1) & " err " & Err.Number
+    Err.Clear
+    ma = FileAttr(21, 2)
+    Rec "fa handle => " & (ma <> 0) & " err " & Err.Number
+    Err.Clear
+    ma = FileAttr(21, 3)
+    Rec "fa 3 => err " & Err.Number
+    Err.Clear
+    ma = FileAttr(21, 0)
+    Rec "fa 0 => err " & Err.Number
+    Err.Clear
+    ma = FileAttr(99, 1)
+    Rec "fa closed => err " & Err.Number
+    Err.Clear
+    ma = FileAttr(0, 1)
+    Rec "fa zero => err " & Err.Number
+    Err.Clear
+    ma = FileAttr(513, 1)
+    Rec "fa big => err " & Err.Number
+    Err.Clear
+    Width #21, 10
+    Rec "width err => " & Err.Number
+    Print #21, "abcdef"; "ghijkl"; "mn"
+    Print #21, "abcdefghijklmn"
+    Print #21, 1; 2; 3; 4; 5
+    Print #21, "abcde", "fg"
+    Print #21, "abcdef";
+    Print #21, "ghijkl";
+    Print #21, "mn"
+    Write #21, "abc", "defgh", "ij"
+    Print #21, Tab(5); "ab"; Tab(9); "cd"
+    Print #21, Spc(8); "abcd"
+    Print #21, "x"
+    Close #21
+''' + _dump('width10', 'wfcio_m.tmp') + '''    Err.Clear
+    Open "wfcio_m.tmp" For Output As #21
+    Width #21, 0
+    Rec "width0 err => " & Err.Number
+    Width #21, 255
+    Rec "width255 err => " & Err.Number
+    Width #21, 256
+    Rec "width256 err => " & Err.Number
+    Err.Clear
+    Width #21, -1
+    Rec "width-1 err => " & Err.Number
+    Err.Clear
+    Width #99, 10
+    Rec "width closed err => " & Err.Number
+    Err.Clear
+    Width #21, 4
+    Print #21, "ab"; "cd"; "ef"
+    Print #21, "abcdefgh"
+    Print #21, "ab"; "cde"
+    Width #21, 0
+    Print #21, "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789"
+    Width #21, 3
+    Print #21, 12; 34; 56
+    Print #21, "a"; "b"; "c"; "d"
+    Print #21, "a", "b"
+    Close #21
+''' + _dump('width4', 'wfcio_m.tmp') + '''    Open "wfcio_m.tmp" For Output As #21
+    Print #21, "Hello World and more text for Input";
+    Close #21
+    Open "wfcio_m.tmp" For Input As #22
+    ms = Input$(5, #22)
+    Rec "in5 => " & ms & "|" & Len(ms) & " err " & Err.Number
+    ms = Input$(0, #22)
+    Rec "in0 => " & ms & "|" & Len(ms) & " err " & Err.Number
+    Err.Clear
+    ms = Input$(-1, #22)
+    Rec "in-1 => " & ms & "|" & Len(ms) & " err " & Err.Number
+    Err.Clear
+    mv = Input(3, #22)
+    Rec "inv => " & mv & "|" & TypeName(mv) & " err " & Err.Number
+    Err.Clear
+    ms = InputB$(4, #22)
+    Rec "inb => " & ms & "|" & Len(ms) & "|" & LenB(ms) & " err " & Err.Number
+    Err.Clear
+    ms = InputB$(3, #22)
+    Rec "inb3 => " & LenB(ms) & " err " & Err.Number
+    Err.Clear
+    mv = InputB(2, #22)
+    Rec "inbv => " & TypeName(mv) & "|" & LenB(mv) & " err " & Err.Number
+    Err.Clear
+    Rec "pos => " & Loc(22) & "|" & Seek(22) & "|" & EOF(22)
+    ms = Input$(1000, #22)
+    Rec "inbig => " & Len(ms) & " err " & Err.Number & " eof " & EOF(22)
+    Err.Clear
+    ms = Input$(1, #22)
+    Rec "inpast => " & Len(ms) & " err " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_m.tmp" For Binary As #22
+    ms = Input$(5, #22)
+    Rec "binin5 => " & ms & " err " & Err.Number
+    ms = Input$(1000, #22)
+    Rec "binbig => " & Len(ms) & " err " & Err.Number & " eof " & EOF(22)
+    Err.Clear
+    ms = Input$(1, #22)
+    Rec "binpast => " & Len(ms) & " err " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_m.tmp" For Output As #22
+    Print #22, Chr$(200); Chr$(1); Chr$(150); "z";
+    Close #22
+    Open "wfcio_m.tmp" For Input As #22
+    ms = Input$(4, #22)
+    Rec "inhigh => " & AscW(Mid$(ms, 1, 1)) & "|" & AscW(Mid$(ms, 2, 1)) & "|" & AscW(Mid$(ms, 3, 1)) & "|" & Len(ms) & " err " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_m.tmp" For Output As #22
+    ms = Input$(1, #22)
+    Rec "inout err => " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_m.tmp" For Input As #22
+    Name "wfcio_m.tmp" As "wfcio_n.tmp"
+    Rec "name open err => " & Err.Number
+    Err.Clear
+    Close #22
+    Name "wfcio_m.tmp" As "wfcio_n.tmp"
+    Rec "name ok err => " & Err.Number & " old " & (Dir$("wfcio_m.tmp") = "") & " new " & (Dir$("wfcio_n.tmp") <> "")
+    Err.Clear
+    Name "wfcio_m.tmp" As "wfcio_o.tmp"
+    Rec "name missing err => " & Err.Number
+    Err.Clear
+    Open "wfcio_m.tmp" For Output As #22
+    Close #22
+    Name "wfcio_m.tmp" As "wfcio_n.tmp"
+    Rec "name exists err => " & Err.Number
+    Err.Clear
+    Name "wfcio_m.tmp" As "nodir_x/wfcio_o.tmp"
+    Rec "name nodir err => " & Err.Number
+    Err.Clear
+    Name "wfcio_m.tmp" As ""
+    Rec "name empty err => " & Err.Number
+    Err.Clear
+    Name "wfcio_m.tmp" As "wfcio_m.tmp"
+    Rec "name same err => " & Err.Number
+    Err.Clear
+    Name "wfcio_n.tmp" As "wfcio_N.tmp"
+    Rec "name case err => " & Err.Number & " " & Dir$("wfcio_n.tmp")
+    Err.Clear
+    Name "nodir_x/a.tmp" As "wfcio_o.tmp"
+    Rec "name srcdir err => " & Err.Number
+    Err.Clear
+    Name "wfcio_m.tmp" As "wfcio_o.tmp"
+    Rec "name move err => " & Err.Number & " " & Dir$("wfcio_o.tmp")
+    Err.Clear
+    Kill "wfcio_m.tmp"
+    Kill "wfcio_n.tmp"
+    Kill "wfcio_o.tmp"
+    Kill "wfcio_N.tmp"
+    Err.Clear
+    Open "wfcio_m.tmp" For Output As #21
+    Close #21
+    Err.Clear
+    Open "wfcio_m.tmp" For Output As #21
+    Width #21, 14
+    Print #21, "abcde", "fg"
+    Print #21, "abcdefghijklm", "n"
+    Print #21, "abcdefghijklmn", "o"
+    Print #21, Spc(12); "a"
+    Print #21, Spc(13); "a"
+    Print #21, Tab(12); "abc"
+    Print #21, "ab"; Tab(14); "c"
+    Print #21, "ab"; Tab(15); "c"
+    Print #21, Spc(20); "a"
+    Print #21, "a"; Tab(30); "b"
+    Width #21, 5
+    Print #21, "abc"; 1
+    Print #21, "ab"; True
+    Print #21, "ab"; 1.5
+    Print #21, #1/2/2000#
+    Print #21, "ab"; Null; "cd"
+    Print #21, "abcd"; Empty; "e"
+    Print #21, "abcdef"; ""; "g"
+    Print #21, ; "abcd"; ""; "e"
+    Print #21, "a"; ""; "bcdefg"
+    Close #21
+''' + _dump('width14', 'wfcio_m.tmp') + '''
+    Open "wfcio_m.tmp" For Binary Access Read Write Shared As #22
+    Open "wfcio_m.tmp" For Binary Access Read Write Shared As #23
+    Rec "shared open err => " & Err.Number
+    Err.Clear
+    ms = "0123456789abcdefghij"
+    Put #22, 1, ms
+    Lock #22, 3 To 6
+    Rec "lock range err => " & Err.Number
+    Err.Clear
+    ms = Space$(2)
+    Get #23, 1, ms
+    Rec "get free => " & ms & " err " & Err.Number
+    Err.Clear
+    Get #23, 4, ms
+    Rec "get locked => err " & Err.Number
+    Err.Clear
+    Put #23, 4, ms
+    Rec "put locked => err " & Err.Number
+    Err.Clear
+    Get #22, 4, ms
+    Rec "get own => " & ms & " err " & Err.Number
+    Err.Clear
+    Unlock #22, 3 To 6
+    Rec "unlock err => " & Err.Number
+    Err.Clear
+    Get #23, 4, ms
+    Rec "get unlocked => " & ms & " err " & Err.Number
+    Err.Clear
+    Unlock #22, 3 To 6
+    Rec "unlock again err => " & Err.Number
+    Err.Clear
+    Lock #22, 2
+    Rec "lock one err => " & Err.Number
+    Err.Clear
+    Get #23, 2, ms
+    Rec "get one locked => err " & Err.Number
+    Err.Clear
+    Unlock #22, 2
+    Lock #22
+    Rec "lock whole err => " & Err.Number
+    Err.Clear
+    Get #23, 15, ms
+    Rec "get whole locked => err " & Err.Number
+    Err.Clear
+    Unlock #22
+    Rec "unlock whole err => " & Err.Number
+    Err.Clear
+    Lock #22, 0
+    Rec "lock zero err => " & Err.Number
+    Err.Clear
+    Lock #22, 6 To 3
+    Rec "lock backwards err => " & Err.Number
+    Err.Clear
+    Lock #22, 2147483647
+    Rec "lock huge err => " & Err.Number
+    Err.Clear
+    Unlock #22, 2147483647
+    Lock #22, 1 To 2
+    Lock #22, 2 To 3
+    Rec "lock overlap err => " & Err.Number
+    Err.Clear
+    Unlock #22, 1 To 2
+    Unlock #22, 2 To 3
+    Err.Clear
+    Lock #99
+    Rec "lock closed err => " & Err.Number
+    Err.Clear
+    Close #22
+    Close #23
+    Open "wfcio_m.tmp" For Random Shared As #22 Len = 4
+    Open "wfcio_m.tmp" For Random Shared As #23 Len = 4
+    Lock #22, 2
+    Get #23, 2, ml
+    Rec "rnd get locked => err " & Err.Number
+    Err.Clear
+    Get #23, 3, ml
+    Rec "rnd get free => err " & Err.Number
+    Err.Clear
+    Lock #22, 5 To 6
+    Get #23, 6, ml
+    Rec "rnd range locked => err " & Err.Number
+    Err.Clear
+    Get #23, 7, ml
+    Rec "rnd range free => err " & Err.Number
+    Err.Clear
+    Unlock #22, 2
+    Unlock #22, 5 To 6
+    Close #22
+    Close #23
+    Open "wfcio_m.tmp" For Input Shared As #22
+    Open "wfcio_m.tmp" For Input Shared As #23
+    Lock #22
+    Rec "seq lock err => " & Err.Number
+    Err.Clear
+    ms = Input$(1, #23)
+    Rec "seq read locked => err " & Err.Number
+    Err.Clear
+    Lock #22, 1 To 2
+    Rec "seq lock range err => " & Err.Number
+    Err.Clear
+    Unlock #22
+    Rec "seq unlock err => " & Err.Number
+    Err.Clear
+    Close #22
+    Close #23
+    Kill "wfcio_m.tmp"
+    Open "wfcio_m.tmp" For Binary As #25
+    fx = "abcdef"
+    Put #25, , fx
+    fy = "xyz"
+    Put #25, , fy
+    Put #25, 2, fy
+    Close #25
+''' + _dump('fxput', 'wfcio_m.tmp') + '''    Open "wfcio_m.tmp" For Binary As #25
+    fx = "......"
+    Get #25, , fx
+    Rec "fxget => " & fx
+    fy = "..."
+    Get #25, , fy
+    Rec "fxget2 => " & fy
+    Get #25, 4, fy
+    Rec "fxget3 => " & fy
+    fx = "......"
+    Get #25, 8, fx
+    Rec "fxget past => " & fx & "|" & Len(fx) & " err " & Err.Number
+    Err.Clear
+    Close #25
+    Open "wfcio_m.tmp" For Random As #25 Len = 8
+    fx = "ABCDEF"
+    Put #25, 2, fx
+    Put #25, , fx
+    fy = "xy"
+    Put #25, 1, fy
+    Rec "rnd lof => " & LOF(25)
+    Close #25
+''' + _dump('fxrnd', 'wfcio_m.tmp') + '''    Open "wfcio_m.tmp" For Random As #25 Len = 8
+    fx = "......"
+    Get #25, 2, fx
+    Rec "rfxget => " & fx
+    Get #25, , fx
+    Rec "rfxget2 => " & fx
+    fy = "..."
+    Get #25, 1, fy
+    Rec "rfxget3 => " & fy
+    Get #25, 9, fx
+    Rec "rfxget past => " & fx & " err " & Err.Number
+    Err.Clear
+    Close #25
+    Open "wfcio_m.tmp" For Random As #25 Len = 4
+    Put #25, 1, fx
+    Rec "rfx long => err " & Err.Number
+    Err.Clear
+    Get #25, 1, fx
+    Rec "rfx long get => err " & Err.Number
+    Err.Clear
+    Close #25
+    Kill "wfcio_m.tmp"
+'''
+experiment('fileMisc', 'x', 'n', [()])
+
+# Control bytes (NUL, Ctrl-Z) in sequential and Binary reads.
+RAW['fileCtrl'] = '''    Dim ca As String, cb As String, ch As Long, cx As String, cv As Variant
+    On Error Resume Next
+    Kill "wfcio_c.tmp"
+    Err.Clear
+    Open "wfcio_c.tmp" For Binary As #25
+    ca = "ab" & Chr$(0) & "cd" & Chr$(26) & "ef" & vbCrLf & "gh" & Chr$(26) & "ij"
+    Put #25, , ca
+    Close #25
+    Rec "len => " & FileLen("wfcio_c.tmp")
+    Open "wfcio_c.tmp" For Input As #22
+    cb = Input$(5, #22)
+    cx = ""
+    For ch = 1 To Len(cb)
+        cx = cx & AscW(Mid$(cb, ch, 1)) & ","
+    Next
+    Rec "in5 => " & cx & " len " & Len(cb) & " err " & Err.Number & " loc " & Loc(22) & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    cb = Input$(3, #22)
+    cx = ""
+    For ch = 1 To Len(cb)
+        cx = cx & AscW(Mid$(cb, ch, 1)) & ","
+    Next
+    Rec "in3 => " & cx & " len " & Len(cb) & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    cb = Input$(1, #22)
+    Rec "in1 => " & Len(cb) & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Input As #22
+    Line Input #22, cb
+    cx = ""
+    For ch = 1 To Len(cb)
+        cx = cx & AscW(Mid$(cb, ch, 1)) & ","
+    Next
+    Rec "line1 => " & cx & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    Line Input #22, cb
+    Rec "line2 => " & Len(cb) & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Input As #22
+    Input #22, cv
+    cx = ""
+    For ch = 1 To Len(cv)
+        cx = cx & AscW(Mid$(cv, ch, 1)) & ","
+    Next
+    Rec "inp1 => " & cx & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Binary As #22
+    cb = Input$(13, #22)
+    cx = ""
+    For ch = 1 To Len(cb)
+        cx = cx & AscW(Mid$(cb, ch, 1)) & ","
+    Next
+    Rec "bin13 => " & cx & " len " & Len(cb) & " err " & Err.Number & " seek " & Seek(22) & " eof " & EOF(22)
+    Err.Clear
+    cb = Input$(20, #22)
+    Rec "binrest => " & Len(cb) & " err " & Err.Number & " eof " & EOF(22)
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Binary As #22
+    cb = Space$(LOF(22))
+    Get #22, , cb
+    Rec "binget => " & Len(cb) & " err " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Binary As #22
+    cb = InputB$(4, #22)
+    Rec "inb => " & LenB(cb) & " " & AscB(MidB$(cb, 3, 1)) & " err " & Err.Number
+    Err.Clear
+    Close #22
+    Open "wfcio_c.tmp" For Random As #22 Len = 4
+    cb = Input$(1, #22)
+    Rec "rndin err => " & Err.Number
+    Err.Clear
+    Close #22
+    Kill "wfcio_c.tmp"
+'''
+experiment('fileCtrl', 'x', 'n', [()])
+
+
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""
     code = []

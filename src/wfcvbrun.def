@@ -137,7 +137,7 @@ EXPORTS
     EbResetProject=vbrun_stub_231 @231
     EbGetHandleOfExecutingProject=vbrun_stub_232 @232
     __vbaFileCloseAll @233
-    __vbaFileLock=vbrun_stub_234 @234
+    __vbaFileLock @234
     __vbaFileOpen @235
     __vbaFileSeek @236
     __vbaFixstrConstruct=vbrun_stub_237 @237
@@ -152,8 +152,8 @@ EXPORTS
     __vbaGenerateBoundsError=vbrun_stub_246 @246
     __vbaGet3 @247
     __vbaGet4 @248
-    __vbaGetFxStr3=vbrun_stub_249 @249
-    __vbaGetFxStr4=vbrun_stub_250 @250
+    __vbaGetFxStr3 @249
+    __vbaGetFxStr4 @250
     __vbaGetOwner3=vbrun_stub_251 @251
     __vbaGetOwner4=vbrun_stub_252 @252
     __vbaGosub=vbrun_stub_253 @253
@@ -242,7 +242,7 @@ EXPORTS
     __vbaMidStmtBstrB=vbrun_stub_336 @336
     __vbaMidStmtVar=vbrun_stub_337 @337
     __vbaMidStmtVarB=vbrun_stub_338 @338
-    __vbaNameFile=vbrun_stub_339 @339
+    __vbaNameFile @339
     __vbaNew2=vbrun_stub_340 @340
     __vbaNew=vbrun_stub_341 @341
     __vbaNextEachAry=vbrun_stub_342 @342
@@ -262,7 +262,7 @@ EXPORTS
     __vbaPrintObj=vbrun_stub_356 @356
     __vbaPut3 @357
     __vbaPut4 @358
-    __vbaPutFxStr3=vbrun_stub_359 @359
+    __vbaPutFxStr3 @359
     __vbaPutFxStr4 @360
     __vbaPutOwner3=vbrun_stub_361 @361
     __vbaPutOwner4=vbrun_stub_362 @362
@@ -457,8 +457,8 @@ EXPORTS
     rtcSetTimeBstr=vbrun_stub_551 @551
     rtcGetDayOfWeek @552
     rtcGetYear @553
-    rtcFileReset=vbrun_stub_554 @554
-    rtcFileAttributes=vbrun_stub_555 @555
+    rtcFileReset @554
+    rtcFileAttributes @555
     rtcIsArray @556
     rtcIsDate @557
     rtcIsEmpty @558
@@ -468,9 +468,9 @@ EXPORTS
     rtcIsObject @562
     rtcVarType @563
     rtDecFromVar=vbrun_stub_564 @564
-    rtcFileWidth=vbrun_stub_565 @565
-    rtcInputCount=vbrun_stub_566 @566
-    rtcInputCountVar=vbrun_stub_567 @567
+    rtcFileWidth @565
+    rtcInputCount @566
+    rtcInputCountVar @567
     rtcFileSeek @568
     rtcFileLocation @569
     rtcFileLength @570
@@ -523,8 +523,8 @@ EXPORTS
     rtcLeftCharVar @617
     rtcRightCharBstr @618
     rtcRightCharVar @619
-    rtcInputCharCount=vbrun_stub_620 @620
-    rtcInputCharCountVar=vbrun_stub_621 @621
+    rtcInputCharCount @620
+    rtcInputCharCountVar @621
     rtcStrConvVar @622
     __vbaWriteFile @623
     rtcGetHostLCID=vbrun_stub_624 @624

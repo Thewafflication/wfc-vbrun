@@ -5,11 +5,11 @@ Target: **MSVBVM60.DLL 6.0.98 (Visual Basic 6.0 SP6)**. Library version: **0.6.0
 `wfcvbrun.dll` exports the helper functions of the Visual Basic 6.0 runtime
 (`MSVBVM60.DLL`) under their original names. The list of what the reference
 runtime exports is kept in WFC's evidence (`evidence/reference`); the library
-implements 290 of them so far; the others are not implemented yet.
+implements 302 of them so far; the others are not implemented yet.
 
 | Item | Count |
 | --- | ---: |
-| Exports implemented | 290 |
+| Exports implemented | 302 |
 | Exports of the reference runtime | see `src/vbrun_exports.inc` |
 
 ## Registration
@@ -30,6 +30,6 @@ implements 290 of them so far; the others are not implemented yet.
 
 ## Known gaps
 
-- The exports beyond the 290 implemented ones are not implemented yet.
+- The exports beyond the 302 implemented ones are not implemented yet.
 - The error numbers of some conversions differ from Microsoft's (see the WFC
   planning notes, MP-0010).

@@ -63,6 +63,8 @@ struct FileSlot {
     long long written = 0;   // bytes written since the Open (Output, Append)
     long long column = 0;    // the print column (0 based)
     bool hit_end = false;    // a read ran into the end
+    int width = 0;           // Width # (0: no limit)
+    bool denied = false;     // a read met a locked region
 };
 
 FileSlot g_files[kFileCount + 1];
@@ -115,6 +117,10 @@ bool read_byte(FileSlot& file, unsigned char& value) {
     if (SetFilePointerEx(file.handle, where, nullptr, FILE_BEGIN) == 0 ||
         ReadFile(file.handle, &value, 1, &got, nullptr) == 0 || got != 1) {
         file.hit_end = true;
+        if (GetLastError() == ERROR_LOCK_VIOLATION) {
+            file.denied = true;
+            static_cast<void>(vbrun::raise(kPermissionDenied));
+        }
         return false;
     }
     ++file.position;
@@ -573,12 +579,15 @@ void print_list(const int number, const unsigned char* const descriptor,
         if (type == 0x20 || type == 0x21) {
             const int amount = reader.word();
             if (!write) {
+                const int shown = file->width > 0 && amount > file->width
+                                      ? amount % file->width
+                                      : amount;
                 if (type == 0x20) {
                     put_text(*file, std::string(static_cast<std::size_t>(
-                                                    amount > 0 ? amount : 0),
+                                                    shown > 0 ? shown : 0),
                                                 ' '));
                 } else {
-                    const long long target = (amount < 1 ? 1 : amount) - 1;
+                    const long long target = (shown < 1 ? 1 : shown) - 1;
                     if (target < file->column) {
                         put_text(*file, "\r\n");
                     }
@@ -595,6 +604,12 @@ void print_list(const int number, const unsigned char* const descriptor,
             if (write && index > 0) {
                 put_text(*file, ",");
             }
+            if (!write && file->width > 0 && file->column > 0 &&
+                !text.empty() &&
+                file->column + static_cast<long long>(text.size()) >
+                    file->width) {
+                put_text(*file, "\r\n");
+            }
             put_text(*file, text);
         } else if (write && index > 0 && separator != 2) {
             put_text(*file, ",");
@@ -602,7 +617,12 @@ void print_list(const int number, const unsigned char* const descriptor,
         if (separator == 2) {
             put_text(*file, "\r\n");
         } else if (separator == 0 && !write) {
-            pad_to(*file, (file->column / 14 + 1) * 14);
+            const long long zone = (file->column / 14 + 1) * 14;
+            if (file->width > 0 && zone >= file->width) {
+                put_text(*file, "\r\n");
+            } else {
+                pad_to(*file, zone);
+            }
         }
     }
 }
@@ -655,6 +675,9 @@ std::string get_bytes(FileSlot& file, const std::size_t size) {
          ReadFile(file.handle, bytes.data(), static_cast<DWORD>(size), &got,
                   nullptr) == 0)) {
         got = 0;
+        if (GetLastError() == ERROR_LOCK_VIOLATION) {
+            static_cast<void>(vbrun::raise(kPermissionDenied));
+        }
     }
     if (got < size) {
         file.hit_end = true;
@@ -1132,8 +1155,17 @@ void __cdecl __vbaFileOpen(const DWORD flags, const int record_length,
             access = GENERIC_WRITE;
         }
     }
-    const DWORD share =
-        lock_bits == 0U ? 0U : (FILE_SHARE_READ | FILE_SHARE_WRITE);
+    // The lock keyword: 0x1000 Lock Read Write, 0x2000 Lock Write, 0x3000
+    // Lock Read, anything else (Shared) denies nothing. No keyword opens the
+    // file exclusively.
+    DWORD share = 0U;
+    if (lock_bits == 0x2000U) {
+        share = FILE_SHARE_READ;
+    } else if (lock_bits == 0x3000U) {
+        share = FILE_SHARE_WRITE;
+    } else if (lock_bits != 0U && lock_bits != 0x1000U) {
+        share = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    }
     const wchar_t* const path = name == nullptr ? L"" : name;
     HANDLE handle = CreateFileW(path, access, share, nullptr, disposition,
                                 FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -1431,6 +1463,10 @@ void WINAPI __vbaGetFxStr4(const LONG length, wchar_t* const text,
     if (file == nullptr || !data_position(*file, record)) {
         return;
     }
+    if (file->mode == kModeRandom && length > file->record_length) {
+        static_cast<void>(vbrun::raise(kBadRecordLength));
+        return;
+    }
     const std::string bytes =
         get_bytes(*file, static_cast<std::size_t>(length));
     const std::wstring wide = widen(bytes.data(), bytes.size());
@@ -1445,6 +1481,199 @@ void WINAPI __vbaGetFxStr4(const LONG length, wchar_t* const text,
 void WINAPI __vbaGetFxStr3(const LONG length, wchar_t* const text,
                            const SHORT number) {
     __vbaGetFxStr4(length, text, 0, number);
+}
+
+// Reset: closes every open file.
+void __cdecl rtcFileReset() {
+    __vbaFileCloseAll();
+}
+
+// Width #number, width: the line width of Print # (0 for no limit).
+void WINAPI rtcFileWidth(const SHORT number, const SHORT width) {
+    if (number < 1 || number > kFileCount) {
+        static_cast<void>(vbrun::raise(kBadFileName));
+        return;
+    }
+    if (width < 0 || width > 255) {
+        static_cast<void>(vbrun::raise(kInvalidProcedureCall));
+        return;
+    }
+    FileSlot* const file = file_of(number);
+    if (file != nullptr) {
+        file->width = width;
+    }
+}
+
+// FileAttr(number, kind): the mode of the file (kind 1). The handle (kind 2)
+// is refused, as it is by the reference.
+LONG WINAPI rtcFileAttributes(const SHORT number, const SHORT kind) {
+    FileSlot* const file = file_of(number);
+    if (file == nullptr) {
+        return 0;
+    }
+    if (kind != 1) {
+        static_cast<void>(vbrun::raise(kInvalidProcedureCall));
+        return 0;
+    }
+    return file->mode;
+}
+
+}  // extern "C"
+
+namespace {
+
+// The characters (or bytes) of Input$ and InputB$. A sequential file raises
+// 62 when it ends early; a Binary file returns what it found.
+BSTR input_text(const LONG count, const SHORT number, const bool bytes) {
+    if (count < 0 || count > 0x3FFFFFFF) {
+        static_cast<void>(vbrun::raise(kInvalidProcedureCall));
+        return nullptr;
+    }
+    FileSlot* const file = file_of(number);
+    if (file == nullptr) {
+        return nullptr;
+    }
+    if (file->mode != kModeInput && file->mode != kModeBinary) {
+        static_cast<void>(vbrun::raise(kBadFileMode));
+        return nullptr;
+    }
+    std::string raw;
+    std::wstring chars;
+    bool ended = false;
+    for (LONG index = 0; index < count && !ended; ++index) {
+        unsigned char value = 0;
+        if (!read_byte(*file, value)) {
+            ended = true;
+            break;
+        }
+        raw.push_back(static_cast<char>(value));
+        if (!bytes) {
+            std::string unit(1, static_cast<char>(value));
+            if (IsDBCSLeadByte(value) != 0) {
+                unsigned char trail = 0;
+                if (read_byte(*file, trail)) {
+                    unit.push_back(static_cast<char>(trail));
+                }
+            }
+            chars += widen(unit.data(), unit.size());
+        }
+    }
+    if (file->denied) {
+        file->denied = false;
+        return nullptr;
+    }
+    if (ended && file->mode != kModeBinary) {
+        static_cast<void>(vbrun::raise(kInputPastEnd));
+        return nullptr;
+    }
+    if (bytes) {
+        return SysAllocStringByteLen(raw.data(), static_cast<UINT>(raw.size()));
+    }
+    return SysAllocStringLen(chars.data(), static_cast<UINT>(chars.size()));
+}
+
+void input_variant(VARIANT* const result, BSTR text) {
+    VariantInit(result);
+    if (text != nullptr) {
+        V_VT(result) = VT_BSTR;
+        V_BSTR(result) = text;
+    }
+}
+
+}  // namespace
+
+extern "C" {
+
+BSTR WINAPI rtcInputCount(const LONG count, const SHORT number) {
+    return input_text(count, number, true);
+}
+
+BSTR WINAPI rtcInputCharCount(const LONG count, const SHORT number) {
+    return input_text(count, number, false);
+}
+
+VARIANT* WINAPI rtcInputCountVar(VARIANT* const result, const LONG count,
+                                 const SHORT number) {
+    input_variant(result, input_text(count, number, true));
+    return result;
+}
+
+VARIANT* WINAPI rtcInputCharCountVar(VARIANT* const result, const LONG count,
+                                     const SHORT number) {
+    input_variant(result, input_text(count, number, false));
+    return result;
+}
+
+// Name old As new: a rename.
+void WINAPI __vbaNameFile(const BSTR old_name, const BSTR new_name) {
+    const wchar_t* const from = old_name == nullptr ? L"" : old_name;
+    const wchar_t* const to = new_name == nullptr ? L"" : new_name;
+    if (to[0] == 0) {
+        // An empty new name is the current folder, which exists.
+        static_cast<void>(vbrun::raise(58));
+        return;
+    }
+    if (MoveFileW(from, to) != 0) {
+        return;
+    }
+    switch (GetLastError()) {
+        case ERROR_FILE_NOT_FOUND:
+        case ERROR_PATH_NOT_FOUND:
+            static_cast<void>(vbrun::raise(kFileNotFound));
+            break;
+        case ERROR_SHARING_VIOLATION:
+            static_cast<void>(vbrun::raise(kFileAlreadyOpen));
+            break;
+        case ERROR_ACCESS_DENIED:
+            static_cast<void>(vbrun::raise(75));
+            break;
+        case ERROR_ALREADY_EXISTS:
+        case ERROR_FILE_EXISTS:
+            static_cast<void>(vbrun::raise(58));
+            break;
+        case ERROR_NOT_SAME_DEVICE:
+            static_cast<void>(vbrun::raise(74));
+            break;
+        default:
+            static_cast<void>(vbrun::raise(kInvalidProcedureCall));
+            break;
+    }
+}
+
+// Lock and Unlock. `flags`: bit 0 set for Unlock, bit 1 for a From To range,
+// bit 2 for one record (in `from`); neither means the whole file. Only a
+// Random or Binary file honours a record range.
+void WINAPI __vbaFileLock(const DWORD flags, const LONG to, const LONG from,
+                          const SHORT number) {
+    FileSlot* const file = file_of(number);
+    if (file == nullptr) {
+        return;
+    }
+    unsigned long long start = 0;
+    unsigned long long length = 0xFFFFFFFFULL;
+    if ((file->mode == kModeRandom || file->mode == kModeBinary) &&
+        (flags & 6U) != 0) {
+        const LONG last = (flags & 4U) != 0 ? from : to;
+        if (from < 1 || last < 1 || from > last) {
+            static_cast<void>(vbrun::raise(kBadRecordNumber));
+            return;
+        }
+        const unsigned long long size =
+            static_cast<unsigned long long>(file->record_length);
+        start = static_cast<unsigned long long>(from - 1) * size;
+        length = static_cast<unsigned long long>(last - from + 1) * size;
+    }
+    const DWORD low = static_cast<DWORD>(start & 0xFFFFFFFFULL);
+    const DWORD high = static_cast<DWORD>(start >> 32);
+    const DWORD length_low = static_cast<DWORD>(length & 0xFFFFFFFFULL);
+    const DWORD length_high = static_cast<DWORD>(length >> 32);
+    const BOOL done =
+        (flags & 1U) != 0
+            ? UnlockFile(file->handle, low, high, length_low, length_high)
+            : LockFile(file->handle, low, high, length_low, length_high);
+    if (done == 0) {
+        static_cast<void>(vbrun::raise(kPermissionDenied));
+    }
 }
 
 }  // extern "C"
