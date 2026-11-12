@@ -171,3 +171,134 @@ LONG WINAPI rtcQBColor(const LONG number) {
 }
 
 }  // extern "C"
+
+// Mid$(target, start, length) = replacement: overwrites characters of the
+// target in place. `fixed` is the length (in characters) of a fixed-length
+// String whose buffer is `target`; it is 0 for a String variable, where
+// `target` points at the BSTR. Offsets and lengths are bytes here; the
+// character forms double them first. Nothing is added to the target: at most
+// the shortest of the replacement, the length and the rest of the target is
+// copied.
+namespace {
+
+constexpr LONG kNoLength = 0x3FFFFFFF;
+
+void mid_statement(const LONG fixed, const BSTR replacement,
+                   const LONG length_bytes, const LONG start_bytes,
+                   void* const target) {
+    LONG target_bytes = 0;
+    char* buffer = nullptr;
+    if (fixed != 0) {
+        const LONG doubled = static_cast<LONG>(static_cast<ULONG>(fixed) * 2U);
+        if (doubled < 0 || doubled > kNoLength) {
+            static_cast<void>(vbrun::raise(5));
+            return;
+        }
+        target_bytes = doubled;
+        buffer = static_cast<char*>(target);
+    } else {
+        const BSTR text = *static_cast<BSTR*>(target);
+        buffer = reinterpret_cast<char*>(text);
+        target_bytes =
+            text == nullptr ? 0 : static_cast<LONG>(SysStringByteLen(text));
+    }
+    const ULONG replacement_bytes =
+        replacement == nullptr ? 0 : SysStringByteLen(replacement);
+    const LONG offset = start_bytes - 1;
+    if (offset < 0 || offset > kNoLength || length_bytes < 0 ||
+        length_bytes > kNoLength ||
+        static_cast<ULONG>(offset) >= static_cast<ULONG>(target_bytes)) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    ULONG count = replacement_bytes;
+    count = std::min(count, static_cast<ULONG>(length_bytes));
+    count = std::min(count, static_cast<ULONG>(target_bytes - offset));
+    if (count != 0) {
+        std::memmove(buffer + offset, replacement, count);
+    }
+}
+
+LONG chars_to_bytes(const LONG count) {
+    return count == kNoLength
+               ? count
+               : static_cast<LONG>(static_cast<ULONG>(count) * 2U);
+}
+
+LONG char_start_to_bytes(const LONG start) {
+    return static_cast<LONG>(static_cast<ULONG>(start) * 2U - 1U);
+}
+
+// The target Variant of Mid$ on a Variant: a String, or one that converts to
+// it (the Variant itself is changed). Returns the BSTR slot or null.
+BSTR* variant_string_slot(VARIANT* const target) {
+    if ((target->vt & VT_BYREF) != 0) {
+        if (target->vt != (VT_BYREF | VT_BSTR)) {
+            static_cast<void>(vbrun::raise(kTypeMismatch));
+            return nullptr;
+        }
+        return target->pbstrVal;
+    }
+    if (target->vt != VT_BSTR) {
+        const HRESULT status = VariantChangeTypeEx(
+            target, target, GetUserDefaultLCID(), VARIANT_ALPHABOOL, VT_BSTR);
+        if (FAILED(status)) {
+            static_cast<void>(vbrun::raise_hresult(status));
+            return nullptr;
+        }
+    }
+    return &target->bstrVal;
+}
+
+void mid_variant_statement(VARIANT* const replacement, const LONG length_bytes,
+                           const LONG start_bytes, VARIANT* const target) {
+    BSTR* const slot = variant_string_slot(target);
+    if (slot == nullptr) {
+        return;
+    }
+    VARIANT converted;
+    VariantInit(&converted);
+    const VARIANT* source = replacement;
+    if (replacement->vt != VT_BSTR) {
+        const HRESULT status =
+            VariantChangeTypeEx(&converted, replacement, GetUserDefaultLCID(),
+                                VARIANT_ALPHABOOL, VT_BSTR);
+        if (FAILED(status)) {
+            static_cast<void>(vbrun::raise_hresult(status));
+            return;
+        }
+        source = &converted;
+    }
+    mid_statement(0, source->bstrVal, length_bytes, start_bytes, slot);
+    VariantClear(&converted);
+}
+
+}  // namespace
+
+extern "C" {
+
+void WINAPI __vbaMidStmtBstr(const LONG fixed, const BSTR replacement,
+                             const LONG length, const LONG start,
+                             void* const target) {
+    mid_statement(fixed, replacement, chars_to_bytes(length),
+                  char_start_to_bytes(start), target);
+}
+
+void WINAPI __vbaMidStmtBstrB(const LONG fixed, const BSTR replacement,
+                              const LONG length, const LONG start,
+                              void* const target) {
+    mid_statement(fixed, replacement, length, start, target);
+}
+
+void WINAPI __vbaMidStmtVar(VARIANT* const replacement, const LONG length,
+                            const LONG start, VARIANT* const target) {
+    mid_variant_statement(replacement, chars_to_bytes(length),
+                          char_start_to_bytes(start), target);
+}
+
+void WINAPI __vbaMidStmtVarB(VARIANT* const replacement, const LONG length,
+                             const LONG start, VARIANT* const target) {
+    mid_variant_statement(replacement, length, start, target);
+}
+
+}  // extern "C"

@@ -1660,6 +1660,44 @@ RAW['fileCtrl'] = '''    Dim ca As String, cb As String, ch As Long, cx As Strin
 '''
 experiment('fileCtrl', 'x', 'n', [()])
 
+# The Mid statement: in place overwrite, caps, errors, fixed strings, Variants.
+RAW['midStmt'] = '''    Dim ms As String, mf As String * 5, mv As Variant, mn As Variant
+    On Error Resume Next
+    ms = "hello world": Mid$(ms, 1, 2) = "XY": Rec "head => " & ms & " err " & Err.Number
+    ms = "hello world": Mid$(ms, 7) = "XYZ": Rec "tail => " & ms & " err " & Err.Number
+    ms = "hello world": Mid$(ms, 7, 2) = "XYZ": Rec "cap => " & ms & " err " & Err.Number
+    ms = "hello": Mid$(ms, 4) = "abcdefgh": Rec "targetcap => " & ms & " err " & Err.Number
+    ms = "hello": Mid$(ms, 2) = "": Rec "emptyrepl => " & ms & " err " & Err.Number
+    ms = "hello": Mid$(ms, 2, 0) = "XY": Rec "zerolen => " & ms & " err " & Err.Number
+    Err.Clear
+    ms = "hello": Mid$(ms, 6) = "X": Rec "past => " & ms & " err " & Err.Number
+    Err.Clear
+    ms = "hello": Mid$(ms, 0) = "X": Rec "zero => " & ms & " err " & Err.Number
+    Err.Clear
+    ms = "hello": Mid$(ms, 1, -1) = "X": Rec "neglen => " & ms & " err " & Err.Number
+    Err.Clear
+    ms = "": Mid$(ms, 1) = "X": Rec "emptytarget => " & ms & " err " & Err.Number
+    Err.Clear
+    ms = "abcd": MidB$(ms, 3, 2) = "WX": Rec "midb => " & Mid$(ms, 1, 1) & Mid$(ms, 2, 1) & Mid$(ms, 3, 2) & " err " & Err.Number
+    Err.Clear
+    mf = "abcde": Mid$(mf, 3) = "12345678": Rec "fixed => " & mf & " err " & Err.Number
+    Err.Clear
+    mf = "abcde": Mid$(mf, 6) = "X": Rec "fixedpast => " & mf & " err " & Err.Number
+    Err.Clear
+    mv = "12345": mn = 99: Mid$(mv, 2) = mn: Rec "varnum => " & mv & " " & TypeName(mv) & " err " & Err.Number
+    Err.Clear
+    mv = 12345: Mid$(mv, 4) = "ab": Rec "vartarget => " & mv & " " & TypeName(mv) & " err " & Err.Number
+    Err.Clear
+    mv = Null: Mid$(mv, 1) = "ab": Rec "varnull => " & TypeName(mv) & " err " & Err.Number
+    Err.Clear
+    mv = Empty: Mid$(mv, 1) = "ab": Rec "varempty => " & TypeName(mv) & " err " & Err.Number
+    Err.Clear
+    ms = "hello": Mid(ms, 2, 3) = "ABCDE": Rec "variantform => " & ms & " err " & Err.Number
+    ms = "hello": Mid$(ms, 2, 3) = 7: Rec "numrepl => " & ms & " err " & Err.Number
+    Err.Clear
+'''
+experiment('midStmt', 'x', 'n', [()])
+
 
 def vb_call(kind, index, row):
     """The Visual Basic statements of one grid row; returns (code, case)."""

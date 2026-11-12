@@ -238,10 +238,10 @@ EXPORTS
     __vbaLineInputVar @332
     __vbaLsetFixstr=vbrun_stub_333 @333
     __vbaLsetFixstrFree=vbrun_stub_334 @334
-    __vbaMidStmtBstr=vbrun_stub_335 @335
-    __vbaMidStmtBstrB=vbrun_stub_336 @336
-    __vbaMidStmtVar=vbrun_stub_337 @337
-    __vbaMidStmtVarB=vbrun_stub_338 @338
+    __vbaMidStmtBstr @335
+    __vbaMidStmtBstrB @336
+    __vbaMidStmtVar @337
+    __vbaMidStmtVarB @338
     __vbaNameFile @339
     __vbaNew2=vbrun_stub_340 @340
     __vbaNew=vbrun_stub_341 @341

@@ -311,3 +311,7 @@ __vbaFileLock
 __vbaGetFxStr3
 __vbaGetFxStr4
 __vbaPutFxStr3
+__vbaMidStmtBstr
+__vbaMidStmtBstrB
+__vbaMidStmtVar
+__vbaMidStmtVarB

@@ -212,6 +212,20 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       TC-MP0009-vbrun-filedata
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
+    # The Mid$ statement.
+    add_executable(
+      vbrun_midstmt_tests
+      tests/vbrun_midstmt_tests.cpp
+      src/helpers_language.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_midstmt_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_midstmt_tests)
+    add_test(NAME TC-MP0009-vbrun-midstmt COMMAND vbrun_midstmt_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-midstmt
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # Width, FileAttr, Name, Lock, Input$ and fixed length strings.
     add_executable(
       vbrun_file_misc_tests
