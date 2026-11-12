@@ -257,7 +257,7 @@ EXPORTS
     __vbaObjVar=vbrun_stub_351 @351
     __vbaOnError=vbrun_stub_352 @352
     __vbaOnGoCheck=vbrun_stub_353 @353
-    __vbaPowerR8=vbrun_stub_354 @354
+    __vbaPowerR8 @354
     __vbaPrintFile @355
     __vbaPrintObj=vbrun_stub_356 @356
     __vbaPut3 @357

@@ -31,6 +31,7 @@ float WINAPI __vbaR4Str(BSTR text);
 SHORT WINAPI __vbaR4Sgn(float value);
 SHORT WINAPI __vbaR8Sgn(double value);
 LONG WINAPI rtDecFromVar(VARIANT* source, DECIMAL* target);
+double WINAPI __vbaPowerR8(double base, double exponent);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
 VARIANT* WINAPI rtcCommandVar(VARIANT* result);

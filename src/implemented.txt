@@ -337,3 +337,4 @@ __vbaR4Str
 __vbaR4Sgn
 __vbaR8Sgn
 rtDecFromVar
+__vbaPowerR8

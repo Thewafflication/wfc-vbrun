@@ -8,6 +8,7 @@
 // with the user's locale; a failure is a Visual Basic error of the thread
 // (vbrun::raise_hresult) and the helper returns 0.
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <cwctype>
@@ -610,6 +611,32 @@ LONG WINAPI rtDecFromVar(VARIANT* const source, DECIMAL* const target) {
     *target = made.decVal;
     target->wReserved = VT_DECIMAL;
     return 0;
+}
+
+// base ^ exponent: 0 ^ 0 is 1; 0 to a negative power and a negative base to
+// a fractional power are error 5; a result too large is error 6 (one too
+// small is 0).
+double WINAPI __vbaPowerR8(const double base, const double exponent) {
+    if (base == 0.0) {
+        if (exponent == 0.0) {
+            return 1.0;
+        }
+        if (exponent < 0.0) {
+            static_cast<void>(vbrun::raise(5));
+            return 0.0;
+        }
+        return 0.0;
+    }
+    if (base < 0.0 && std::floor(exponent) != exponent) {
+        static_cast<void>(vbrun::raise(5));
+        return 0.0;
+    }
+    const double answer = std::pow(base, exponent);
+    if (std::isinf(answer)) {
+        static_cast<void>(vbrun::raise(6));
+        return 0.0;
+    }
+    return answer;
 }
 
 double WINAPI __vbaDateStr(const BSTR text) {
