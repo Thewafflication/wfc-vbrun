@@ -8,11 +8,15 @@
 #include <oleauto.h>
 
 #include <cstdio>
+#include <cwchar>
 #include <string>
 
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+BSTR WINAPI __vbaStrFixstr(LONG length, const wchar_t* text);
+LONG WINAPI __vbaAptOffset(LONG value);
+BSTR WINAPI __vbaStrVarCopy(VARIANT* value);
 LONG WINAPI rtcGetErl();
 void WINAPI __vbaSetSystemError();
 VARIANT* WINAPI __vbaStrCompVar(VARIANT* result, LONG mode, VARIANT* right,

@@ -1435,6 +1435,45 @@ void* WINAPI __vbaUdtVar(IRecordInfo* const info, const VARIANT* const value) {
     return value->pvRecord;
 }
 
+// A string of fixed length (Dim s As String * n) as a string of its own.
+BSTR WINAPI __vbaStrFixstr(const LONG length, const wchar_t* const text) {
+    BSTR result = SysAllocStringLen(text, static_cast<UINT>(length));
+    if (result == nullptr) {
+        static_cast<void>(vbrun::raise(14));  // out of string space
+    }
+    return result;
+}
+
+// The apartment offset of a (single threaded) program is zero.
+LONG WINAPI __vbaAptOffset(const LONG) {
+    return 0;
+}
+
+// A copy of the string of a Variant (converted when it is not a string).
+BSTR WINAPI __vbaStrVarCopy(VARIANT* const value) {
+    if (value->vt == VT_BSTR) {
+        if (value->bstrVal == nullptr) {
+            return nullptr;
+        }
+        BSTR copy = SysAllocStringByteLen(
+            reinterpret_cast<const char*>(value->bstrVal),
+            SysStringByteLen(value->bstrVal));
+        if (copy == nullptr) {
+            static_cast<void>(vbrun::raise(7));
+        }
+        return copy;
+    }
+    VARIANT converted;
+    VariantInit(&converted);
+    const HRESULT status =
+        VariantChangeType(&converted, value, 0, VT_BSTR);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+        return nullptr;
+    }
+    return converted.bstrVal;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

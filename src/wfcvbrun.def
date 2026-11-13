@@ -66,7 +66,7 @@ EXPORTS
     _CIsin=vbrun_stub_160 @160
     _CIsqrt=vbrun_stub_161 @161
     _CItan=vbrun_stub_162 @162
-    __vbaAptOffset=vbrun_stub_163 @163
+    __vbaAptOffset @163
     __vbaAryConstruct2=vbrun_stub_164 @164
     __vbaAryConstruct=vbrun_stub_165 @165
     __vbaAryCopy @166
@@ -122,10 +122,10 @@ EXPORTS
     __vbaError @216
     __vbaErrorOverflow @217
     __vbaExceptHandler=vbrun_stub_218 @218
-    __vbaExitEachAry=vbrun_stub_219 @219
+    __vbaExitEachAry @219
     TipSetOption=vbrun_stub_220 @220
-    __vbaExitEachColl=vbrun_stub_221 @221
-    __vbaExitEachVar=vbrun_stub_222 @222
+    __vbaExitEachColl @221
+    __vbaExitEachVar @222
     __vbaExitProc=vbrun_stub_223 @223
     __vbaFPException=vbrun_stub_224 @224
     __vbaFPFix=vbrun_stub_225 @225
@@ -141,11 +141,11 @@ EXPORTS
     __vbaFileOpen @235
     __vbaFileSeek @236
     __vbaFixstrConstruct @237
-    __vbaForEachAry=vbrun_stub_238 @238
-    __vbaForEachCollAd=vbrun_stub_239 @239
-    __vbaForEachCollObj=vbrun_stub_240 @240
-    __vbaForEachCollVar=vbrun_stub_241 @241
-    __vbaForEachVar=vbrun_stub_242 @242
+    __vbaForEachAry @238
+    __vbaForEachCollAd @239
+    __vbaForEachCollObj @240
+    __vbaForEachCollVar @241
+    __vbaForEachVar @242
     __vbaFreeObjList @243
     __vbaFreeStrList @244
     __vbaFreeVarList @245
@@ -245,11 +245,11 @@ EXPORTS
     __vbaNameFile @339
     __vbaNew2=vbrun_stub_340 @340
     __vbaNew=vbrun_stub_341 @341
-    __vbaNextEachAry=vbrun_stub_342 @342
-    __vbaNextEachCollAd=vbrun_stub_343 @343
-    __vbaNextEachCollObj=vbrun_stub_344 @344
-    __vbaNextEachCollVar=vbrun_stub_345 @345
-    __vbaNextEachVar=vbrun_stub_346 @346
+    __vbaNextEachAry @342
+    __vbaNextEachCollAd @343
+    __vbaNextEachCollObj @344
+    __vbaNextEachCollVar @345
+    __vbaNextEachVar @346
     __vbaObjAddref @347
     __vbaObjIs @348
     __vbaObjSet @349
@@ -319,7 +319,7 @@ EXPORTS
     BASIC_CLASS_GetIDsOfNames=vbrun_stub_413 @413
     BASIC_CLASS_Invoke=vbrun_stub_414 @414
     __vbaStrDate @415
-    __vbaStrFixstr=vbrun_stub_416 @416
+    __vbaStrFixstr @416
     __vbaStrI2 @417
     __vbaStrI4 @418
     __vbaStrLike @419
@@ -332,7 +332,7 @@ EXPORTS
     __vbaStrToAnsi @426
     __vbaStrToUnicode @427
     __vbaStrUI1 @428
-    __vbaStrVarCopy=vbrun_stub_429 @429
+    __vbaStrVarCopy @429
     Zombie_QueryInterface=vbrun_stub_430 @430
     Zombie_AddRef=vbrun_stub_431 @431
     Zombie_Release=vbrun_stub_432 @432

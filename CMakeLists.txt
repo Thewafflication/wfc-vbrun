@@ -62,6 +62,7 @@ set(
   src/helpers_numeric.cpp
   src/helpers_scalars.cpp
   src/helpers_late.cpp
+  src/helpers_foreach.cpp
   src/helpers_errors.cpp
   src/helpers_finance.cpp
   src/helpers_dates.cpp
@@ -241,6 +242,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_late_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_late_tests)
     add_test(NAME TC-MP0009-vbrun-late COMMAND vbrun_late_tests)
+    # For Each over arrays, Variants and a collection.
+    add_executable(
+      vbrun_foreach_tests
+      tests/vbrun_foreach_tests.cpp
+      src/helpers_foreach.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_foreach_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_foreach_tests)
+    add_test(NAME TC-MP0009-vbrun-foreach COMMAND vbrun_foreach_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-foreach
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     set_tests_properties(
       TC-MP0009-vbrun-late
       PROPERTIES LABELS "unit;mp-0009;vbrun"
