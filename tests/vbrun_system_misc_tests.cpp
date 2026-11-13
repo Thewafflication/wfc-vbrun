@@ -37,6 +37,16 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+void WINAPI __vbaError(LONG number);
+HRESULT WINAPI __vbaHresultCheckNonvirt(HRESULT result);
+void WINAPI __vbaEraseNoPop(SAFEARRAY** slot);
+void WINAPI __vbaAryDestruct(const void* frame, SAFEARRAY** slot);
+void WINAPI __vbaAryMove(SAFEARRAY** destination, SAFEARRAY** source);
+void WINAPI __vbaAryCopy(SAFEARRAY** destination, SAFEARRAY** source);
+VARIANT* WINAPI __vbaVargObj(VARIANT* variant, IUnknown* object);
+VARIANT* WINAPI __vbaVargObjAddref(VARIANT* variant, IUnknown* object);
+VARIANT* WINAPI __vbaVargUnk(VARIANT* variant, IUnknown* object);
+VARIANT* WINAPI __vbaVargUnkAddref(VARIANT* variant, IUnknown* object);
 SAFEARRAY** WINAPI __vbaRefVarAry(VARIANT* value);
 void* WINAPI __vbaDerefAry1(const SAFEARRAY* array, LONG index);
 void* __cdecl __vbaDerefAry(SHORT rank, const SAFEARRAY* array, ...);
@@ -138,6 +148,48 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        vbrun::clear_error();
+        __vbaError(53);
+        expect(vbrun::last_error() == 53, "error statement");
+        vbrun::clear_error();
+        __vbaError(0);
+        expect(vbrun::last_error() == 5, "error zero");
+        vbrun::clear_error();
+        static_cast<void>(__vbaHresultCheckNonvirt(E_OUTOFMEMORY));
+        expect(vbrun::last_error() == 7, "hresult nonvirt");
+        vbrun::clear_error();
+        SAFEARRAYBOUND three = {3, 0};
+        SAFEARRAY* made = SafeArrayCreate(VT_I4, 1, &three);
+        SAFEARRAY* target = nullptr;
+        __vbaAryMove(&target, &made);
+        expect(target != nullptr && made == nullptr, "array move");
+        SAFEARRAY* copy = nullptr;
+        __vbaAryCopy(&copy, &target);
+        expect(copy != nullptr && copy != target &&
+                   copy->rgsabound[0].cElements == 3,
+               "array copy");
+        __vbaEraseNoPop(&target);
+        expect(target == nullptr, "erase");
+        __vbaAryDestruct(nullptr, &copy);
+        expect(copy == nullptr, "array destruct");
+        IStream* stream = nullptr;
+        CreateStreamOnHGlobal(nullptr, TRUE, &stream);
+        VARIANT arg;
+        VariantInit(&arg);
+        stream->AddRef();
+        __vbaVargObj(&arg, stream);
+        expect(arg.vt == VT_DISPATCH && arg.punkVal == stream, "varg obj");
+        VARIANT wrapper;
+        VariantInit(&wrapper);
+        wrapper.vt = VT_BYREF | VT_VARIANT;
+        wrapper.pvarVal = &arg;
+        __vbaVargUnkAddref(&wrapper, nullptr);
+        expect(arg.vt == VT_UNKNOWN && arg.punkVal == nullptr,
+               "varg through reference releases");
+        VariantClear(&arg);
+        stream->Release();
+    }
     {
         SAFEARRAY* none = nullptr;
         VARIANT plain;

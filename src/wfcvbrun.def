@@ -69,9 +69,9 @@ EXPORTS
     __vbaAptOffset=vbrun_stub_163 @163
     __vbaAryConstruct2=vbrun_stub_164 @164
     __vbaAryConstruct=vbrun_stub_165 @165
-    __vbaAryCopy=vbrun_stub_166 @166
-    __vbaAryDestruct=vbrun_stub_167 @167
-    __vbaAryMove=vbrun_stub_168 @168
+    __vbaAryCopy @166
+    __vbaAryDestruct @167
+    __vbaAryMove @168
     __vbaAryRebase1Var=vbrun_stub_169 @169
     __vbaAryRecCopy=vbrun_stub_170 @170
     __vbaAryRecMove=vbrun_stub_171 @171
@@ -118,8 +118,8 @@ EXPORTS
     __vbaEnd=vbrun_stub_212 @212
     __vbaErase=vbrun_stub_213 @213
     __vbaEraseKeepData=vbrun_stub_214 @214
-    __vbaEraseNoPop=vbrun_stub_215 @215
-    __vbaError=vbrun_stub_216 @216
+    __vbaEraseNoPop @215
+    __vbaError @216
     __vbaErrorOverflow @217
     __vbaExceptHandler=vbrun_stub_218 @218
     __vbaExitEachAry=vbrun_stub_219 @219
@@ -160,7 +160,7 @@ EXPORTS
     __vbaGosubFree=vbrun_stub_254 @254
     __vbaGosubReturn=vbrun_stub_255 @255
     __vbaHresultCheck @256
-    __vbaHresultCheckNonvirt=vbrun_stub_257 @257
+    __vbaHresultCheckNonvirt @257
     __vbaHresultCheckObj=vbrun_stub_258 @258
     __vbaI2Cy @259
     __vbaI2ErrVar @260
@@ -413,8 +413,8 @@ EXPORTS
     __vbaVarTstLt @507
     __vbaVarTstNe @508
     __vbaVarXor @509
-    __vbaVargObj=vbrun_stub_510 @510
-    __vbaVargObjAddref=vbrun_stub_511 @511
+    __vbaVargObj @510
+    __vbaVargObjAddref @511
     rtcLeftBstr @512
     rtcLeftVar @513
     rtcRightBstr @514
@@ -505,8 +505,8 @@ EXPORTS
     rtcSendKeys=vbrun_stub_599 @599
     rtcShell=vbrun_stub_600 @600
     rtcArray @601
-    __vbaVargUnk=vbrun_stub_602 @602
-    __vbaVargUnkAddref=vbrun_stub_603 @603
+    __vbaVargUnk @602
+    __vbaVargUnkAddref @603
     __vbaVerifyVarObj @604
     rtcGetErl=vbrun_stub_605 @605
     rtcStringBstr @606

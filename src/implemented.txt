@@ -380,3 +380,13 @@ __vbaDerefAry
 __vbaAryVar
 __vbaStr2Vec
 __vbaRefVarAry
+__vbaError
+__vbaHresultCheckNonvirt
+__vbaEraseNoPop
+__vbaAryDestruct
+__vbaAryMove
+__vbaAryCopy
+__vbaVargObj
+__vbaVargObjAddref
+__vbaVargUnk
+__vbaVargUnkAddref

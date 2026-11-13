@@ -1139,6 +1139,141 @@ SAFEARRAY** WINAPI __vbaRefVarAry(VARIANT* const value) {
     return (value->vt & VT_BYREF) != 0 ? value->pparray : &value->parray;
 }
 
+// Error statement: Error n raises Visual Basic error n (0 and values above
+// 65535 are error 5).
+void WINAPI __vbaError(const LONG number) {
+    static_cast<void>(vbrun::raise(number < 1 || number > 0xFFFF ? 5 : number));
+}
+
+HRESULT WINAPI __vbaHresultCheckNonvirt(const HRESULT result) {
+    return __vbaHresultCheck(result);
+}
+
+// Frees an array held in a slot; a locked array is error 10.
+static void destroy_array(SAFEARRAY** const slot) {
+    if (*slot == nullptr) {
+        return;
+    }
+    if ((*slot)->cLocks != 0) {
+        static_cast<void>(vbrun::raise(10));
+        return;
+    }
+    if (SUCCEEDED(SafeArrayDestroy(*slot))) {
+        *slot = nullptr;
+    }
+}
+
+// Erase: frees a dynamic array (fixed-size and static ones are error 13).
+void WINAPI __vbaEraseNoPop(SAFEARRAY** const slot) {
+    if (*slot == nullptr) {
+        return;
+    }
+    if (((*slot)->fFeatures & (FADF_STATIC | FADF_EMBEDDED | FADF_FIXEDSIZE)) !=
+        0) {
+        static_cast<void>(vbrun::raise(13));
+        return;
+    }
+    destroy_array(slot);
+}
+
+void WINAPI __vbaAryDestruct(const void* const frame, SAFEARRAY** const slot) {
+    static_cast<void>(frame);
+    if (*slot == nullptr ||
+        ((*slot)->fFeatures & (FADF_AUTO | FADF_EMBEDDED)) != 0) {
+        return;
+    }
+    destroy_array(slot);
+}
+
+// Array assignment by move: the old array of the destination is freed and the
+// array of the source becomes the destination one (error 13 when the
+// destination is fixed-size).
+void WINAPI __vbaAryMove(SAFEARRAY** const destination,
+                         SAFEARRAY** const source) {
+    if (*destination != nullptr &&
+        ((*destination)->fFeatures &
+         (FADF_AUTO | FADF_STATIC | FADF_EMBEDDED | FADF_FIXEDSIZE)) != 0) {
+        static_cast<void>(vbrun::raise(13));
+        return;
+    }
+    if (*destination != *source) {
+        destroy_array(destination);
+        *destination = *source;
+        *source = nullptr;
+    }
+}
+
+// Array assignment by copy.
+void WINAPI __vbaAryCopy(SAFEARRAY** const destination,
+                         SAFEARRAY** const source) {
+    if (*destination != nullptr &&
+        ((*destination)->fFeatures &
+         (FADF_AUTO | FADF_STATIC | FADF_EMBEDDED | FADF_FIXEDSIZE)) != 0) {
+        static_cast<void>(vbrun::raise(13));
+        return;
+    }
+    if (*destination == *source) {
+        return;
+    }
+    destroy_array(destination);
+    if (*source != nullptr) {
+        const HRESULT result = SafeArrayCopy(*source, destination);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+        }
+    }
+}
+
+// Stores an object in a Variant used as a by-reference argument. The plain
+// forms take over the reference of the caller, the Addref forms add their own.
+static VARIANT* set_argument_object(VARIANT* variant, IUnknown* const object,
+                                    const VARTYPE type,
+                                    const bool add_reference) {
+    if (variant->vt == (VT_BYREF | VT_VARIANT)) {
+        variant = variant->pvarVal;
+    }
+    IUnknown** slot = nullptr;
+    if (variant->vt == (VT_BYREF | VT_DISPATCH) ||
+        variant->vt == (VT_BYREF | VT_UNKNOWN)) {
+        slot = variant->ppunkVal;
+    } else if ((variant->vt & VT_BYREF) != 0) {
+        static_cast<void>(vbrun::raise(13));
+        return variant;
+    } else {
+        VariantClear(variant);
+        variant->vt = type;
+        variant->punkVal = nullptr;
+        slot = &variant->punkVal;
+    }
+    if (add_reference && object != nullptr) {
+        object->AddRef();
+    }
+    IUnknown* const old = *slot;
+    *slot = object;
+    if (old != nullptr) {
+        old->Release();
+    }
+    return variant;
+}
+
+VARIANT* WINAPI __vbaVargObj(VARIANT* const variant, IUnknown* const object) {
+    return set_argument_object(variant, object, VT_DISPATCH, false);
+}
+
+VARIANT* WINAPI __vbaVargObjAddref(VARIANT* const variant,
+                                   IUnknown* const object) {
+    return set_argument_object(variant, object, VT_DISPATCH, true);
+}
+
+VARIANT* WINAPI __vbaVargUnk(VARIANT* const variant, IUnknown* const object) {
+    return set_argument_object(variant, object, VT_UNKNOWN, false);
+}
+
+VARIANT* WINAPI __vbaVargUnkAddref(VARIANT* const variant,
+                                   IUnknown* const object) {
+    return set_argument_object(variant, object, VT_UNKNOWN, true);
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;
