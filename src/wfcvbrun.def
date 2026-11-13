@@ -116,8 +116,8 @@ EXPORTS
     __vbaDerefAry @210
     __vbaDerefAry1 @211
     __vbaEnd=vbrun_stub_212 @212
-    __vbaErase=vbrun_stub_213 @213
-    __vbaEraseKeepData=vbrun_stub_214 @214
+    __vbaErase @213
+    __vbaEraseKeepData @214
     __vbaEraseNoPop @215
     __vbaError @216
     __vbaErrorOverflow @217

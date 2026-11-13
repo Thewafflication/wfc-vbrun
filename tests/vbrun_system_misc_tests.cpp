@@ -14,6 +14,8 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+LONG WINAPI __vbaErase(const void* elements, SAFEARRAY** slot);
+void WINAPI __vbaEraseKeepData(const void* elements, SAFEARRAY** slot);
 BSTR WINAPI __vbaStrFixstr(LONG length, const wchar_t* text);
 LONG WINAPI __vbaAptOffset(LONG value);
 BSTR WINAPI __vbaStrVarCopy(VARIANT* value);

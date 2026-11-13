@@ -1165,6 +1165,53 @@ static void destroy_array(SAFEARRAY** const slot) {
     }
 }
 
+// The core of Erase: frees the data of the array (elements included) and,
+// for a dynamic array, the array itself. A locked array is error 10.
+static LONG erase_array(SAFEARRAY** const slot) {
+    SAFEARRAY* const array = *slot;
+    if (array == nullptr) {
+        return 0;
+    }
+    if (array->cLocks != 0) {
+        static_cast<void>(vbrun::raise(10));
+        return 10;
+    }
+    const HRESULT cleared = SafeArrayDestroyData(array);
+    if (FAILED(cleared)) {
+        return static_cast<LONG>(vbrun::raise_hresult(cleared));
+    }
+    if ((array->fFeatures & (FADF_AUTO | FADF_STATIC | FADF_EMBEDDED)) == 0) {
+        const HRESULT freed = SafeArrayDestroyDescriptor(array);
+        if (FAILED(freed)) {
+            return static_cast<LONG>(vbrun::raise_hresult(freed));
+        }
+        *slot = nullptr;
+    }
+    return 0;
+}
+
+// Erase: the first argument describes the elements (unused here).
+LONG WINAPI __vbaErase(const void* const elements, SAFEARRAY** const slot) {
+    static_cast<void>(elements);
+    return erase_array(slot);
+}
+
+// Erase of a fixed-size array: the data goes, the array stays.
+void WINAPI __vbaEraseKeepData(const void* const elements,
+                               SAFEARRAY** const slot) {
+    static_cast<void>(elements);
+    SAFEARRAY* const array = *slot;
+    if (array == nullptr) {
+        return;
+    }
+    array->fFeatures |= FADF_STATIC | FADF_FIXEDSIZE;
+    erase_array(slot);
+    if (*slot != nullptr) {
+        (*slot)->fFeatures &=
+            static_cast<USHORT>(~(FADF_STATIC | FADF_FIXEDSIZE));
+    }
+}
+
 // Erase: frees a dynamic array (fixed-size and static ones are error 13).
 void WINAPI __vbaEraseNoPop(SAFEARRAY** const slot) {
     if (*slot == nullptr) {

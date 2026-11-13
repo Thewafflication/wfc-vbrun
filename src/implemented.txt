@@ -446,3 +446,5 @@ rtcGetAllSettings
 rtcCreateObject2
 rtcGetObject
 rtcCallByName
+__vbaErase
+__vbaEraseKeepData
