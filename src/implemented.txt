@@ -412,3 +412,14 @@ __vbaLateMemNamedCall
 __vbaLateMemNamedCallLd
 __vbaLateIdNamedCall
 __vbaLateIdNamedCallLd
+__vbaLateMemNamedCallSt
+__vbaLateMemNamedStAd
+__vbaLateIdNamedCallSt
+__vbaLateIdNamedStAd
+__vbaVarLateMemCallLd
+__vbaVarLateMemCallLdRf
+__vbaVarLateMemCallSt
+__vbaVarLateMemSt
+__vbaVarLateMemStAd
+rtcGetErl
+__vbaSetSystemError

@@ -13,6 +13,8 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+LONG WINAPI rtcGetErl();
+void WINAPI __vbaSetSystemError();
 VARIANT* WINAPI __vbaStrCompVar(VARIANT* result, LONG mode, VARIANT* right,
                                 VARIANT* left);
 VARIANT* WINAPI rtcCompareBstr(VARIANT* result, VARIANT* left, VARIANT* right,

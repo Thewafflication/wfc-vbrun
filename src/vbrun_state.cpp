@@ -7,6 +7,8 @@ namespace vbrun {
 namespace {
 
 thread_local int g_error = 0;
+thread_local int g_erl = 0;
+thread_local DWORD g_dll_error = 0;
 
 }  // namespace
 
@@ -25,6 +27,22 @@ int last_error() {
 
 void clear_error() {
     g_error = 0;
+}
+
+int erl() {
+    return g_erl;
+}
+
+void set_erl(const int line) {
+    g_erl = line;
+}
+
+void set_last_dll_error(const DWORD code) {
+    g_dll_error = code;
+}
+
+DWORD last_dll_error() {
+    return g_dll_error;
 }
 
 int error_of_hresult(const HRESULT result) {
@@ -76,3 +94,18 @@ HRESULT raise_hresult(const HRESULT result) {
 }
 
 }  // namespace vbrun
+
+extern "C" {
+
+// Erl: the line number of the statement that raised the error most recently.
+LONG WINAPI rtcGetErl() {
+    return vbrun::erl();
+}
+
+// Takes the error code of the last system call of the thread (what a
+// Declare'd function with the error flag leaves in Err.LastDllError).
+void WINAPI __vbaSetSystemError() {
+    vbrun::set_last_dll_error(GetLastError());
+}
+
+}  // extern "C"

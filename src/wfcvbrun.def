@@ -15,11 +15,11 @@ EXPORTS
     __vbaBoolErrVar @109
     __vbaRedimVar2=vbrun_stub_110 @110
     __vbaStrErrVarCopy @111
-    __vbaVarLateMemCallLd=vbrun_stub_112 @112
-    __vbaVarLateMemCallLdRf=vbrun_stub_113 @113
-    __vbaVarLateMemCallSt=vbrun_stub_114 @114
-    __vbaVarLateMemSt=vbrun_stub_115 @115
-    __vbaVarLateMemStAd=vbrun_stub_116 @116
+    __vbaVarLateMemCallLd @112
+    __vbaVarLateMemCallLdRf @113
+    __vbaVarLateMemCallSt @114
+    __vbaVarLateMemSt @115
+    __vbaVarLateMemStAd @116
     __vbaAryVarVarg=vbrun_stub_117 @117
     __vbaFpCDblR4=vbrun_stub_118 @118
     __vbaFpCDblR8=vbrun_stub_119 @119
@@ -191,8 +191,8 @@ EXPORTS
     __vbaLateIdCallSt @285
     __vbaLateIdNamedCall @286
     __vbaLateIdNamedCallLd @287
-    __vbaLateIdNamedCallSt=vbrun_stub_288 @288
-    __vbaLateIdNamedStAd=vbrun_stub_289 @289
+    __vbaLateIdNamedCallSt @288
+    __vbaLateIdNamedStAd @289
     __vbaLateIdSt @290
     __vbaLateIdStAd @291
     __vbaLateMemCall @292
@@ -200,7 +200,7 @@ EXPORTS
     __vbaLateMemCallSt @294
     __vbaLateMemNamedCall @295
     __vbaLateMemNamedCallLd @296
-    __vbaLateMemNamedCallSt=vbrun_stub_297 @297
+    __vbaLateMemNamedCallSt @297
     EbIsProjectOnStack=vbrun_stub_298 @298
     TipCreateInstanceEx=vbrun_stub_299 @299
     GetMem2 @300
@@ -225,7 +225,7 @@ EXPORTS
     GetMemEvent=vbrun_stub_319 @319
     PutMemEvent=vbrun_stub_320 @320
     SetMemEvent=vbrun_stub_321 @321
-    __vbaLateMemNamedStAd=vbrun_stub_322 @322
+    __vbaLateMemNamedStAd @322
     __vbaLateMemSt @323
     __vbaLateMemStAd @324
     __vbaLbound @325
@@ -297,7 +297,7 @@ EXPORTS
     __vbaResume=vbrun_stub_391 @391
     __vbaRsetFixstr=vbrun_stub_392 @392
     __vbaRsetFixstrFree=vbrun_stub_393 @393
-    __vbaSetSystemError=vbrun_stub_394 @394
+    __vbaSetSystemError @394
     __vbaStopExe=vbrun_stub_395 @395
     __vbaStr2Vec @396
     __vbaStrAryToAnsi @397
@@ -508,7 +508,7 @@ EXPORTS
     __vbaVargUnk @602
     __vbaVargUnkAddref @603
     __vbaVerifyVarObj @604
-    rtcGetErl=vbrun_stub_605 @605
+    rtcGetErl @605
     rtcStringBstr @606
     rtcStringVar @607
     rtcVarBstrFromAnsi @608

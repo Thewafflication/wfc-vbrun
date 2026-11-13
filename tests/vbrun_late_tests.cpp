@@ -34,6 +34,25 @@ VARIANT* __cdecl __vbaLateMemNamedCallLd(VARIANT* result, IDispatch* object,
                                          LONG name_count, ...);
 void __cdecl __vbaLateIdNamedCall(IDispatch* object, LONG id, LONG count,
                                   LONG name_count, ...);
+void __cdecl __vbaLateMemNamedCallSt(IDispatch* object, BSTR name, LONG count,
+                                     LONG name_count, ...);
+void __cdecl __vbaLateMemNamedStAd(IDispatch* object, BSTR name, LONG count,
+                                   LONG name_count, ...);
+void __cdecl __vbaLateIdNamedCallSt(IDispatch* object, LONG id, LONG count,
+                                    LONG name_count, ...);
+void __cdecl __vbaLateIdNamedStAd(IDispatch* object, LONG id, LONG count,
+                                  LONG name_count, ...);
+VARIANT* __cdecl __vbaVarLateMemCallLd(VARIANT* result, const VARIANT* holder,
+                                       BSTR name, LONG count, ...);
+VARIANT* __cdecl __vbaVarLateMemCallLdRf(VARIANT* result,
+                                         const VARIANT* holder, BSTR name,
+                                         LONG count, ...);
+void __cdecl __vbaVarLateMemCallSt(const VARIANT* holder, BSTR name,
+                                   LONG count, ...);
+void __cdecl __vbaVarLateMemStAd(const VARIANT* holder, BSTR name, LONG count,
+                                 ...);
+void WINAPI __vbaVarLateMemSt(const VARIANT* holder, BSTR name,
+                              VARIANT value);
 VARIANT* __cdecl __vbaLateIdNamedCallLd(VARIANT* result, IDispatch* object,
                                         LONG id, LONG count, LONG name_count,
                                         ...);
@@ -256,6 +275,54 @@ int main() {
     __vbaLateIdNamedCall(&object, 10, 2, 2, 1, 2, number(1), number(2));
     expect(vbrun::last_error() == 5, "more than one named argument by id");
     vbrun::clear_error();
+
+    __vbaLateMemNamedCallSt(&object, value, 0, 1, who, number(21));
+    expect(object.value == 21 && object.last_named == 2 &&
+               object.last_flags == DISPATCH_PROPERTYPUT,
+           "named assignment");
+    vbrun::clear_error();
+    __vbaLateMemNamedStAd(&object, value, 0, 1, who, number(22));
+    expect(vbrun::last_error() == 424, "named Set needs an object");
+    vbrun::clear_error();
+    __vbaLateIdNamedCallSt(&object, 11, 0, 1, 40, number(23));
+    expect(object.value == 23 && object.last_named == 2 &&
+               object.last_named_id == DISPID_PROPERTYPUT,
+           "named assignment by id");
+    __vbaLateIdNamedStAd(&object, 11, 0, 1, 40, number(24));
+    expect(vbrun::last_error() == 424, "named Set by id needs an object");
+    vbrun::clear_error();
+
+    {
+        VARIANT holder;
+        VariantInit(&holder);
+        holder.vt = VT_DISPATCH;
+        holder.pdispVal = &object;
+        VARIANT outer;
+        VariantInit(&outer);
+        outer.vt = VT_VARIANT | VT_BYREF;
+        outer.pvarVal = &holder;
+        VariantInit(&result);
+        __vbaVarLateMemCallLd(&result, &holder, sum, 2, number(5), number(6));
+        expect(result.vt == VT_I4 && result.lVal == 11, "call on a Variant");
+        VariantInit(&result);
+        __vbaVarLateMemCallLdRf(&result, &outer, sum, 1, number(9));
+        expect(result.lVal == 9, "call on a Variant reference");
+        __vbaVarLateMemSt(&holder, value, number(31));
+        expect(object.value == 31, "assignment on a Variant");
+        __vbaVarLateMemCallSt(&holder, value, 0, number(32));
+        expect(object.value == 32, "call-style assignment on a Variant");
+        vbrun::clear_error();
+        __vbaVarLateMemStAd(&holder, value, 0, number(33));
+        expect(vbrun::last_error() == 424, "Set on a Variant needs an object");
+        vbrun::clear_error();
+        VARIANT plain = number(1);
+        __vbaVarLateMemCallLd(&result, &plain, sum, 0);
+        expect(vbrun::last_error() == 424, "not an object is error 424");
+        vbrun::clear_error();
+        __vbaVarLateMemCallLd(&result, nullptr, sum, 0);
+        expect(vbrun::last_error() == 91, "no Variant is error 91");
+        vbrun::clear_error();
+    }
 
     SysFreeString(sum);
     SysFreeString(value);

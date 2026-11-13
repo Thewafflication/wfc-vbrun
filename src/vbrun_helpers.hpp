@@ -25,6 +25,13 @@ HRESULT raise(int vb_error);
 int last_error();
 void clear_error();
 
+// Erl (the line number of the failing statement) and Err.LastDllError (the
+// system error code of the last Declare'd call), both per thread.
+int erl();
+void set_erl(int line);
+DWORD last_dll_error();
+void set_last_dll_error(DWORD code);
+
 // The Visual Basic error number for an HRESULT (the reference maps a few
 // well-known results and keeps the code of `0x800Axxxx` results).
 int error_of_hresult(HRESULT result);

@@ -135,6 +135,11 @@ VARIANT* invoke_named(IDispatch* const object, const BSTR member,
         static_cast<void>(vbrun::raise(kNoObject));
         return result;
     }
+    const bool assignment = (flags & (DISPATCH_PROPERTYPUT |
+                                      DISPATCH_PROPERTYPUTREF)) != 0;
+    if (assignment && !put_value_ok(flags, values[0])) {
+        return result;
+    }
     std::vector<OLECHAR*> names;
     names.push_back(member);
     for (BSTR name : argument_names) {
@@ -152,9 +157,40 @@ VARIANT* invoke_named(IDispatch* const object, const BSTR member,
         raise_late(status, none);
         return result;
     }
-    return invoke(object, ids[0], flags, values.data(),
-                  static_cast<unsigned>(values.size()), ids.data() + 1,
-                  static_cast<unsigned>(argument_names.size()), result);
+    const DISPID member_id = ids[0];
+    DISPID* named = ids.data() + 1;
+    unsigned named_count = static_cast<unsigned>(argument_names.size());
+    if (assignment) {
+        // The new value is the first named argument.
+        ids[0] = DISPID_PROPERTYPUT;
+        named = ids.data();
+        ++named_count;
+    }
+    return invoke(object, member_id, flags, values.data(),
+                  static_cast<unsigned>(values.size()), named, named_count,
+                  result);
+}
+
+// The object of a late call on a Variant: an object Variant, or a reference to
+// one. Anything else is "object required"; no Variant at all is 91.
+bool variant_object(const VARIANT* const value, IDispatch*& object) {
+    if (value == nullptr) {
+        static_cast<void>(vbrun::raise(kNoObject));
+        return false;
+    }
+    const VARIANT* target = value;
+    if ((value->vt & VT_BYREF) != 0 &&
+        (value->vt & ~static_cast<unsigned>(VT_BYREF)) == VT_VARIANT) {
+        target = value->pvarVal;
+    }
+    const unsigned type = target->vt & ~static_cast<unsigned>(VT_BYREF);
+    if (type != VT_DISPATCH) {
+        static_cast<void>(vbrun::raise(kObjectRequired));
+        return false;
+    }
+    object = (target->vt & VT_BYREF) != 0 ? *target->ppdispVal
+                                          : target->pdispVal;
+    return true;
 }
 
 }  // namespace
@@ -345,6 +381,152 @@ VARIANT* __cdecl __vbaLateIdNamedCallLd(VARIANT* const result,
     invoke(object, id, DISPATCH_METHOD | DISPATCH_PROPERTYGET, values.data(),
            count, names.data(), name_count, result);
     return result;
+}
+
+// Assignments with named arguments: the value comes first among count + 1
+// values, then the named arguments, then the subscripts.
+void __cdecl __vbaLateMemNamedCallSt(IDispatch* const object, const BSTR name,
+                                     const LONG count, const LONG name_count,
+                                     ...) {
+    va_list list;
+    va_start(list, name_count);
+    std::vector<BSTR> names;
+    for (LONG index = 0; index < name_count; ++index) {
+        names.push_back(va_arg(list, BSTR));
+    }
+    std::vector<VARIANT> values = take_variants(list, count + 1);
+    va_end(list);
+    invoke_named(object, name, names, DISPATCH_PROPERTYPUT, values, nullptr);
+}
+
+void __cdecl __vbaLateMemNamedStAd(IDispatch* const object, const BSTR name,
+                                   const LONG count, const LONG name_count,
+                                   ...) {
+    va_list list;
+    va_start(list, name_count);
+    std::vector<BSTR> names;
+    for (LONG index = 0; index < name_count; ++index) {
+        names.push_back(va_arg(list, BSTR));
+    }
+    std::vector<VARIANT> values = take_variants(list, count + 1);
+    va_end(list);
+    invoke_named(object, name, names, DISPATCH_PROPERTYPUTREF, values,
+                 nullptr);
+}
+
+static void put_by_id_named(IDispatch* const object, const LONG id,
+                     const WORD flags, const LONG count,
+                     const LONG name_count, va_list& list) {
+    std::vector<DISPID> names;
+    names.push_back(DISPID_PROPERTYPUT);
+    for (LONG index = 0; index < name_count; ++index) {
+        names.push_back(va_arg(list, LONG));
+    }
+    std::vector<VARIANT> values = take_variants(list, count + 1);
+    if (name_count > 1) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    if (object == nullptr) {
+        static_cast<void>(vbrun::raise(kNoObject));
+        return;
+    }
+    if (!put_value_ok(flags, values[0])) {
+        return;
+    }
+    invoke(object, id, flags, values.data(),
+           static_cast<unsigned>(values.size()), names.data(),
+           static_cast<unsigned>(names.size()), nullptr);
+}
+
+void __cdecl __vbaLateIdNamedCallSt(IDispatch* const object, const LONG id,
+                                    const LONG count, const LONG name_count,
+                                    ...) {
+    va_list list;
+    va_start(list, name_count);
+    put_by_id_named(object, id, DISPATCH_PROPERTYPUT, count, name_count, list);
+    va_end(list);
+}
+
+void __cdecl __vbaLateIdNamedStAd(IDispatch* const object, const LONG id,
+                                  const LONG count, const LONG name_count,
+                                  ...) {
+    va_list list;
+    va_start(list, name_count);
+    put_by_id_named(object, id, DISPATCH_PROPERTYPUTREF, count, name_count,
+                    list);
+    va_end(list);
+}
+
+// The same calls on an object held in a Variant.
+VARIANT* __cdecl __vbaVarLateMemCallLd(VARIANT* const result,
+                                       const VARIANT* const holder,
+                                       const BSTR name, const LONG count,
+                                       ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values = take_variants(list, count);
+    va_end(list);
+    IDispatch* object = nullptr;
+    DISPID id = 0;
+    if (variant_object(holder, object) && dispatch_id(object, name, id)) {
+        invoke(object, id, DISPATCH_METHOD | DISPATCH_PROPERTYGET,
+               values.data(), count, nullptr, 0, result);
+    }
+    return result;
+}
+
+VARIANT* __cdecl __vbaVarLateMemCallLdRf(VARIANT* const result,
+                                         const VARIANT* const holder,
+                                         const BSTR name, const LONG count,
+                                         ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values = take_variants(list, count);
+    va_end(list);
+    IDispatch* object = nullptr;
+    DISPID id = 0;
+    if (variant_object(holder, object) && dispatch_id(object, name, id)) {
+        invoke(object, id, DISPATCH_METHOD | DISPATCH_PROPERTYGET,
+               values.data(), count, nullptr, 0, result);
+    }
+    return result;
+}
+
+void __cdecl __vbaVarLateMemCallSt(const VARIANT* const holder,
+                                   const BSTR name, const LONG count, ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values = take_variants(list, count + 1);
+    va_end(list);
+    IDispatch* object = nullptr;
+    DISPID id = 0;
+    if (variant_object(holder, object) && dispatch_id(object, name, id)) {
+        put(object, id, DISPATCH_PROPERTYPUT, values);
+    }
+}
+
+void __cdecl __vbaVarLateMemStAd(const VARIANT* const holder, const BSTR name,
+                                 const LONG count, ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values = take_variants(list, count + 1);
+    va_end(list);
+    IDispatch* object = nullptr;
+    DISPID id = 0;
+    if (variant_object(holder, object) && dispatch_id(object, name, id)) {
+        put(object, id, DISPATCH_PROPERTYPUTREF, values);
+    }
+}
+
+void WINAPI __vbaVarLateMemSt(const VARIANT* const holder, const BSTR name,
+                              VARIANT value) {
+    IDispatch* object = nullptr;
+    DISPID id = 0;
+    if (variant_object(holder, object) && dispatch_id(object, name, id)) {
+        std::vector<VARIANT> values(1, value);
+        put(object, id, DISPATCH_PROPERTYPUT, values);
+    }
 }
 
 }  // extern "C"
