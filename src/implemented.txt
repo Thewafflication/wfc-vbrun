@@ -390,3 +390,8 @@ __vbaVargObj
 __vbaVargObjAddref
 __vbaVargUnk
 __vbaVargUnkAddref
+__vbaAryRebase1Var
+__vbaVar2Vec
+__vbaStrAryToAnsi
+__vbaStrAryToUnicode
+rtcChangeDrive

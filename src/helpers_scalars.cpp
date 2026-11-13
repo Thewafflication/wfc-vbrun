@@ -1274,6 +1274,112 @@ VARIANT* WINAPI __vbaVargUnkAddref(VARIANT* const variant,
     return set_argument_object(variant, object, VT_UNKNOWN, true);
 }
 
+// Option Base 1 for an array held in a Variant array of Variants: a
+// one-dimensional array is rebased to start at 1.
+void WINAPI __vbaAryRebase1Var(VARIANT* const value) {
+    if (value->vt == (VT_ARRAY | VT_VARIANT) && value->parray != nullptr &&
+        value->parray->cDims == 1) {
+        value->parray->rgsabound[0].lLbound = 1;
+    }
+}
+
+// `bytes = variant`: a String or Byte-array Variant as a Byte array.
+SAFEARRAY* WINAPI __vbaVar2Vec(SAFEARRAY** const slot,
+                               const VARIANT* const value) {
+    const unsigned type = value->vt & ~static_cast<unsigned>(VT_BYREF);
+    if (type != VT_BSTR && type != (VT_ARRAY | VT_UI1)) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    if (*slot != nullptr) {
+        SafeArrayDestroy(*slot);
+        *slot = nullptr;
+    }
+    const bool by_reference = (value->vt & VT_BYREF) != 0;
+    if (type == VT_BSTR) {
+        return __vbaStr2Vec(slot, by_reference ? *value->pbstrVal
+                                               : value->bstrVal);
+    }
+    const SAFEARRAY* const source =
+        by_reference ? *value->pparray : value->parray;
+    const HRESULT result =
+        SafeArrayCopy(const_cast<SAFEARRAY*>(source), slot);
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(result));
+        return nullptr;
+    }
+    return *slot;
+}
+
+// Converts every string of an array copy between Unicode and ANSI bytes.
+static SAFEARRAY** convert_string_array(SAFEARRAY** const destination,
+                                        SAFEARRAY* const source,
+                                        const bool to_ansi) {
+    if (*destination != nullptr) {
+        SafeArrayDestroy(*destination);
+        *destination = nullptr;
+    }
+    if (source == nullptr) {
+        return destination;
+    }
+    const HRESULT result = SafeArrayCopy(source, destination);
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(result));
+        return destination;
+    }
+    LONG count = 1;
+    for (USHORT dimension = 0; dimension < (*destination)->cDims; ++dimension) {
+        count *= static_cast<LONG>((*destination)->rgsabound[dimension].cElements);
+    }
+    BSTR* const items = static_cast<BSTR*>((*destination)->pvData);
+    for (LONG index = 0; items != nullptr && index < count; ++index) {
+        BSTR converted = nullptr;
+        if (to_ansi) {
+            __vbaStrToAnsi(&converted, items[index]);
+        } else {
+            __vbaStrToUnicode(&converted, items[index]);
+        }
+        SysFreeString(items[index]);
+        items[index] = converted;
+    }
+    return destination;
+}
+
+SAFEARRAY** WINAPI __vbaStrAryToAnsi(SAFEARRAY** const destination,
+                                     SAFEARRAY* const source) {
+    return convert_string_array(destination, source, true);
+}
+
+SAFEARRAY** WINAPI __vbaStrAryToUnicode(SAFEARRAY** const destination,
+                                        SAFEARRAY* const source) {
+    return convert_string_array(destination, source, false);
+}
+
+// ChDrive: a letter A-Z changes the current drive (error 5 for anything else,
+// error 68 when the drive is not available); an empty string does nothing.
+void WINAPI rtcChangeDrive(const BSTR drive) {
+    if (drive == nullptr || SysStringLen(drive) == 0) {
+        return;
+    }
+    const wint_t letter = std::towupper(drive[0]);
+    if (letter < L'A' || letter > L'Z') {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    const wchar_t root[3] = {static_cast<wchar_t>(letter), L':', L'\0'};
+    wchar_t current[MAX_PATH] = {};
+    if (GetFileAttributesW((std::wstring(root) + L"\\").c_str()) ==
+            INVALID_FILE_ATTRIBUTES ||
+        !SetCurrentDirectoryW((std::wstring(root) + L".").c_str())) {
+        static_cast<void>(vbrun::raise(68));
+        return;
+    }
+    GetCurrentDirectoryW(MAX_PATH, current);
+    if (std::towupper(current[0]) != letter) {
+        static_cast<void>(vbrun::raise(68));
+    }
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

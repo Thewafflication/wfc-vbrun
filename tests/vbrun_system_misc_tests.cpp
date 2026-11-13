@@ -37,6 +37,12 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+void WINAPI __vbaAryRebase1Var(VARIANT* value);
+SAFEARRAY* WINAPI __vbaVar2Vec(SAFEARRAY** slot, const VARIANT* value);
+SAFEARRAY** WINAPI __vbaStrAryToAnsi(SAFEARRAY** destination, SAFEARRAY* source);
+SAFEARRAY** WINAPI __vbaStrAryToUnicode(SAFEARRAY** destination,
+                                        SAFEARRAY* source);
+void WINAPI rtcChangeDrive(BSTR drive);
 void WINAPI __vbaError(LONG number);
 HRESULT WINAPI __vbaHresultCheckNonvirt(HRESULT result);
 void WINAPI __vbaEraseNoPop(SAFEARRAY** slot);
@@ -148,6 +154,57 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        SAFEARRAYBOUND two = {2, 0};
+        SAFEARRAY* items = SafeArrayCreate(VT_VARIANT, 1, &two);
+        VARIANT held;
+        VariantInit(&held);
+        held.vt = VT_ARRAY | VT_VARIANT;
+        held.parray = items;
+        __vbaAryRebase1Var(&held);
+        expect(items->rgsabound[0].lLbound == 1, "array rebase");
+        SafeArrayDestroy(items);
+        SAFEARRAY* bytes = nullptr;
+        VARIANT text = text_variant(L"Z");
+        __vbaVar2Vec(&bytes, &text);
+        expect(bytes != nullptr && bytes->rgsabound[0].cElements == 2,
+               "variant to bytes");
+        SafeArrayDestroy(bytes);
+        VariantClear(&text);
+        SAFEARRAYBOUND names = {2, 0};
+        SAFEARRAY* strings = SafeArrayCreate(VT_BSTR, 1, &names);
+        LONG at = 0;
+        SafeArrayPutElement(strings, &at, SysAllocString(L"ab"));
+        at = 1;
+        SafeArrayPutElement(strings, &at, SysAllocString(L"c"));
+        SAFEARRAY* ansi = nullptr;
+        __vbaStrAryToAnsi(&ansi, strings);
+        BSTR* ansi_items = static_cast<BSTR*>(ansi->pvData);
+        expect(SysStringByteLen(ansi_items[0]) == 2 &&
+                   SysStringByteLen(ansi_items[1]) == 1,
+               "string array to ansi");
+        SAFEARRAY* wide = nullptr;
+        __vbaStrAryToUnicode(&wide, ansi);
+        expect(std::wstring(static_cast<BSTR*>(wide->pvData)[0]) == L"ab",
+               "string array to unicode");
+        SafeArrayDestroy(wide);
+        SafeArrayDestroy(ansi);
+        SafeArrayDestroy(strings);
+        vbrun::clear_error();
+        BSTR bad = SysAllocString(L"1");
+        rtcChangeDrive(bad);
+        expect(vbrun::last_error() == 5, "chdrive bad letter");
+        vbrun::clear_error();
+        wchar_t here[MAX_PATH] = {};
+        GetCurrentDirectoryW(MAX_PATH, here);
+        wchar_t letter_text[2] = {here[0], L'\0'};
+        BSTR same = SysAllocString(letter_text);
+        rtcChangeDrive(same);
+        expect(vbrun::last_error() == 0, "chdrive same drive");
+        vbrun::clear_error();
+        SysFreeString(same);
+        SysFreeString(bad);
+    }
     {
         vbrun::clear_error();
         __vbaError(53);

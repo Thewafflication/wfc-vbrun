@@ -72,7 +72,7 @@ EXPORTS
     __vbaAryCopy @166
     __vbaAryDestruct @167
     __vbaAryMove @168
-    __vbaAryRebase1Var=vbrun_stub_169 @169
+    __vbaAryRebase1Var @169
     __vbaAryRecCopy=vbrun_stub_170 @170
     __vbaAryRecMove=vbrun_stub_171 @171
     __vbaAryUnlock @172
@@ -300,8 +300,8 @@ EXPORTS
     __vbaSetSystemError=vbrun_stub_394 @394
     __vbaStopExe=vbrun_stub_395 @395
     __vbaStr2Vec @396
-    __vbaStrAryToAnsi=vbrun_stub_397 @397
-    __vbaStrAryToUnicode=vbrun_stub_398 @398
+    __vbaStrAryToAnsi @397
+    __vbaStrAryToUnicode @398
     __vbaStrBool @399
     EVENT_SINK_QueryInterface=vbrun_stub_400 @400
     EVENT_SINK_AddRef=vbrun_stub_401 @401
@@ -351,7 +351,7 @@ EXPORTS
     __vbaUbound @445
     __vbaUdtVar=vbrun_stub_446 @446
     __vbaUnkVar @447
-    __vbaVar2Vec=vbrun_stub_448 @448
+    __vbaVar2Vec @448
     __vbaVarAbs @449
     __vbaVarAdd @450
     __vbaVarAnd @451
@@ -436,7 +436,7 @@ EXPORTS
     rtcChangeDir @530
     rtcMakeDir @531
     rtcRemoveDir @532
-    rtcChangeDrive=vbrun_stub_533 @533
+    rtcChangeDrive @533
     rtcBeep @534
     rtcGetTimer @535
     rtcStrFromVar @536
