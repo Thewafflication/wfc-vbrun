@@ -375,3 +375,8 @@ __vbaStrVarMove
 __vbaAryLock
 __vbaAryUnlock
 __vbaVarErrI4
+__vbaDerefAry1
+__vbaDerefAry
+__vbaAryVar
+__vbaStr2Vec
+__vbaRefVarAry

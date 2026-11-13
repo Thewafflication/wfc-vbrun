@@ -37,6 +37,11 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+SAFEARRAY** WINAPI __vbaRefVarAry(VARIANT* value);
+void* WINAPI __vbaDerefAry1(const SAFEARRAY* array, LONG index);
+void* __cdecl __vbaDerefAry(SHORT rank, const SAFEARRAY* array, ...);
+SAFEARRAY* WINAPI __vbaAryVar(USHORT type, const VARIANT* value);
+SAFEARRAY* WINAPI __vbaStr2Vec(SAFEARRAY** slot, BSTR text);
 BSTR WINAPI __vbaStrVarMove(VARIANT* value);
 SAFEARRAY* WINAPI __vbaAryLock(SAFEARRAY** slot, SAFEARRAY* array);
 void WINAPI __vbaAryUnlock(SAFEARRAY** slot);
@@ -133,6 +138,65 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        SAFEARRAY* none = nullptr;
+        VARIANT plain;
+        VariantInit(&plain);
+        plain.vt = VT_ARRAY | VT_I4;
+        plain.parray = none;
+        expect(__vbaRefVarAry(&plain) == &plain.parray, "ref var array");
+        VARIANT byref;
+        VariantInit(&byref);
+        byref.vt = VT_ARRAY | VT_I4 | VT_BYREF;
+        byref.pparray = &none;
+        expect(__vbaRefVarAry(&byref) == &none, "ref var array byref");
+        plain.vt = VT_I4;
+        expect(__vbaRefVarAry(&plain) == nullptr && vbrun::last_error() == 13,
+               "ref var array not array");
+        vbrun::clear_error();
+    }
+    {
+        SAFEARRAYBOUND line = {3, 2};
+        SAFEARRAY* items = SafeArrayCreate(VT_I4, 1, &line);
+        LONG* first = static_cast<LONG*>(items->pvData);
+        expect(__vbaDerefAry1(items, 2) == first &&
+                   __vbaDerefAry1(items, 4) == first + 2,
+               "deref array 1");
+        vbrun::clear_error();
+        expect(__vbaDerefAry1(items, 5) == nullptr && vbrun::last_error() == 9,
+               "deref array 1 range");
+        vbrun::clear_error();
+        VARIANT held;
+        VariantInit(&held);
+        held.vt = VT_ARRAY | VT_I4;
+        held.parray = items;
+        expect(__vbaAryVar(VT_I4, &held) == items, "array of variant");
+        expect(__vbaAryVar(VT_R8, &held) == nullptr &&
+                   vbrun::last_error() == 13,
+               "array of variant wrong type");
+        vbrun::clear_error();
+        SafeArrayDestroy(items);
+        SAFEARRAYBOUND grid[2] = {{2, 1}, {3, 0}};
+        SAFEARRAY* table = SafeArrayCreate(VT_I4, 2, grid);
+        LONG* cells = static_cast<LONG*>(table->pvData);
+        expect(__vbaDerefAry(2, table, 0, 1) == cells &&
+                   __vbaDerefAry(2, table, 2, 2) == cells + 5,
+               "deref array");
+        expect(__vbaDerefAry(2, table, 3, 1) == nullptr &&
+                   vbrun::last_error() == 9,
+               "deref array range");
+        vbrun::clear_error();
+        SafeArrayDestroy(table);
+        SAFEARRAY* bytes = nullptr;
+        BSTR wide = SysAllocString(L"AB");
+        __vbaStr2Vec(&bytes, wide);
+        expect(bytes != nullptr && bytes->rgsabound[0].cElements == 4 &&
+                   static_cast<unsigned char*>(bytes->pvData)[0] == 'A' &&
+                   static_cast<unsigned char*>(bytes->pvData)[1] == 0,
+               "string to bytes");
+        SafeArrayDestroy(bytes);
+        SysFreeString(wide);
+    }
     {
         VARIANT moved = text_variant(L"mv");
         BSTR taken = __vbaStrVarMove(&moved);

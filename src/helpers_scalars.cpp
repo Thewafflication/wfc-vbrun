@@ -1046,6 +1046,99 @@ VARIANT* WINAPI __vbaVarErrI4(VARIANT* const result, const LONG number) {
     return result;
 }
 
+// The address of one element of an array: error 9 when the array is missing,
+// not of the expected rank, or the subscript is out of range.
+void* WINAPI __vbaDerefAry1(const SAFEARRAY* const array, const LONG index) {
+    if (array == nullptr || array->cDims != 1 || array->pvData == nullptr ||
+        static_cast<ULONG>(index - array->rgsabound[0].lLbound) >=
+            array->rgsabound[0].cElements) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    return static_cast<char*>(array->pvData) +
+           static_cast<size_t>(array->cbElements) *
+               static_cast<size_t>(index - array->rgsabound[0].lLbound);
+}
+
+// Same for any rank (cdecl): the rank, the array, then one subscript per
+// dimension in storage order.
+void* __cdecl __vbaDerefAry(const SHORT rank, const SAFEARRAY* const array,
+                            ...) {
+    if (array == nullptr || array->cDims != rank || array->pvData == nullptr) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    va_list subscripts;
+    va_start(subscripts, array);
+    ULONG offset = 0;
+    bool bad = false;
+    for (SHORT dimension = 0; dimension < rank; ++dimension) {
+        const LONG index = va_arg(subscripts, LONG);
+        const ULONG relative =
+            static_cast<ULONG>(index - array->rgsabound[dimension].lLbound);
+        if (relative >= array->rgsabound[dimension].cElements) {
+            bad = true;
+            break;
+        }
+        offset += relative;
+        if (dimension + 1 < rank) {
+            offset *= array->rgsabound[dimension + 1].cElements;
+        }
+    }
+    va_end(subscripts);
+    if (bad) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    return static_cast<char*>(array->pvData) +
+           static_cast<size_t>(array->cbElements) * offset;
+}
+
+// The array inside a Variant, which must hold an array of the wanted element
+// type (error 13 otherwise).
+SAFEARRAY* WINAPI __vbaAryVar(const USHORT type, const VARIANT* const value) {
+    if ((value->vt & VT_ARRAY) == 0) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    SAFEARRAY* const array =
+        (value->vt & VT_BYREF) != 0 ? *value->pparray : value->parray;
+    const USHORT element = static_cast<USHORT>(value->vt & VT_TYPEMASK);
+    if (element != (type & VT_TYPEMASK) ||
+        (type == VT_RECORD && (array == nullptr ||
+                               (array->fFeatures & FADF_RECORD) == 0))) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    return array;
+}
+
+// `bytes = text`: a zero-based Byte array holding the string's raw bytes.
+SAFEARRAY* WINAPI __vbaStr2Vec(SAFEARRAY** const slot, const BSTR text) {
+    const ULONG length = text == nullptr ? 0 : SysStringByteLen(text);
+    SAFEARRAYBOUND bound = {length, 0};
+    SAFEARRAY* const array = SafeArrayCreate(VT_UI1, 1, &bound);
+    if (array == nullptr) {
+        static_cast<void>(vbrun::raise(7));
+        return nullptr;
+    }
+    if (length != 0) {
+        std::memcpy(array->pvData, text, length);
+    }
+    *slot = array;
+    return array;
+}
+
+// The address of the array slot inside a Variant (error 13 when it holds no
+// array); a by-reference Variant hands back the slot it points to.
+SAFEARRAY** WINAPI __vbaRefVarAry(VARIANT* const value) {
+    if ((value->vt & VT_ARRAY) == 0) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    return (value->vt & VT_BYREF) != 0 ? value->pparray : &value->parray;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;
