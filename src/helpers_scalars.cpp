@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdarg>
 #include <cstring>
 #include <cwctype>
 #include <string>
@@ -902,6 +903,100 @@ LONG WINAPI __vbaUbound(const SHORT dimension, const SAFEARRAY* const array) {
     return bound == nullptr
                ? 0
                : bound->lLbound + static_cast<LONG>(bound->cElements) - 1;
+}
+
+// The cleanup lists at the end of a procedure: the caller passes a count and
+// then that many slots (cdecl); each held reference is released and cleared.
+void __cdecl __vbaFreeStrList(const LONG count, ...) {
+    va_list slots;
+    va_start(slots, count);
+    for (LONG index = 0; index < count; ++index) {
+        BSTR* const slot = va_arg(slots, BSTR*);
+        if (*slot != nullptr) {
+            SysFreeString(*slot);
+            *slot = nullptr;
+        }
+    }
+    va_end(slots);
+}
+
+void __cdecl __vbaFreeObjList(const LONG count, ...) {
+    va_list slots;
+    va_start(slots, count);
+    for (LONG index = 0; index < count; ++index) {
+        IUnknown** const slot = va_arg(slots, IUnknown**);
+        if (*slot != nullptr) {
+            (*slot)->Release();
+            *slot = nullptr;
+        }
+    }
+    va_end(slots);
+}
+
+void __cdecl __vbaFreeVarList(const LONG count, ...) {
+    va_list slots;
+    va_start(slots, count);
+    for (LONG index = 0; index < count; ++index) {
+        VariantClear(va_arg(slots, VARIANT*));
+    }
+    va_end(slots);
+}
+
+// Boolean of a Variant where Null (and Empty) read as False.
+SHORT WINAPI __vbaBoolVarNull(const VARIANT* const value) {
+    if (value != nullptr && (value->vt == VT_EMPTY || value->vt == VT_NULL)) {
+        return 0;
+    }
+    return __vbaBoolVar(value);
+}
+
+// Variant := object. The plain forms take over the caller's reference; the
+// Addref forms add their own.
+static VARIANT* set_variant_object(VARIANT* const destination,
+                                   IUnknown* const source, const VARTYPE type,
+                                   const bool add_reference) {
+    VariantClear(destination);
+    if (add_reference && source != nullptr) {
+        source->AddRef();
+    }
+    destination->vt = type;
+    destination->punkVal = source;
+    return destination;
+}
+
+VARIANT* WINAPI __vbaVarSetUnk(VARIANT* const destination,
+                               IUnknown* const source) {
+    return set_variant_object(destination, source, VT_UNKNOWN, false);
+}
+
+VARIANT* WINAPI __vbaVarSetUnkAddref(VARIANT* const destination,
+                                     IUnknown* const source) {
+    return set_variant_object(destination, source, VT_UNKNOWN, true);
+}
+
+VARIANT* WINAPI __vbaVarSetObj(VARIANT* const destination,
+                               IUnknown* const source) {
+    return set_variant_object(destination, source, VT_DISPATCH, false);
+}
+
+VARIANT* WINAPI __vbaVarSetObjAddref(VARIANT* const destination,
+                                     IUnknown* const source) {
+    return set_variant_object(destination, source, VT_DISPATCH, true);
+}
+
+// The string of a Variant, borrowed: a String variant hands back its own
+// text; anything else is converted into the caller's slot.
+BSTR WINAPI __vbaStrVarVal(BSTR* const slot, const VARIANT* const value) {
+    *slot = nullptr;
+    if (value != nullptr && value->vt == VT_BSTR) {
+        return value->bstrVal;
+    }
+    VARIANT out;
+    if (!change(value, VT_BSTR, out)) {
+        return nullptr;
+    }
+    *slot = out.bstrVal;
+    return *slot;
 }
 
 double WINAPI __vbaDateStr(const BSTR text) {

@@ -79,7 +79,7 @@ EXPORTS
     __vbaAryVar=vbrun_stub_173 @173
     __vbaBoolStr @174
     __vbaBoolVar @175
-    __vbaBoolVarNull=vbrun_stub_176 @176
+    __vbaBoolVarNull @176
     __vbaCVarAryUdt=vbrun_stub_177 @177
     __vbaCastObj @178
     __vbaCastObjVar @179
@@ -146,9 +146,9 @@ EXPORTS
     __vbaForEachCollObj=vbrun_stub_240 @240
     __vbaForEachCollVar=vbrun_stub_241 @241
     __vbaForEachVar=vbrun_stub_242 @242
-    __vbaFreeObjList=vbrun_stub_243 @243
-    __vbaFreeStrList=vbrun_stub_244 @244
-    __vbaFreeVarList=vbrun_stub_245 @245
+    __vbaFreeObjList @243
+    __vbaFreeStrList @244
+    __vbaFreeVarList @245
     __vbaGenerateBoundsError @246
     __vbaGet3 @247
     __vbaGet4 @248
@@ -341,7 +341,7 @@ EXPORTS
     Zombie_GetIDsOfNames=vbrun_stub_435 @435
     Zombie_Invoke=vbrun_stub_436 @436
     __vbaStrVarMove=vbrun_stub_437 @437
-    __vbaStrVarVal=vbrun_stub_438 @438
+    __vbaStrVarVal @438
     __vbaUI1Cy @439
     EVENT_SINK2_AddRef=vbrun_stub_440 @440
     EVENT_SINK2_Release=vbrun_stub_441 @441
@@ -385,10 +385,10 @@ EXPORTS
     __vbaVarNot @479
     __vbaVarOr @480
     __vbaVarPow @481
-    __vbaVarSetObj=vbrun_stub_482 @482
-    __vbaVarSetObjAddref=vbrun_stub_483 @483
-    __vbaVarSetUnk=vbrun_stub_484 @484
-    __vbaVarSetUnkAddref=vbrun_stub_485 @485
+    __vbaVarSetObj @482
+    __vbaVarSetObjAddref @483
+    __vbaVarSetUnk @484
+    __vbaVarSetUnkAddref @485
     __vbaVarSetVar=vbrun_stub_486 @486
     __vbaVarSetVarAddref=vbrun_stub_487 @487
     __vbaVarSub @488

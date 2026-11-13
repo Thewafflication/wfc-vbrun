@@ -37,6 +37,15 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+void __cdecl __vbaFreeStrList(LONG count, ...);
+void __cdecl __vbaFreeObjList(LONG count, ...);
+void __cdecl __vbaFreeVarList(LONG count, ...);
+SHORT WINAPI __vbaBoolVarNull(const VARIANT* value);
+VARIANT* WINAPI __vbaVarSetUnk(VARIANT* destination, IUnknown* source);
+VARIANT* WINAPI __vbaVarSetUnkAddref(VARIANT* destination, IUnknown* source);
+VARIANT* WINAPI __vbaVarSetObj(VARIANT* destination, IUnknown* source);
+VARIANT* WINAPI __vbaVarSetObjAddref(VARIANT* destination, IUnknown* source);
+BSTR WINAPI __vbaStrVarVal(BSTR* slot, const VARIANT* value);
 LONG WINAPI __vbaLbound(SHORT dimension, const SAFEARRAY* array);
 LONG WINAPI __vbaUbound(SHORT dimension, const SAFEARRAY* array);
 IUnknown* WINAPI __vbaCastObjVar(VARIANT* value, const IID* iid);
@@ -120,6 +129,48 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        BSTR one = SysAllocString(L"a");
+        BSTR two = SysAllocString(L"b");
+        __vbaFreeStrList(2, &one, &two);
+        expect(one == nullptr && two == nullptr, "free str list");
+        VARIANT va = text_variant(L"x");
+        VARIANT vb = text_variant(L"y");
+        __vbaFreeVarList(2, &va, &vb);
+        expect(va.vt == VT_EMPTY && vb.vt == VT_EMPTY, "free var list");
+        IStream* stream = nullptr;
+        CreateStreamOnHGlobal(nullptr, TRUE, &stream);
+        stream->AddRef();
+        IUnknown* held = stream;
+        __vbaFreeObjList(1, &held);
+        expect(held == nullptr, "free obj list");
+        VARIANT holder;
+        VariantInit(&holder);
+        __vbaVarSetUnkAddref(&holder, stream);
+        expect(holder.vt == VT_UNKNOWN && holder.punkVal == stream,
+               "var set unk");
+        __vbaVarSetObj(&holder, nullptr);
+        expect(holder.vt == VT_DISPATCH && holder.pdispVal == nullptr,
+               "var set obj clears the old one");
+        stream->Release();
+        VARIANT nul = null_variant();
+        VARIANT truth;
+        VariantInit(&truth);
+        truth.vt = VT_I4;
+        truth.lVal = 5;
+        expect(__vbaBoolVarNull(&nul) == 0 && __vbaBoolVarNull(&truth) == -1,
+               "bool of null");
+        BSTR slot = nullptr;
+        VARIANT text = text_variant(L"hi");
+        expect(__vbaStrVarVal(&slot, &text) == text.bstrVal && slot == nullptr,
+               "str var val borrows");
+        BSTR converted = __vbaStrVarVal(&slot, &truth);
+        expect(converted != nullptr && std::wstring(converted) == L"5" &&
+                   slot == converted,
+               "str var val converts");
+        SysFreeString(slot);
+        VariantClear(&text);
+    }
     {
         SAFEARRAYBOUND bounds[2] = {{4, 1}, {3, 5}};
         SAFEARRAY* grid = SafeArrayCreate(VT_I4, 2, bounds);

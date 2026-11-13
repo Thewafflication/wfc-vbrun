@@ -362,3 +362,12 @@ __vbaCastObjVar
 __vbaHresultCheck
 __vbaLbound
 __vbaUbound
+__vbaFreeStrList
+__vbaFreeObjList
+__vbaFreeVarList
+__vbaBoolVarNull
+__vbaVarSetUnk
+__vbaVarSetUnkAddref
+__vbaVarSetObj
+__vbaVarSetObjAddref
+__vbaStrVarVal
