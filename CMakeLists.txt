@@ -63,6 +63,7 @@ set(
   src/helpers_scalars.cpp
   src/helpers_late.cpp
   src/helpers_foreach.cpp
+  src/helpers_settings.cpp
   src/helpers_errors.cpp
   src/helpers_finance.cpp
   src/helpers_dates.cpp
@@ -253,6 +254,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_foreach_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_foreach_tests)
     add_test(NAME TC-MP0009-vbrun-foreach COMMAND vbrun_foreach_tests)
+    # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.
+    add_executable(
+      vbrun_settings_tests
+      tests/vbrun_settings_tests.cpp
+      src/helpers_settings.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_settings_tests PRIVATE oleaut32 advapi32)
+    wfc_vbrun_harden(vbrun_settings_tests)
+    add_test(NAME TC-MP0009-vbrun-settings COMMAND vbrun_settings_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-settings
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     set_tests_properties(
       TC-MP0009-vbrun-foreach
       PROPERTIES LABELS "unit;mp-0009;vbrun"

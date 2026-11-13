@@ -592,10 +592,10 @@ EXPORTS
     rtUI1FromErrVar @686
     rtcVarDateFromVar @687
     _adj_fdiv_m32=vbrun_stub_688 @688
-    rtcGetSetting=vbrun_stub_689 @689
-    rtcSaveSetting=vbrun_stub_690 @690
-    rtcDeleteSetting=vbrun_stub_691 @691
-    rtcGetAllSettings=vbrun_stub_692 @692
+    rtcGetSetting @689
+    rtcSaveSetting @690
+    rtcDeleteSetting @691
+    rtcGetAllSettings @692
     rtcByteValueBstr @693
     rtcBstrFromByte @694
     rtcVarBstrFromByte @695
