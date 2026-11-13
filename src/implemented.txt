@@ -445,3 +445,4 @@ rtcDeleteSetting
 rtcGetAllSettings
 rtcCreateObject2
 rtcGetObject
+rtcCallByName

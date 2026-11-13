@@ -15,6 +15,9 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+VARIANT* WINAPI rtcCallByName(VARIANT* result, IDispatch* object, BSTR name,
+                              LONG call_type, SAFEARRAY** arguments,
+                              LCID locale);
 void __cdecl __vbaLateMemCall(IDispatch* object, BSTR name, LONG count, ...);
 VARIANT* __cdecl __vbaLateMemCallLd(VARIANT* result, IDispatch* object,
                                     BSTR name, LONG count, ...);
@@ -322,6 +325,40 @@ int main() {
         __vbaVarLateMemCallLd(&result, nullptr, sum, 0);
         expect(vbrun::last_error() == 91, "no Variant is error 91");
         vbrun::clear_error();
+    }
+
+    {
+        // CallByName: a method, a read, an assignment and an error.
+        SAFEARRAY* list = SafeArrayCreateVector(VT_VARIANT, 0, 2);
+        long at = 0;
+        VARIANT item = number(3);
+        SafeArrayPutElement(list, &at, &item);
+        at = 1;
+        item = number(4);
+        SafeArrayPutElement(list, &at, &item);
+        VariantInit(&result);
+        rtcCallByName(&result, &object, sum, 1, &list, 0x409);
+        expect(result.vt == VT_I4 && result.lVal == 7, "CallByName method");
+        SafeArrayDestroy(list);
+        list = SafeArrayCreateVector(VT_VARIANT, 0, 1);
+        at = 0;
+        item = number(55);
+        SafeArrayPutElement(list, &at, &item);
+        rtcCallByName(&result, &object, value, 4, &list, 0x409);
+        expect(object.value == 55 && object.last_flags == DISPATCH_PROPERTYPUT,
+               "CallByName assignment");
+        SafeArrayDestroy(list);
+        list = SafeArrayCreateVector(VT_VARIANT, 0, 0);
+        rtcCallByName(&result, &object, value, 2, &list, 0x409);
+        expect(result.lVal == 55, "CallByName read");
+        vbrun::clear_error();
+        rtcCallByName(&result, &object, gone, 1, &list, 0x409);
+        expect(vbrun::last_error() == 438, "CallByName unknown member");
+        vbrun::clear_error();
+        rtcCallByName(&result, &object, sum, 7, &list, 0x409);
+        expect(vbrun::last_error() == 438, "CallByName bad call type");
+        vbrun::clear_error();
+        SafeArrayDestroy(list);
     }
 
     SysFreeString(sum);

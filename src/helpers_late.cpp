@@ -529,4 +529,68 @@ void WINAPI __vbaVarLateMemSt(const VARIANT* const holder, const BSTR name,
     }
 }
 
+// CallByName(object, name, calltype, args()): VbMethod (1), VbGet (2),
+// VbLet (4) or VbSet (8). The arguments are the elements of the array, first
+// to last; an assignment has its value last.
+VARIANT* WINAPI rtcCallByName(VARIANT* const result, IDispatch* const object,
+                              const BSTR name, const LONG call_type,
+                              SAFEARRAY** const arguments, const LCID locale) {
+    VariantInit(result);
+    if (object == nullptr) {
+        static_cast<void>(vbrun::raise(5));
+        return result;
+    }
+    if (call_type <= 0 || (call_type > 4 && call_type != 8)) {
+        static_cast<void>(vbrun::raise(kNoMember));
+        return result;
+    }
+    std::vector<VARIANT> values;
+    SAFEARRAY* const array = arguments == nullptr ? nullptr : *arguments;
+    if (array != nullptr) {
+        SafeArrayLock(array);
+        const auto count = static_cast<LONG>(array->rgsabound[0].cElements);
+        const auto* const elements =
+            static_cast<const VARIANT*>(array->pvData);
+        // The array runs first to last; an Invoke array runs last to first.
+        for (LONG index = count - 1; index >= 0; --index) {
+            values.push_back(elements[index]);
+        }
+        SafeArrayUnlock(array);
+    }
+    const bool assignment = call_type == DISPATCH_PROPERTYPUT ||
+                            call_type == DISPATCH_PROPERTYPUTREF;
+    if (assignment && values.empty()) {
+        static_cast<void>(vbrun::raise(kNoMember));
+        return result;
+    }
+    DISPID id = DISPID_VALUE;
+    if (name != nullptr && SysStringLen(name) != 0) {
+        OLECHAR* names[1] = {name};
+        const HRESULT found =
+            object->GetIDsOfNames(IID_NULL, names, 1, locale, &id);
+        if (FAILED(found)) {
+            EXCEPINFO none = {};
+            raise_late(found, none);
+            return result;
+        }
+    }
+    DISPID put_id = DISPID_PROPERTYPUT;
+    DISPPARAMS parameters = {};
+    parameters.rgvarg = values.empty() ? nullptr : values.data();
+    parameters.cArgs = static_cast<unsigned>(values.size());
+    if (assignment) {
+        parameters.rgdispidNamedArgs = &put_id;
+        parameters.cNamedArgs = 1;
+    }
+    EXCEPINFO excep = {};
+    UINT bad_argument = 0;
+    const HRESULT status =
+        object->Invoke(id, IID_NULL, locale, static_cast<WORD>(call_type),
+                       &parameters, result, &excep, &bad_argument);
+    if (FAILED(status)) {
+        raise_late(status, excep);
+    }
+    return result;
+}
+
 }  // extern "C"

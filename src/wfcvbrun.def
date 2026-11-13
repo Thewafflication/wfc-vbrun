@@ -618,7 +618,7 @@ EXPORTS
     rtcReplace @712
     rtcStrReverse @713
     rtcRound @714
-    rtcCallByName=vbrun_stub_715 @715
+    rtcCallByName @715
     rtcCreateObject2 @716
     rtcStrConvVar2=vbrun_stub_717 @717
     _adj_fdiv_m64=vbrun_stub_718 @718
