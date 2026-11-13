@@ -360,3 +360,5 @@ __vbaStrToUnicode
 __vbaCastObj
 __vbaCastObjVar
 __vbaHresultCheck
+__vbaLbound
+__vbaUbound

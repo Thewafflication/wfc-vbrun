@@ -881,6 +881,29 @@ HRESULT WINAPI __vbaHresultCheck(const HRESULT result) {
     return result;
 }
 
+// LBound/UBound(array, dimension): error 9 for a missing array or a
+// dimension outside 1..dimensions.
+static const SAFEARRAYBOUND* array_bound(const SHORT dimension,
+                                         const SAFEARRAY* const array) {
+    if (dimension < 1 || array == nullptr || dimension > array->cDims) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    return &array->rgsabound[array->cDims - dimension];
+}
+
+LONG WINAPI __vbaLbound(const SHORT dimension, const SAFEARRAY* const array) {
+    const SAFEARRAYBOUND* const bound = array_bound(dimension, array);
+    return bound == nullptr ? 0 : bound->lLbound;
+}
+
+LONG WINAPI __vbaUbound(const SHORT dimension, const SAFEARRAY* const array) {
+    const SAFEARRAYBOUND* const bound = array_bound(dimension, array);
+    return bound == nullptr
+               ? 0
+               : bound->lLbound + static_cast<LONG>(bound->cElements) - 1;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

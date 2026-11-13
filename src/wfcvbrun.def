@@ -228,7 +228,7 @@ EXPORTS
     __vbaLateMemNamedStAd=vbrun_stub_322 @322
     __vbaLateMemSt=vbrun_stub_323 @323
     __vbaLateMemStAd=vbrun_stub_324 @324
-    __vbaLbound=vbrun_stub_325 @325
+    __vbaLbound @325
     __vbaLdZeroAry=vbrun_stub_326 @326
     __vbaLenBstr @327
     __vbaLenBstrB @328
@@ -348,7 +348,7 @@ EXPORTS
     __vbaUI1ErrVar @442
     __vbaUI1Str @443
     __vbaUI1Var @444
-    __vbaUbound=vbrun_stub_445 @445
+    __vbaUbound @445
     __vbaUdtVar=vbrun_stub_446 @446
     __vbaUnkVar @447
     __vbaVar2Vec=vbrun_stub_448 @448

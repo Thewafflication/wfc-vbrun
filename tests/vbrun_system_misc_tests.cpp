@@ -37,6 +37,8 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+LONG WINAPI __vbaLbound(SHORT dimension, const SAFEARRAY* array);
+LONG WINAPI __vbaUbound(SHORT dimension, const SAFEARRAY* array);
 IUnknown* WINAPI __vbaCastObjVar(VARIANT* value, const IID* iid);
 HRESULT WINAPI __vbaHresultCheck(HRESULT result);
 BSTR WINAPI __vbaStrToAnsi(BSTR* destination, BSTR source);
@@ -118,6 +120,22 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        SAFEARRAYBOUND bounds[2] = {{4, 1}, {3, 5}};
+        SAFEARRAY* grid = SafeArrayCreate(VT_I4, 2, bounds);
+        expect(__vbaLbound(2, grid) == 5 && __vbaUbound(2, grid) == 7,
+               "bounds of dimension 1");
+        expect(__vbaLbound(1, grid) == 1 && __vbaUbound(1, grid) == 4,
+               "bounds of dimension 2");
+        vbrun::clear_error();
+        expect(__vbaUbound(3, grid) == 0 && vbrun::last_error() == 9,
+               "bound out of range");
+        vbrun::clear_error();
+        expect(__vbaLbound(1, nullptr) == 0 && vbrun::last_error() == 9,
+               "bound of nothing");
+        vbrun::clear_error();
+        SafeArrayDestroy(grid);
+    }
     {
         expect(__vbaCastObj(nullptr, &IID_IUnknown) == nullptr, "cast nothing");
         IStream* stream = nullptr;
