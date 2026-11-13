@@ -371,3 +371,7 @@ __vbaVarSetUnkAddref
 __vbaVarSetObj
 __vbaVarSetObjAddref
 __vbaStrVarVal
+__vbaStrVarMove
+__vbaAryLock
+__vbaAryUnlock
+__vbaVarErrI4

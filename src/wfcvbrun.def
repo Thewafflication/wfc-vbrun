@@ -11,7 +11,7 @@ EXPORTS
     UserDllMain=vbrun_stub_105 @105
     DllRegisterServer @106
     DllUnregisterServer @107
-    __vbaAryLock=vbrun_stub_108 @108
+    __vbaAryLock @108
     __vbaBoolErrVar @109
     __vbaRedimVar2=vbrun_stub_110 @110
     __vbaStrErrVarCopy @111
@@ -75,7 +75,7 @@ EXPORTS
     __vbaAryRebase1Var=vbrun_stub_169 @169
     __vbaAryRecCopy=vbrun_stub_170 @170
     __vbaAryRecMove=vbrun_stub_171 @171
-    __vbaAryUnlock=vbrun_stub_172 @172
+    __vbaAryUnlock @172
     __vbaAryVar=vbrun_stub_173 @173
     __vbaBoolStr @174
     __vbaBoolVar @175
@@ -340,7 +340,7 @@ EXPORTS
     Zombie_GetTypeInfo=vbrun_stub_434 @434
     Zombie_GetIDsOfNames=vbrun_stub_435 @435
     Zombie_Invoke=vbrun_stub_436 @436
-    __vbaStrVarMove=vbrun_stub_437 @437
+    __vbaStrVarMove @437
     __vbaStrVarVal @438
     __vbaUI1Cy @439
     EVENT_SINK2_AddRef=vbrun_stub_440 @440
@@ -365,7 +365,7 @@ EXPORTS
     __vbaVarDateVar @459
     __vbaVarDiv @460
     __vbaVarEqv @461
-    __vbaVarErrI4=vbrun_stub_462 @462
+    __vbaVarErrI4 @462
     __vbaVarFix @463
     __vbaVarForInit=vbrun_stub_464 @464
     __vbaVarForNext=vbrun_stub_465 @465

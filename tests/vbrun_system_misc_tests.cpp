@@ -37,6 +37,10 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+BSTR WINAPI __vbaStrVarMove(VARIANT* value);
+SAFEARRAY* WINAPI __vbaAryLock(SAFEARRAY** slot, SAFEARRAY* array);
+void WINAPI __vbaAryUnlock(SAFEARRAY** slot);
+VARIANT* WINAPI __vbaVarErrI4(VARIANT* result, LONG number);
 void __cdecl __vbaFreeStrList(LONG count, ...);
 void __cdecl __vbaFreeObjList(LONG count, ...);
 void __cdecl __vbaFreeVarList(LONG count, ...);
@@ -129,6 +133,38 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        VARIANT moved = text_variant(L"mv");
+        BSTR taken = __vbaStrVarMove(&moved);
+        expect(moved.vt == VT_EMPTY && std::wstring(taken) == L"mv",
+               "str var move");
+        SysFreeString(taken);
+        VARIANT number;
+        VariantInit(&number);
+        number.vt = VT_I4;
+        number.lVal = 12;
+        taken = __vbaStrVarMove(&number);
+        expect(std::wstring(taken) == L"12" && number.vt == VT_EMPTY,
+               "str var move converts");
+        SysFreeString(taken);
+        SAFEARRAYBOUND one = {2, 0};
+        SAFEARRAY* array = SafeArrayCreate(VT_I4, 1, &one);
+        SAFEARRAY* slot = nullptr;
+        expect(__vbaAryLock(&slot, array) == array && slot == array &&
+                   array->cLocks == 1,
+               "array lock");
+        __vbaAryUnlock(&slot);
+        expect(slot == nullptr && array->cLocks == 0, "array unlock");
+        SafeArrayDestroy(array);
+        VARIANT error;
+        VariantInit(&error);
+        __vbaVarErrI4(&error, 11);
+        expect(error.vt == VT_ERROR &&
+                   static_cast<ULONG>(error.scode) == 0x800A000BUL,
+               "cverr");
+        __vbaVarErrI4(&error, 0);
+        expect(error.scode == 0, "cverr zero");
+    }
     {
         BSTR one = SysAllocString(L"a");
         BSTR two = SysAllocString(L"b");

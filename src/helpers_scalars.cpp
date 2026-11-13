@@ -999,6 +999,53 @@ BSTR WINAPI __vbaStrVarVal(BSTR* const slot, const VARIANT* const value) {
     return *slot;
 }
 
+// Takes the string out of a Variant, leaving the Variant Empty. A Variant that
+// is not a String is converted first.
+BSTR WINAPI __vbaStrVarMove(VARIANT* const value) {
+    if (value->vt != VT_BSTR) {
+        VARIANT out;
+        if (!change(value, VT_BSTR, out)) {
+            return nullptr;
+        }
+        VariantClear(value);
+        *value = out;
+    }
+    BSTR const text = value->bstrVal;
+    value->vt = VT_EMPTY;
+    return text;
+}
+
+// Locks an array for a call, keeping it in the caller's slot until unlocked.
+SAFEARRAY* WINAPI __vbaAryLock(SAFEARRAY** const slot, SAFEARRAY* const array) {
+    if (array == nullptr) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    SafeArrayLock(array);
+    *slot = array;
+    return array;
+}
+
+void WINAPI __vbaAryUnlock(SAFEARRAY** const slot) {
+    if (*slot != nullptr) {
+        SafeArrayUnlock(*slot);
+        *slot = nullptr;
+    }
+}
+
+// CVErr(number): a Variant of type Error; 0 is a zero code, others carry the
+// Visual Basic facility bits. Outside 0..65535 is error 5.
+VARIANT* WINAPI __vbaVarErrI4(VARIANT* const result, const LONG number) {
+    if (number < 0 || number > 0xFFFF) {
+        static_cast<void>(vbrun::raise(5));
+    }
+    result->vt = VT_ERROR;
+    result->scode = number == 0 ? 0 : static_cast<SCODE>(
+                                          static_cast<ULONG>(number) |
+                                          0x800A0000UL);
+    return result;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;
