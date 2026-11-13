@@ -357,3 +357,6 @@ __vbaErrorOverflow
 __vbaGenerateBoundsError
 __vbaStrToAnsi
 __vbaStrToUnicode
+__vbaCastObj
+__vbaCastObjVar
+__vbaHresultCheck

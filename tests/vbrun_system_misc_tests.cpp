@@ -36,6 +36,9 @@ void* WINAPI __vbaCopyBytes(LONG count, void* target, const void* source);
 void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
+IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+IUnknown* WINAPI __vbaCastObjVar(VARIANT* value, const IID* iid);
+HRESULT WINAPI __vbaHresultCheck(HRESULT result);
 BSTR WINAPI __vbaStrToAnsi(BSTR* destination, BSTR source);
 BSTR WINAPI __vbaStrToUnicode(BSTR* destination, BSTR source);
 IUnknown* WINAPI __vbaObjSet(IUnknown** destination, IUnknown* source);
@@ -115,6 +118,41 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        expect(__vbaCastObj(nullptr, &IID_IUnknown) == nullptr, "cast nothing");
+        IStream* stream = nullptr;
+        CreateStreamOnHGlobal(nullptr, TRUE, &stream);
+        IUnknown* same = __vbaCastObj(stream, &IID_IUnknown);
+        expect(same != nullptr, "cast to unknown");
+        if (same != nullptr) {
+            same->Release();
+        }
+        vbrun::clear_error();
+        expect(__vbaCastObj(stream, &IID_IDispatch) == nullptr &&
+                   vbrun::last_error() == 13,
+               "cast without interface");
+        VARIANT holder;
+        VariantInit(&holder);
+        holder.vt = VT_UNKNOWN;
+        holder.punkVal = stream;
+        IUnknown* again = __vbaCastObjVar(&holder, &IID_IUnknown);
+        expect(again != nullptr, "cast variant");
+        if (again != nullptr) {
+            again->Release();
+        }
+        holder.vt = VT_I4;
+        expect(__vbaCastObjVar(&holder, &IID_IUnknown) == nullptr &&
+                   vbrun::last_error() == 424,
+               "cast variant not object");
+        vbrun::clear_error();
+        expect(__vbaHresultCheck(S_OK) == S_OK && vbrun::last_error() == 0,
+               "hresult ok");
+        static_cast<void>(__vbaHresultCheck(E_OUTOFMEMORY));
+        expect(vbrun::last_error() == 7, "hresult out of memory");
+        vbrun::clear_error();
+        vbrun::clear_error();
+        stream->Release();
+    }
     {
         VARIANT subject = text_variant(L"Hello");
         VARIANT pattern = text_variant(L"h*o");

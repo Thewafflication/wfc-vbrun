@@ -848,6 +848,39 @@ BSTR WINAPI __vbaStrToUnicode(BSTR* const destination, const BSTR source) {
     return *destination;
 }
 
+// `CType`/`Set x = obj` to another interface: QueryInterface for the wanted
+// IID. Nothing casts to Nothing; a missing interface is error 13.
+IUnknown* WINAPI __vbaCastObj(IUnknown* const object, const IID* const iid) {
+    if (object == nullptr) {
+        return nullptr;
+    }
+    IUnknown* result = nullptr;
+    const HRESULT hr =
+        object->QueryInterface(*iid, reinterpret_cast<void**>(&result));
+    if (FAILED(hr)) {
+        static_cast<void>(hr == E_NOINTERFACE ? vbrun::raise(13)
+                                              : vbrun::raise_hresult(hr));
+        return nullptr;
+    }
+    return result;
+}
+
+IUnknown* WINAPI __vbaCastObjVar(VARIANT* const value, const IID* const iid) {
+    if (value->vt != VT_DISPATCH && value->vt != VT_UNKNOWN) {
+        static_cast<void>(vbrun::raise(424));
+        return nullptr;
+    }
+    return __vbaCastObj(value->punkVal, iid);
+}
+
+// A failed HRESULT from a COM call becomes the Visual Basic error.
+HRESULT WINAPI __vbaHresultCheck(const HRESULT result) {
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(result));
+    }
+    return result;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

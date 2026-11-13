@@ -81,8 +81,8 @@ EXPORTS
     __vbaBoolVar @175
     __vbaBoolVarNull=vbrun_stub_176 @176
     __vbaCVarAryUdt=vbrun_stub_177 @177
-    __vbaCastObj=vbrun_stub_178 @178
-    __vbaCastObjVar=vbrun_stub_179 @179
+    __vbaCastObj @178
+    __vbaCastObjVar @179
     __vbaCheckType=vbrun_stub_180 @180
     __vbaCheckTypeVar=vbrun_stub_181 @181
     __vbaChkstk=vbrun_stub_182 @182
@@ -159,7 +159,7 @@ EXPORTS
     __vbaGosub=vbrun_stub_253 @253
     __vbaGosubFree=vbrun_stub_254 @254
     __vbaGosubReturn=vbrun_stub_255 @255
-    __vbaHresultCheck=vbrun_stub_256 @256
+    __vbaHresultCheck @256
     __vbaHresultCheckNonvirt=vbrun_stub_257 @257
     __vbaHresultCheckObj=vbrun_stub_258 @258
     __vbaI2Cy @259
