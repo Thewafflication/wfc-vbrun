@@ -37,6 +37,9 @@ void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
 IUnknown* WINAPI __vbaCastObj(IUnknown* object, const IID* iid);
+LONG WINAPI __vbaCheckType(IUnknown* object, const IID* iid);
+LONG WINAPI __vbaCheckTypeVar(const VARIANT* value, const IID* iid);
+void* WINAPI __vbaUdtVar(IRecordInfo* info, const VARIANT* value);
 void WINAPI __vbaAryRebase1Var(VARIANT* value);
 SAFEARRAY* WINAPI __vbaVar2Vec(SAFEARRAY** slot, const VARIANT* value);
 SAFEARRAY** WINAPI __vbaStrAryToAnsi(SAFEARRAY** destination, SAFEARRAY* source);
@@ -154,6 +157,32 @@ VARIANT null_variant() {
 }  // namespace
 
 int main() {
+    {
+        IStream* stream = nullptr;
+        CreateStreamOnHGlobal(nullptr, TRUE, &stream);
+        expect(__vbaCheckType(stream, &IID_IStream) == -1 &&
+                   __vbaCheckType(stream, &IID_IDispatch) == 0,
+               "check type");
+        vbrun::clear_error();
+        expect(__vbaCheckType(nullptr, &IID_IStream) == 0 &&
+                   vbrun::last_error() == 91,
+               "check type nothing");
+        vbrun::clear_error();
+        VARIANT held;
+        VariantInit(&held);
+        held.vt = VT_UNKNOWN;
+        held.punkVal = stream;
+        expect(__vbaCheckTypeVar(&held, &IID_IStream) == -1, "check type var");
+        held.vt = VT_I4;
+        expect(__vbaCheckTypeVar(&held, &IID_IStream) == 0,
+               "check type var other");
+        vbrun::clear_error();
+        expect(__vbaUdtVar(nullptr, &held) == nullptr ||
+                   vbrun::last_error() == 13,
+               "udt var not a record");
+        vbrun::clear_error();
+        stream->Release();
+    }
     {
         SAFEARRAYBOUND two = {2, 0};
         SAFEARRAY* items = SafeArrayCreate(VT_VARIANT, 1, &two);

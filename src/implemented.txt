@@ -395,3 +395,6 @@ __vbaVar2Vec
 __vbaStrAryToAnsi
 __vbaStrAryToUnicode
 rtcChangeDrive
+__vbaCheckType
+__vbaCheckTypeVar
+__vbaUdtVar

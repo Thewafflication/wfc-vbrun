@@ -83,8 +83,8 @@ EXPORTS
     __vbaCVarAryUdt=vbrun_stub_177 @177
     __vbaCastObj @178
     __vbaCastObjVar @179
-    __vbaCheckType=vbrun_stub_180 @180
-    __vbaCheckTypeVar=vbrun_stub_181 @181
+    __vbaCheckType @180
+    __vbaCheckTypeVar @181
     __vbaChkstk=vbrun_stub_182 @182
     __vbaCopyBytes @183
     __vbaCopyBytesZero @184
@@ -349,7 +349,7 @@ EXPORTS
     __vbaUI1Str @443
     __vbaUI1Var @444
     __vbaUbound @445
-    __vbaUdtVar=vbrun_stub_446 @446
+    __vbaUdtVar @446
     __vbaUnkVar @447
     __vbaVar2Vec @448
     __vbaVarAbs @449

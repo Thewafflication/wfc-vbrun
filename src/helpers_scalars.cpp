@@ -1380,6 +1380,55 @@ void WINAPI rtcChangeDrive(const BSTR drive) {
     }
 }
 
+// TypeOf obj Is Class: True when the object supports the interface. Nothing
+// is error 91.
+LONG WINAPI __vbaCheckType(IUnknown* const object, const IID* const iid) {
+    if (object == nullptr) {
+        static_cast<void>(vbrun::raise(91));
+        return 0;
+    }
+    IUnknown* found = nullptr;
+    const HRESULT result = object->QueryInterface(
+        iid == nullptr ? IID_IDispatch : *iid, reinterpret_cast<void**>(&found));
+    if (FAILED(result) || found == nullptr) {
+        return 0;
+    }
+    found->Release();
+    return -1;
+}
+
+// Same for an object or user-defined type held in a Variant.
+LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value, const IID* const iid) {
+    const unsigned type = value->vt & ~static_cast<unsigned>(VT_BYREF);
+    if (type == VT_RECORD) {
+        GUID guid = {};
+        const HRESULT result = value->pRecInfo->GetGuid(&guid);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+            return 0;
+        }
+        return iid != nullptr && std::memcmp(&guid, iid, sizeof(GUID)) == 0 ? -1
+                                                                             : 0;
+    }
+    if (type == VT_DISPATCH || type == VT_UNKNOWN) {
+        IUnknown* const object = (value->vt & VT_BYREF) != 0 ? *value->ppunkVal
+                                                             : value->punkVal;
+        return __vbaCheckType(object, iid);
+    }
+    return 0;
+}
+
+// The record inside a Variant, which must be of the given record type
+// (error 13 otherwise).
+void* WINAPI __vbaUdtVar(IRecordInfo* const info, const VARIANT* const value) {
+    if ((value->vt & ~static_cast<unsigned>(VT_BYREF)) != VT_RECORD ||
+        !info->IsMatchingType(value->pRecInfo)) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    return value->pvRecord;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;
