@@ -398,3 +398,17 @@ rtcChangeDrive
 __vbaCheckType
 __vbaCheckTypeVar
 __vbaUdtVar
+__vbaLateMemCall
+__vbaLateMemCallLd
+__vbaLateMemCallSt
+__vbaLateMemStAd
+__vbaLateMemSt
+__vbaLateIdCall
+__vbaLateIdCallLd
+__vbaLateIdCallSt
+__vbaLateIdStAd
+__vbaLateIdSt
+__vbaLateMemNamedCall
+__vbaLateMemNamedCallLd
+__vbaLateIdNamedCall
+__vbaLateIdNamedCallLd

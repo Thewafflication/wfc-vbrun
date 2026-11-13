@@ -185,21 +185,21 @@ EXPORTS
     __vbaInStrVar @279
     __vbaInStrVarB @280
     __vbaInputFile @281
-    __vbaLateIdCall=vbrun_stub_282 @282
-    __vbaLateIdCallLd=vbrun_stub_283 @283
+    __vbaLateIdCall @282
+    __vbaLateIdCallLd @283
     EbGetErrorInfo=vbrun_stub_284 @284
-    __vbaLateIdCallSt=vbrun_stub_285 @285
-    __vbaLateIdNamedCall=vbrun_stub_286 @286
-    __vbaLateIdNamedCallLd=vbrun_stub_287 @287
+    __vbaLateIdCallSt @285
+    __vbaLateIdNamedCall @286
+    __vbaLateIdNamedCallLd @287
     __vbaLateIdNamedCallSt=vbrun_stub_288 @288
     __vbaLateIdNamedStAd=vbrun_stub_289 @289
-    __vbaLateIdSt=vbrun_stub_290 @290
-    __vbaLateIdStAd=vbrun_stub_291 @291
-    __vbaLateMemCall=vbrun_stub_292 @292
-    __vbaLateMemCallLd=vbrun_stub_293 @293
-    __vbaLateMemCallSt=vbrun_stub_294 @294
-    __vbaLateMemNamedCall=vbrun_stub_295 @295
-    __vbaLateMemNamedCallLd=vbrun_stub_296 @296
+    __vbaLateIdSt @290
+    __vbaLateIdStAd @291
+    __vbaLateMemCall @292
+    __vbaLateMemCallLd @293
+    __vbaLateMemCallSt @294
+    __vbaLateMemNamedCall @295
+    __vbaLateMemNamedCallLd @296
     __vbaLateMemNamedCallSt=vbrun_stub_297 @297
     EbIsProjectOnStack=vbrun_stub_298 @298
     TipCreateInstanceEx=vbrun_stub_299 @299
@@ -226,8 +226,8 @@ EXPORTS
     PutMemEvent=vbrun_stub_320 @320
     SetMemEvent=vbrun_stub_321 @321
     __vbaLateMemNamedStAd=vbrun_stub_322 @322
-    __vbaLateMemSt=vbrun_stub_323 @323
-    __vbaLateMemStAd=vbrun_stub_324 @324
+    __vbaLateMemSt @323
+    __vbaLateMemStAd @324
     __vbaLbound @325
     __vbaLdZeroAry=vbrun_stub_326 @326
     __vbaLenBstr @327

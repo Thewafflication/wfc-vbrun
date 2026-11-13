@@ -61,6 +61,7 @@ set(
   src/helpers_varstrings.cpp
   src/helpers_numeric.cpp
   src/helpers_scalars.cpp
+  src/helpers_late.cpp
   src/helpers_errors.cpp
   src/helpers_finance.cpp
   src/helpers_dates.cpp
@@ -227,6 +228,20 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-systemmisc COMMAND vbrun_system_misc_tests)
     set_tests_properties(
       TC-MP0009-vbrun-systemmisc
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # Late binding.
+    add_executable(
+      vbrun_late_tests
+      tests/vbrun_late_tests.cpp
+      src/helpers_late.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_late_tests PRIVATE oleaut32)
+    wfc_vbrun_harden(vbrun_late_tests)
+    add_test(NAME TC-MP0009-vbrun-late COMMAND vbrun_late_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-late
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # The Mid$ statement.
