@@ -36,6 +36,8 @@ void* WINAPI __vbaCopyBytes(LONG count, void* target, const void* source);
 void* WINAPI __vbaCopyBytesZero(LONG count, void* target, void* source);
 void WINAPI __vbaFixstrConstruct(LONG count, BSTR* slot);
 LONG WINAPI __vbaObjIs(IUnknown* left, IUnknown* right);
+BSTR WINAPI __vbaStrToAnsi(BSTR* destination, BSTR source);
+BSTR WINAPI __vbaStrToUnicode(BSTR* destination, BSTR source);
 IUnknown* WINAPI __vbaObjSet(IUnknown** destination, IUnknown* source);
 IUnknown* WINAPI __vbaObjSetAddref(IUnknown** destination, IUnknown* source);
 IUnknown* WINAPI __vbaObjAddref(IUnknown* object);

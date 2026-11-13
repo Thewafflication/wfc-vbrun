@@ -806,6 +806,48 @@ void WINAPI __vbaGenerateBoundsError() {
     static_cast<void>(vbrun::raise(9));
 }
 
+// Declare-statement string marshalling: converts a Unicode string to its ANSI
+// bytes (a byte-length BSTR) and back, through the system code page.
+BSTR WINAPI __vbaStrToAnsi(BSTR* const destination, const BSTR source) {
+    SysFreeString(*destination);
+    *destination = nullptr;
+    if (source == nullptr) {
+        return nullptr;
+    }
+    const UINT length = SysStringLen(source);
+    const int bytes = WideCharToMultiByte(CP_ACP, 0, source,
+                                          static_cast<int>(length), nullptr, 0,
+                                          nullptr, nullptr);
+    std::string buffer(static_cast<size_t>(bytes > 0 ? bytes : 0), '\0');
+    if (bytes > 0) {
+        WideCharToMultiByte(CP_ACP, 0, source, static_cast<int>(length),
+                            buffer.data(), bytes, nullptr, nullptr);
+    }
+    *destination =
+        SysAllocStringByteLen(buffer.data(), static_cast<UINT>(buffer.size()));
+    return *destination;
+}
+
+BSTR WINAPI __vbaStrToUnicode(BSTR* const destination, const BSTR source) {
+    SysFreeString(*destination);
+    *destination = nullptr;
+    if (source == nullptr) {
+        return nullptr;
+    }
+    const UINT bytes = SysStringByteLen(source);
+    const int chars = MultiByteToWideChar(
+        CP_ACP, 0, reinterpret_cast<const char*>(source),
+        static_cast<int>(bytes), nullptr, 0);
+    std::wstring buffer(static_cast<size_t>(chars > 0 ? chars : 0), L'\0');
+    if (chars > 0) {
+        MultiByteToWideChar(CP_ACP, 0, reinterpret_cast<const char*>(source),
+                            static_cast<int>(bytes), buffer.data(), chars);
+    }
+    *destination =
+        SysAllocStringLen(buffer.data(), static_cast<UINT>(buffer.size()));
+    return *destination;
+}
+
 double WINAPI __vbaDateStr(const BSTR text) {
     DATE value = 0.0;
     return date_of_text(text, value) ? value : 0.0;

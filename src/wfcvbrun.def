@@ -329,8 +329,8 @@ EXPORTS
     __vbaStrR8 @423
     __vbaStrTextCmp @424
     __vbaStrTextLike @425
-    __vbaStrToAnsi=vbrun_stub_426 @426
-    __vbaStrToUnicode=vbrun_stub_427 @427
+    __vbaStrToAnsi @426
+    __vbaStrToUnicode @427
     __vbaStrUI1 @428
     __vbaStrVarCopy=vbrun_stub_429 @429
     Zombie_QueryInterface=vbrun_stub_430 @430

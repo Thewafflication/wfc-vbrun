@@ -355,3 +355,5 @@ __vbaR8ForNextCheck
 __vbaOnGoCheck
 __vbaErrorOverflow
 __vbaGenerateBoundsError
+__vbaStrToAnsi
+__vbaStrToUnicode
