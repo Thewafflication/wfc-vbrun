@@ -151,9 +151,9 @@ LONG WINAPI rtcRgb(const LONG red, const LONG green, const LONG blue) {
         static_cast<void>(vbrun::raise(kInvalidArgument));
         return 0;
     }
-    const LONG r = std::min(red, 255L);
-    const LONG g = std::min(green, 255L);
-    const LONG b = std::min(blue, 255L);
+    const LONG r = std::min<LONG>(red, 255);
+    const LONG g = std::min<LONG>(green, 255);
+    const LONG b = std::min<LONG>(blue, 255);
     return r | (g << 8) | (b << 16);
 }
 

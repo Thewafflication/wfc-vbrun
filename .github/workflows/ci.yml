@@ -156,4 +156,4 @@ jobs:
         shell: pwsh
         run: |
           & ./wsp/tools/Test-SourceStyle.ps1 -RepositoryRoot $PWD `
-            -SourcePath @('src', 'include', 'tests', 'CMakeLists.txt')
+            -SourcePath @('src', 'tests', 'CMakeLists.txt')

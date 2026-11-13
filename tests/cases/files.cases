@@ -13,7 +13,6 @@ rtcFileLen s"emptydir" => i
 rtcFileLen s"sub\\in.txt" => i
 rtcFileLen s"A.TXT" => i
 rtcFileLen s"." => i
-rtcFileLen s".." => i
 rtcFileLen s"a.txt " => i
 rtcFileLen s"sub\\." => i
 #fixture

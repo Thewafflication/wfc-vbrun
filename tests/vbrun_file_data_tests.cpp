@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <type_traits>
 
 #include "../src/vbrun_helpers.hpp"
 
@@ -160,14 +161,31 @@ constexpr unsigned char kComma = 0x00;
 constexpr unsigned char kSemicolon = 0x40;
 constexpr unsigned char kNewline = 0x80;
 
+// A Single travels as four bytes on the x86 stack the helpers read; the
+// variadic call would widen it to a Double, so it goes as its bit pattern.
+template <typename T>
+auto wire(const T value) {
+#if defined(_M_IX86)
+    if constexpr (std::is_same_v<T, float>) {
+        std::uint32_t bits = 0;
+        std::memcpy(&bits, &value, sizeof(bits));
+        return bits;
+    } else {
+        return value;
+    }
+#else
+    return value;
+#endif
+}
+
 void print_statements() {
     open(kOutput, 21, "wfcio_p.tmp");
     // Each descriptor: the count (a word), then a byte for every item.
     const auto print = [](const unsigned char* descriptor, auto... values) {
-        __vbaPrintFile(descriptor, 21, values...);
+        __vbaPrintFile(descriptor, 21, wire(values)...);
     };
     const auto write = [](const unsigned char* descriptor, auto... values) {
-        __vbaWriteFile(descriptor, 21, values...);
+        __vbaWriteFile(descriptor, 21, wire(values)...);
     };
     const auto one = [](const unsigned char type) {
         static unsigned char buffer[4];
@@ -510,9 +528,9 @@ void number_statements() {
         for (int pass = 0; pass < 2; ++pass) {
             const auto emit = [&](const unsigned char* descriptor, auto value) {
                 if (pass == 0) {
-                    __vbaPrintFile(descriptor, 21, value);
+                    __vbaPrintFile(descriptor, 21, wire(value));
                 } else {
-                    __vbaWriteFile(descriptor, 21, value);
+                    __vbaWriteFile(descriptor, 21, wire(value));
                 }
             };
             if (item.kind == 'f') {
