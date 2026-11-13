@@ -673,7 +673,8 @@ LONG WINAPI __vbaObjIs(IUnknown* const left, IUnknown* const right) {
     }
     IUnknown* left_identity = nullptr;
     if (FAILED(left->QueryInterface(IID_IUnknown,
-                                    reinterpret_cast<void**>(&left_identity))) ||
+                                    reinterpret_cast<void**>(
+                                        &left_identity))) ||
         left_identity == nullptr) {
         return 0;
     }
@@ -694,7 +695,8 @@ LONG WINAPI __vbaObjIs(IUnknown* const left, IUnknown* const right) {
 // Addref form takes its own reference to the new one, the plain form takes
 // over one the caller already holds. The answer is the new value.
 static IUnknown* store_object(IUnknown** const destination,
-                              IUnknown* const source, const bool add_reference) {
+                              IUnknown* const source,
+                              const bool add_reference) {
     if (add_reference && source != nullptr) {
         source->AddRef();
     }
@@ -1329,7 +1331,8 @@ static SAFEARRAY** convert_string_array(SAFEARRAY** const destination,
     }
     LONG count = 1;
     for (USHORT dimension = 0; dimension < (*destination)->cDims; ++dimension) {
-        count *= static_cast<LONG>((*destination)->rgsabound[dimension].cElements);
+        count *=
+            static_cast<LONG>((*destination)->rgsabound[dimension].cElements);
     }
     BSTR* const items = static_cast<BSTR*>((*destination)->pvData);
     for (LONG index = 0; items != nullptr && index < count; ++index) {
@@ -1389,7 +1392,8 @@ LONG WINAPI __vbaCheckType(IUnknown* const object, const IID* const iid) {
     }
     IUnknown* found = nullptr;
     const HRESULT result = object->QueryInterface(
-        iid == nullptr ? IID_IDispatch : *iid, reinterpret_cast<void**>(&found));
+        iid == nullptr ? IID_IDispatch : *iid,
+        reinterpret_cast<void**>(&found));
     if (FAILED(result) || found == nullptr) {
         return 0;
     }
@@ -1398,7 +1402,8 @@ LONG WINAPI __vbaCheckType(IUnknown* const object, const IID* const iid) {
 }
 
 // Same for an object or user-defined type held in a Variant.
-LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value, const IID* const iid) {
+LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value,
+                               const IID* const iid) {
     const unsigned type = value->vt & ~static_cast<unsigned>(VT_BYREF);
     if (type == VT_RECORD) {
         GUID guid = {};
@@ -1407,8 +1412,9 @@ LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value, const IID* const iid) 
             static_cast<void>(vbrun::raise_hresult(result));
             return 0;
         }
-        return iid != nullptr && std::memcmp(&guid, iid, sizeof(GUID)) == 0 ? -1
-                                                                             : 0;
+        return iid != nullptr && std::memcmp(&guid, iid, sizeof(GUID)) == 0
+                   ? -1
+                   : 0;
     }
     if (type == VT_DISPATCH || type == VT_UNKNOWN) {
         IUnknown* const object = (value->vt & VT_BYREF) != 0 ? *value->ppunkVal
@@ -2011,8 +2017,9 @@ static VARIANT* in_str_variant(VARIANT* const result, const LONG mode,
         haystack_state < 0 ? -1 : string_of_variant(needle, needle_text);
     if (haystack_state > 0 && needle_state > 0) {
         result->vt = VT_I4;
-        result->lVal = bytes ? __vbaInStrB(mode, needle_text, haystack_text, start)
-                             : __vbaInStr(mode, needle_text, haystack_text, start);
+        result->lVal =
+            bytes ? __vbaInStrB(mode, needle_text, haystack_text, start)
+                  : __vbaInStr(mode, needle_text, haystack_text, start);
     } else if (haystack_state >= 0 && needle_state >= 0) {
         result->vt = VT_NULL;
     }

@@ -91,7 +91,8 @@ if(WIN32)
   list(GET version_parts 1 WFC_LIB_VERSION_MINOR)
   list(GET version_parts 2 WFC_LIB_VERSION_PATCH)
   set(WFC_LIB_VERSION "${WFC_VBRUN_VERSION}")
-  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET" WFC_LIB_TARGET LIMIT_COUNT 1)
+  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET" WFC_LIB_TARGET
+       LIMIT_COUNT 1)
   configure_file(
     src/registration_info.hpp.in
     "${CMAKE_CURRENT_BINARY_DIR}/registration_info.hpp"
@@ -280,7 +281,10 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")
-    foreach(vbrun_cases strings variants convert varops language varfuncs varstrings scalars scalars2 scalars3 random random2 numeric finance dates dates2 payments arrays lists system files)
+    foreach(vbrun_cases
+            strings variants convert varops language varfuncs varstrings
+            scalars scalars2 scalars3 random random2 numeric finance dates
+            dates2 payments arrays lists system files)
       add_test(
         NAME TC-MP0009-vbrun-cases-${vbrun_cases}
         COMMAND

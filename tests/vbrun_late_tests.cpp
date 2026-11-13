@@ -180,14 +180,16 @@ int main() {
 
     __vbaLateMemSt(&object, value, number(42));
     expect(object.value == 42 && object.last_flags == DISPATCH_PROPERTYPUT &&
-               object.last_named == 1 && object.last_named_id == DISPID_PROPERTYPUT,
+               object.last_named == 1 &&
+               object.last_named_id == DISPID_PROPERTYPUT,
            "property assignment");
     VariantInit(&result);
     __vbaLateMemCallLd(&result, &object, value, 0);
     expect(result.vt == VT_I4 && result.lVal == 42, "property read");
 
     __vbaLateMemCallSt(&object, value, 0, number(7));
-    expect(object.value == 7 && object.last_count == 1, "call-style assignment");
+    expect(object.value == 7 && object.last_count == 1,
+           "call-style assignment");
 
     vbrun::clear_error();
     __vbaLateMemStAd(&object, value, 0, number(9));

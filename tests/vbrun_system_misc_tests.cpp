@@ -42,7 +42,8 @@ LONG WINAPI __vbaCheckTypeVar(const VARIANT* value, const IID* iid);
 void* WINAPI __vbaUdtVar(IRecordInfo* info, const VARIANT* value);
 void WINAPI __vbaAryRebase1Var(VARIANT* value);
 SAFEARRAY* WINAPI __vbaVar2Vec(SAFEARRAY** slot, const VARIANT* value);
-SAFEARRAY** WINAPI __vbaStrAryToAnsi(SAFEARRAY** destination, SAFEARRAY* source);
+SAFEARRAY** WINAPI __vbaStrAryToAnsi(SAFEARRAY** destination,
+                                     SAFEARRAY* source);
 SAFEARRAY** WINAPI __vbaStrAryToUnicode(SAFEARRAY** destination,
                                         SAFEARRAY* source);
 void WINAPI rtcChangeDrive(BSTR drive);

@@ -94,7 +94,8 @@ bool elements_of(const VARIANT* const value, std::vector<std::wstring>& out) {
     SAFEARRAY* array = (value->vt & VT_BYREF) != 0 ? *value->pparray
                                                     : value->parray;
     if (array == nullptr || SafeArrayGetDim(array) != 1) {
-        static_cast<void>(vbrun::raise(array == nullptr ? 0 : kInvalidArgument));
+        static_cast<void>(
+            vbrun::raise(array == nullptr ? 0 : kInvalidArgument));
         return array == nullptr;
     }
     const VARTYPE kind = static_cast<VARTYPE>(value->vt & VT_TYPEMASK);
