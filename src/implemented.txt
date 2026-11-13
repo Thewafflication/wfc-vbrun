@@ -443,3 +443,5 @@ rtcSaveSetting
 rtcGetSetting
 rtcDeleteSetting
 rtcGetAllSettings
+rtcCreateObject2
+rtcGetObject

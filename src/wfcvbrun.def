@@ -529,7 +529,7 @@ EXPORTS
     __vbaWriteFile @623
     rtcGetHostLCID @624
     rtcCreateObject=vbrun_stub_625 @625
-    rtcGetObject=vbrun_stub_626 @626
+    rtcGetObject @626
     rtcAppleScript=vbrun_stub_627 @627
     rtcMidBstr @628
     rtcMidVar @629
@@ -619,7 +619,7 @@ EXPORTS
     rtcStrReverse @713
     rtcRound @714
     rtcCallByName=vbrun_stub_715 @715
-    rtcCreateObject2=vbrun_stub_716 @716
+    rtcCreateObject2 @716
     rtcStrConvVar2=vbrun_stub_717 @717
     _adj_fdiv_m64=vbrun_stub_718 @718
     _adj_fdiv_r=vbrun_stub_719 @719
