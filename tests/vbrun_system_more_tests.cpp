@@ -20,6 +20,10 @@ extern "C" {
 LONG WINAPI rtcGetErl();
 void WINAPI __vbaSetSystemError();
 BSTR WINAPI __vbaStrFixstr(LONG length, const wchar_t* text);
+wchar_t* WINAPI __vbaLsetFixstr(LONG length, wchar_t* target, BSTR source);
+wchar_t* WINAPI __vbaLsetFixstrFree(LONG length, wchar_t* target, BSTR source);
+wchar_t* WINAPI __vbaRsetFixstr(LONG length, wchar_t* target, BSTR source);
+wchar_t* WINAPI __vbaRsetFixstrFree(LONG length, wchar_t* target, BSTR source);
 LONG WINAPI __vbaAptOffset(LONG value);
 BSTR WINAPI __vbaStrVarCopy(VARIANT* value);
 LONG WINAPI __vbaErase(const void* elements, SAFEARRAY** slot);
@@ -141,6 +145,37 @@ void test_strings() {
            "fixed string");
     SysFreeString(fixed);
     expect(__vbaAptOffset(0) == 0, "apartment offset");
+    {
+        // LSet and RSet: cut or pad to the length.
+        wchar_t buffer[6] = L"xxxxx";
+        BSTR source = SysAllocString(L"ab");
+        __vbaLsetFixstr(5, buffer, source);
+        expect(std::wcsncmp(buffer, L"ab   ", 5) == 0, "LSet pads right");
+        __vbaRsetFixstr(5, buffer, source);
+        expect(std::wcsncmp(buffer, L"   ab", 5) == 0, "RSet pads left");
+        SysFreeString(source);
+        source = SysAllocString(L"abcdefg");
+        __vbaLsetFixstr(5, buffer, source);
+        expect(std::wcsncmp(buffer, L"abcde", 5) == 0, "LSet cuts");
+        __vbaRsetFixstr(5, buffer, source);
+        expect(std::wcsncmp(buffer, L"abcde", 5) == 0, "RSet cuts the end");
+        SysFreeString(source);
+        // Into a String variable, in place, the source freed.
+        BSTR target = SysAllocString(L"12345678");
+        VARIANT holder;
+        VariantInit(&holder);
+        holder.vt = VT_BYREF | VT_BSTR;
+        holder.pbstrVal = &target;
+        __vbaRsetFixstrFree(0xFFFF, reinterpret_cast<wchar_t*>(&holder),
+                            SysAllocString(L"xyz"));
+        expect(std::wcsncmp(target, L"     xyz", 8) == 0,
+               "RSet into a String");
+        __vbaLsetFixstrFree(0xFFFF, reinterpret_cast<wchar_t*>(&holder),
+                            SysAllocString(L"hi"));
+        expect(std::wcsncmp(target, L"hi      ", 8) == 0,
+               "LSet into a String");
+        SysFreeString(target);
+    }
     VARIANT value = text(L"copy");
     BSTR copy = __vbaStrVarCopy(&value);
     expect(copy != value.bstrVal && std::wcscmp(copy, L"copy") == 0,

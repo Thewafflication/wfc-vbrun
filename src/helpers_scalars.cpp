@@ -1734,6 +1734,78 @@ BSTR WINAPI __vbaStrFixstr(const LONG length, const wchar_t* const text) {
     return result;
 }
 
+// LSet/RSet into a fixed length string: the text is cut or padded with spaces
+// to the length. A length of 0xFFFF means the target is a String variable (a
+// by-reference BSTR Variant), whose own length is used; it is written in place.
+static wchar_t* fixed_target(LONG& length, const VARIANT*& holder,
+                             wchar_t* target) {
+    if (length == 0xFFFF) {
+        if ((holder->vt & VT_BYREF) == 0 || holder->vt != (VT_BYREF | VT_BSTR)) {
+            static_cast<void>(vbrun::raise(13));
+            return nullptr;
+        }
+        target = *holder->pbstrVal;
+        length = 0;
+    }
+    if (length == 0) {
+        length = target == nullptr
+                     ? 0
+                     : static_cast<LONG>(SysStringLen(
+                           reinterpret_cast<BSTR>(target)));
+    }
+    return target;
+}
+
+static wchar_t* lset_core(LONG length, const VARIANT* const holder,
+                          wchar_t* target, const BSTR source,
+                          const bool right) {
+    const VARIANT* variable = holder;
+    target = fixed_target(length, variable, target);
+    if (target == nullptr) {
+        return target;
+    }
+    const LONG have =
+        source == nullptr ? 0 : static_cast<LONG>(SysStringLen(source));
+    const LONG used = have < length ? have : length;
+    const LONG pad = length - used;
+    if (right) {
+        std::wmemmove(target + pad, source, static_cast<std::size_t>(used));
+        std::wmemset(target, L' ', static_cast<std::size_t>(pad));
+    } else {
+        std::wmemmove(target, source, static_cast<std::size_t>(used));
+        std::wmemset(target + used, L' ', static_cast<std::size_t>(pad));
+    }
+    return target;
+}
+
+wchar_t* WINAPI __vbaLsetFixstr(const LONG length, wchar_t* const target,
+                                const BSTR source) {
+    return lset_core(length, reinterpret_cast<const VARIANT*>(target), target,
+                     source, false);
+}
+
+wchar_t* WINAPI __vbaLsetFixstrFree(const LONG length, wchar_t* const target,
+                                    const BSTR source) {
+    wchar_t* const result = lset_core(
+        length, reinterpret_cast<const VARIANT*>(target), target, source, false);
+    SysFreeString(source);
+    return result;
+}
+
+wchar_t* WINAPI __vbaRsetFixstr(const LONG length, wchar_t* const target,
+                                const BSTR source) {
+    return lset_core(length, reinterpret_cast<const VARIANT*>(target), target,
+                     source, true);
+}
+
+wchar_t* WINAPI __vbaRsetFixstrFree(const LONG length, wchar_t* const target,
+                                    const BSTR source) {
+    wchar_t* const result = lset_core(
+        length, reinterpret_cast<const VARIANT*>(target), target, source, true);
+    SysFreeString(source);
+    return result;
+}
+
 // The apartment offset of a (single threaded) program is zero.
 LONG WINAPI __vbaAptOffset(const LONG) {
     return 0;

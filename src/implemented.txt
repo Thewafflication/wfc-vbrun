@@ -468,3 +468,7 @@ __vbaVarIndexStoreObj
 rtcMsgBox
 rtcAppActivate
 rtcInputBox
+__vbaLsetFixstr
+__vbaLsetFixstrFree
+__vbaRsetFixstr
+__vbaRsetFixstrFree
