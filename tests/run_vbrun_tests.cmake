@@ -37,6 +37,7 @@ run_step("layout" 0 layout "${DLL}" "${WORK}/exports.csv")
 run_step("load" 0 load "${DLL}")
 # An unimplemented export names itself and stops the process with 0x5642.
 run_step("stub" 22082 call "${DLL}" "rtcAppleScript")
-if(NOT step_output MATCHES "rtcAppleScript \\(ordinal [0-9]+\\) is not implemented")
+set(stub_pattern "rtcAppleScript \\(ordinal [0-9]+\\) is not implemented")
+if(NOT step_output MATCHES "${stub_pattern}")
   message(FATAL_ERROR "stub diagnostic missing: ${step_output}")
 endif()
