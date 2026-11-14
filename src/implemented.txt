@@ -490,3 +490,4 @@ __vbaHresultCheckObj
 rtcSendKeys
 rtcAppleScript
 rtcCreateObject
+rtcErrObj

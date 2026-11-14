@@ -65,6 +65,7 @@ set(
   src/helpers_foreach.cpp
   src/helpers_settings.cpp
   src/helpers_objects.cpp
+  src/helpers_errobj.cpp
   src/helpers_errors.cpp
   src/helpers_finance.cpp
   src/helpers_dates.cpp
@@ -288,6 +289,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-objects COMMAND vbrun_objects_tests)
     set_tests_properties(
       TC-MP0009-vbrun-objects
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # The Err object.
+    add_executable(
+      vbrun_errobj_tests
+      tests/vbrun_errobj_tests.cpp
+      src/helpers_errobj.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_errobj_tests PRIVATE oleaut32 ole32)
+    wfc_vbrun_harden(vbrun_errobj_tests)
+    add_test(NAME TC-MP0009-vbrun-errobj COMMAND vbrun_errobj_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-errobj
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.

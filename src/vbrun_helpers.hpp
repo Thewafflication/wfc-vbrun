@@ -24,6 +24,16 @@ namespace vbrun {
 // that raised it. Returns the HRESULT a helper hands back for the error.
 HRESULT raise(int vb_error);
 
+// What the Err object keeps besides the number, per thread: it is cleared
+// whenever a new error is raised.
+struct ErrorDetail {
+    std::wstring source;
+    std::wstring description;
+    std::wstring help_file;
+    LONG help_context = 0;
+};
+ErrorDetail& error_detail();
+
 // The error most recently raised on this thread (0 for none).
 int last_error();
 void clear_error();

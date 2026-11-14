@@ -9,11 +9,17 @@ namespace {
 thread_local int g_error = 0;
 thread_local int g_erl = 0;
 thread_local DWORD g_dll_error = 0;
+thread_local ErrorDetail g_detail;
 
 }  // namespace
 
+ErrorDetail& error_detail() {
+    return g_detail;
+}
+
 HRESULT raise(const int vb_error) {
     g_error = vb_error;
+    g_detail = ErrorDetail();
     // The reference turns a Visual Basic error into 0x800A0000 | number (zero
     // stays zero).
     return vb_error == 0 ? S_OK
@@ -27,6 +33,7 @@ int last_error() {
 
 void clear_error() {
     g_error = 0;
+    g_detail = ErrorDetail();
 }
 
 int erl() {
