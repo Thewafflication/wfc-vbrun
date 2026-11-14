@@ -15,6 +15,12 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+SAFEARRAY* __cdecl __vbaRedim(ULONG features, LONG element_size,
+                              SAFEARRAY** slot, const void* info,
+                              LONG dimensions, ...);
+SAFEARRAY* __cdecl __vbaRedimPreserve(ULONG features, LONG element_size,
+                                      SAFEARRAY** slot, const void* info,
+                                      LONG dimensions, ...);
 void WINAPI rtcSetCurrentCalendar(LONG calendar);
 SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI rtcStrConvVar2(VARIANT* result, VARIANT* operand,

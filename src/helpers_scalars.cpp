@@ -14,6 +14,7 @@
 #include <cstring>
 #include <cwctype>
 #include <string>
+#include <vector>
 
 #include "vbrun_helpers.hpp"
 
@@ -1199,6 +1200,138 @@ void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
         return;
     }
     construct_array(destination, declaration);
+}
+
+// ReDim: the array of a declaration (its features, element size, element type
+// or record information, and the bounds as pairs of upper and lower bound in
+// the order of the dimensions). Redimensioning an array that exists frees its
+// data (error 10 for a fixed-size or locked one); a bound with the upper below
+// the lower is error 9.
+SAFEARRAY* __cdecl __vbaRedim(const ULONG features, const LONG element_size,
+                              SAFEARRAY** const slot, const void* const info,
+                              const LONG dimensions, ...) {
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    for (LONG index = 0; index < dimensions * 2; ++index) {
+        bounds.push_back(va_arg(list, LONG));
+    }
+    va_end(list);
+    if (dimensions <= 0) {
+        static_cast<void>(vbrun::raise(9));
+        return *slot;
+    }
+    SAFEARRAY* array = *slot;
+    if (array != nullptr) {
+        if ((array->fFeatures & (FADF_STATIC | FADF_EMBEDDED |
+                                 FADF_FIXEDSIZE)) != 0 ||
+            array->cLocks != 0) {
+            static_cast<void>(vbrun::raise(10));
+            return array;
+        }
+        if (array->pvData != nullptr) {
+            SafeArrayDestroyData(array);
+            array->pvData = nullptr;
+        }
+        if (array->cDims != dimensions || array->fFeatures != features) {
+            SafeArrayDestroyDescriptor(array);
+            array = nullptr;
+            *slot = nullptr;
+        }
+    }
+    if (array == nullptr) {
+        HRESULT status = S_OK;
+        if ((features & (FADF_RECORD | FADF_HAVEIID | FADF_HAVEVARTYPE)) == 0) {
+            status = SafeArrayAllocDescriptor(
+                static_cast<UINT>(dimensions), &array);
+        } else {
+            VARTYPE type = static_cast<VARTYPE>(
+                reinterpret_cast<std::uintptr_t>(info));
+            if ((features & FADF_HAVEIID) != 0) {
+                type = static_cast<VARTYPE>(
+                    (features & FADF_DISPATCH) != 0 ? VT_DISPATCH
+                                                    : VT_UNKNOWN);
+            } else if ((features & FADF_RECORD) != 0) {
+                type = static_cast<VARTYPE>(VT_RECORD);
+            }
+            status = SafeArrayAllocDescriptorEx(
+                type, static_cast<UINT>(dimensions), &array);
+        }
+        if (FAILED(status) || array == nullptr) {
+            static_cast<void>(vbrun::raise_hresult(status));
+            return *slot;
+        }
+        array->fFeatures = static_cast<USHORT>(features);
+        *slot = array;
+    }
+    array->cbElements = static_cast<ULONG>(element_size);
+    for (LONG index = 0; index < dimensions; ++index) {
+        const LONG upper = bounds[static_cast<std::size_t>(index) * 2U];
+        const LONG lower = bounds[static_cast<std::size_t>(index) * 2U + 1U];
+        if (upper < lower) {
+            static_cast<void>(vbrun::raise(9));
+            return array;
+        }
+        array->rgsabound[index].cElements =
+            static_cast<ULONG>(upper - lower + 1);
+        array->rgsabound[index].lLbound = lower;
+    }
+    const HRESULT allocated = SafeArrayAllocData(array);
+    if (FAILED(allocated) || array->pvData == nullptr) {
+        static_cast<void>(vbrun::raise(7));
+    }
+    return array;
+}
+
+// ReDim Preserve: the first dimension (the last one of the declaration) may
+// change its upper bound; the others keep their bounds. The data stays.
+SAFEARRAY* __cdecl __vbaRedimPreserve(const ULONG features,
+                                      const LONG element_size,
+                                      SAFEARRAY** const slot,
+                                      const void* const info,
+                                      const LONG dimensions, ...) {
+    static_cast<void>(features);
+    static_cast<void>(element_size);
+    static_cast<void>(info);
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    for (LONG index = 0; index < dimensions * 2; ++index) {
+        bounds.push_back(va_arg(list, LONG));
+    }
+    va_end(list);
+    SAFEARRAY* const array = *slot;
+    if (array == nullptr || dimensions <= 0 || array->cDims != dimensions) {
+        static_cast<void>(vbrun::raise(9));
+        return array;
+    }
+    if ((array->fFeatures & (FADF_STATIC | FADF_EMBEDDED |
+                             FADF_FIXEDSIZE)) != 0 ||
+        array->cLocks != 0) {
+        static_cast<void>(vbrun::raise(10));
+        return array;
+    }
+    for (LONG index = 0; index < dimensions; ++index) {
+        const LONG upper = bounds[static_cast<std::size_t>(index) * 2U];
+        const LONG lower = bounds[static_cast<std::size_t>(index) * 2U + 1U];
+        const SAFEARRAYBOUND& have = array->rgsabound[index];
+        const bool changes_here =
+            index == 0 && upper >= lower && lower == have.lLbound;
+        const bool kept = upper >= lower && lower == have.lLbound &&
+                          static_cast<ULONG>(upper - lower + 1) ==
+                              have.cElements;
+        if (!changes_here && !kept) {
+            static_cast<void>(vbrun::raise(9));
+            return array;
+        }
+    }
+    SAFEARRAYBOUND resized = {static_cast<ULONG>(bounds[0] - bounds[1] + 1),
+                              bounds[1]};
+    const HRESULT status = SafeArrayRedim(array, &resized);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise_hresult(status));
+    }
+    return array;
 }
 
 // The core of Erase: frees the data of the array (elements included) and,

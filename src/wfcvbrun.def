@@ -288,8 +288,8 @@ EXPORTS
     __vbaRecDestruct=vbrun_stub_382 @382
     __vbaRecDestructAnsi=vbrun_stub_383 @383
     __vbaRecUniToAnsi=vbrun_stub_384 @384
-    __vbaRedim=vbrun_stub_385 @385
-    __vbaRedimPreserve=vbrun_stub_386 @386
+    __vbaRedim @385
+    __vbaRedimPreserve @386
     __vbaRedimPreserveVar=vbrun_stub_387 @387
     __vbaRedimPreserveVar2=vbrun_stub_388 @388
     __vbaRedimVar=vbrun_stub_389 @389
