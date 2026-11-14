@@ -15,6 +15,7 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+void WINAPI rtcAppActivate(const VARIANT* title, const VARIANT* wait);
 SHORT WINAPI rtcMsgBox(const VARIANT* prompt, LONG buttons,
                        const VARIANT* title, const VARIANT* help_file,
                        const VARIANT* context);

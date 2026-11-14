@@ -72,6 +72,51 @@ bool environment_text(const VARIANT* const argument, std::wstring& text) {
 
 }  // namespace
 
+namespace {
+
+struct WindowSearch {
+    std::wstring wanted;
+    DWORD process = 0;
+    bool by_process = false;
+    bool prefix = false;
+    HWND found = nullptr;
+};
+
+BOOL CALLBACK match_window(HWND window, LPARAM parameter) {
+    auto* const search = reinterpret_cast<WindowSearch*>(parameter);
+    if (IsWindowVisible(window) == 0 || IsWindowEnabled(window) == 0) {
+        return TRUE;
+    }
+    if (search->by_process) {
+        DWORD owner = 0;
+        GetWindowThreadProcessId(window, &owner);
+        if (owner == search->process && GetWindow(window, GW_OWNER) == nullptr) {
+            search->found = window;
+            return FALSE;
+        }
+        return TRUE;
+    }
+    wchar_t title[512] = {};
+    const int length = GetWindowTextW(window, title, 511);
+    if (length <= 0) {
+        return TRUE;
+    }
+    const std::size_t wanted = search->wanted.size();
+    const std::size_t compared =
+        search->prefix ? wanted : static_cast<std::size_t>(length);
+    if (static_cast<std::size_t>(length) >= wanted && wanted != 0 &&
+        (search->prefix || static_cast<std::size_t>(length) == wanted) &&
+        CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, title,
+                       static_cast<int>(compared), search->wanted.c_str(),
+                       static_cast<int>(wanted)) == CSTR_EQUAL) {
+        search->found = window;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+}  // namespace
+
 extern "C" {
 
 // Environ$(name or number).
@@ -318,6 +363,46 @@ SHORT WINAPI rtcMsgBox(const VARIANT* const prompt, LONG buttons,
     return static_cast<SHORT>(MessageBoxW(GetActiveWindow(), text.c_str(),
                                           caption.c_str(),
                                           static_cast<UINT>(buttons)));
+}
+
+// AppActivate(title) or AppActivate(process id): brings the window of an
+// application to the front. A window whose title is the text is preferred to
+// one whose title begins with it; no such window is error 5.
+void WINAPI rtcAppActivate(const VARIANT* const title,
+                           const VARIANT* const wait) {
+    static_cast<void>(wait);
+    WindowSearch search;
+    if (title == nullptr || title->vt == VT_ERROR) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    if (title->vt == VT_BSTR) {
+        search.wanted.assign(title->bstrVal == nullptr ? L"" : title->bstrVal,
+                             SysStringLen(title->bstrVal));
+    } else {
+        VARIANT number;
+        VariantInit(&number);
+        if (FAILED(VariantChangeType(&number, const_cast<VARIANT*>(title), 0,
+                                     VT_I4))) {
+            static_cast<void>(vbrun::raise(13));
+            return;
+        }
+        search.by_process = true;
+        search.process = static_cast<DWORD>(number.lVal);
+    }
+    EnumWindows(match_window, reinterpret_cast<LPARAM>(&search));
+    if (search.found == nullptr && !search.by_process) {
+        search.prefix = true;
+        EnumWindows(match_window, reinterpret_cast<LPARAM>(&search));
+    }
+    if (search.found == nullptr) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    if (IsIconic(search.found) != 0) {
+        ShowWindow(search.found, SW_RESTORE);
+    }
+    SetForegroundWindow(search.found);
 }
 
 }  // extern "C"

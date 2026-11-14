@@ -500,7 +500,7 @@ EXPORTS
     rtcRandomize @594
     rtcMsgBox @595
     rtcInputBox=vbrun_stub_596 @596
-    rtcAppActivate=vbrun_stub_597 @597
+    rtcAppActivate @597
     rtcDoEvents @598
     rtcSendKeys=vbrun_stub_599 @599
     rtcShell @600
