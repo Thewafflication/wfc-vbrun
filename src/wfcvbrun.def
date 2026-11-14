@@ -95,8 +95,8 @@ EXPORTS
     __vbaCyErrVar @189
     CopyRecord=vbrun_stub_190 @190
     __vbaCyFix @191
-    __vbaCyForInit=vbrun_stub_192 @192
-    __vbaCyForNext=vbrun_stub_193 @193
+    __vbaCyForInit @192
+    __vbaCyForNext @193
     __vbaCyI2 @194
     TipGetAddressOfPredeclaredInstance=vbrun_stub_195 @195
     __vbaCyI4 @196
@@ -493,7 +493,7 @@ EXPORTS
     rtcLog @587
     rtcRgb @588
     rtcQBColor @589
-    rtcMacId=vbrun_stub_590 @590
+    rtcMacId @590
     rtcTypeName @591
     rtcIsMissing @592
     rtcRandomNext @593

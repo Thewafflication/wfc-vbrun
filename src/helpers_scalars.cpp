@@ -1496,6 +1496,24 @@ LONG WINAPI __vbaAptOffset(const LONG) {
     return 0;
 }
 
+// MacID("TEXT"): the four characters of the string as a Long, the first one
+// in the high byte (a short string is padded with spaces).
+LONG WINAPI rtcMacId(const BSTR text) {
+    if (text == nullptr) {
+        return 0;
+    }
+    char characters[4] = {' ', ' ', ' ', '\0'};
+    const int length = static_cast<int>(SysStringLen(text));
+    WideCharToMultiByte(CP_ACP, 0, text, length < 4 ? length : 4, characters,
+                        4, nullptr, nullptr);
+    ULONG result = 0;
+    for (const char character : characters) {
+        result = (result << 8) |
+                 static_cast<unsigned char>(character == '\0' ? ' ' : character);
+    }
+    return static_cast<LONG>(result);
+}
+
 // A copy of the string of a Variant (converted when it is not a string).
 BSTR WINAPI __vbaStrVarCopy(VARIANT* const value) {
     if (value->vt == VT_BSTR) {
@@ -1544,6 +1562,28 @@ LONGLONG WINAPI __vbaCyAdd(const LONGLONG right, const LONGLONG left) {
     b.int64 = right;
     sum.int64 = 0;
     return worked(VarCyAdd(a, b, &sum)) ? sum.int64 : 0;
+}
+
+// For with a Currency counter: 1 when the loop runs (the counter has not
+// passed the limit in the direction of the step), 0 when it does not.
+static LONG currency_loop_runs(const LONGLONG counter, const LONGLONG limit,
+                               const LONGLONG step) {
+    if (step > 0) {
+        return counter <= limit ? 1 : 0;
+    }
+    return counter >= limit ? 1 : 0;
+}
+
+LONG WINAPI __vbaCyForInit(LONGLONG* const counter, const LONGLONG start,
+                           const LONGLONG limit, const LONGLONG step) {
+    *counter = start;
+    return currency_loop_runs(start, limit, step);
+}
+
+LONG WINAPI __vbaCyForNext(LONGLONG* const counter, const LONGLONG limit,
+                           const LONGLONG step) {
+    *counter = __vbaCyAdd(step, *counter);
+    return currency_loop_runs(*counter, limit, step);
 }
 
 // The minuend comes first here (left - right), unlike the String helpers.

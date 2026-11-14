@@ -14,6 +14,10 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+LONG WINAPI rtcMacId(BSTR text);
+LONG WINAPI __vbaCyForInit(LONGLONG* counter, LONGLONG start, LONGLONG limit,
+                           LONGLONG step);
+LONG WINAPI __vbaCyForNext(LONGLONG* counter, LONGLONG limit, LONGLONG step);
 LONG WINAPI __vbaErase(const void* elements, SAFEARRAY** slot);
 void WINAPI __vbaEraseKeepData(const void* elements, SAFEARRAY** slot);
 BSTR WINAPI __vbaStrFixstr(LONG length, const wchar_t* text);

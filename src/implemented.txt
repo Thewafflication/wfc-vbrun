@@ -448,3 +448,6 @@ rtcGetObject
 rtcCallByName
 __vbaErase
 __vbaEraseKeepData
+__vbaCyForInit
+__vbaCyForNext
+rtcMacId
