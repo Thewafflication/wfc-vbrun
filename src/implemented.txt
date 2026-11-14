@@ -487,3 +487,4 @@ __vbaVarIndexLoadRefLock
 rtcIMEStatus
 __vbaFailedFriend
 __vbaHresultCheckObj
+rtcSendKeys

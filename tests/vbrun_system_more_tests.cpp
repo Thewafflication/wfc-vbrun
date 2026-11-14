@@ -13,6 +13,7 @@
 #include <cstring>
 #include <cwchar>
 #include <string>
+#include <vector>
 
 #include "../src/vbrun_helpers.hpp"
 
@@ -39,6 +40,7 @@ SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
+void WINAPI rtcSendKeys(BSTR keys, const VARIANT* wait);
 HRESULT WINAPI __vbaHresultCheckObj(HRESULT result, IUnknown* object,
                                     const IID* iid, LONG extra);
 LONG WINAPI rtcIMEStatus();
@@ -686,6 +688,55 @@ void test_ime_and_friend() {
     vbrun::clear_error();
 }
 
+std::vector<vbrun::KeyEvent> keys_of(const wchar_t* const text,
+                                     bool& valid) {
+    std::vector<vbrun::KeyEvent> events;
+    valid = vbrun::parse_send_keys(text, events);
+    return events;
+}
+
+void test_send_keys() {
+    bool valid = false;
+    // "a" is a press and a release of the key.
+    auto events = keys_of(L"a", valid);
+    expect(valid && events.size() == 2 && !events[0].up && events[1].up,
+           "SendKeys of a letter");
+    // A group with shift: shift down, both keys, shift up.
+    events = keys_of(L"+(ab)", valid);
+    expect(valid && events.size() == 6 && events[0].key == VK_SHIFT &&
+               !events[0].up && events[5].key == VK_SHIFT && events[5].up,
+           "SendKeys of a group with shift");
+    events = keys_of(L"{ENTER}~", valid);
+    expect(valid && events.size() == 4 && events[0].key == VK_RETURN &&
+               events[2].key == VK_RETURN,
+           "SendKeys of Enter");
+    events = keys_of(L"{LEFT 3}", valid);
+    expect(valid && events.size() == 6 && events[0].key == VK_LEFT,
+           "SendKeys with a count");
+    events = keys_of(L"{F5}^c", valid);
+    expect(valid && events.size() == 6 && events[0].key == VK_F5 &&
+               events[2].key == VK_CONTROL,
+           "SendKeys of a function key and control");
+    events = keys_of(L"{+}", valid);
+    expect(valid && events.size() >= 2, "SendKeys of a literal plus");
+    for (const wchar_t* const bad :
+         {L"{NOSUCH}", L"(ab", L"ab)", L"{ENTER", L"+", L"{LEFT x}"}) {
+        keys_of(bad, valid);
+        expect(!valid, "SendKeys of a malformed string");
+    }
+    // The empty string is nothing to send; a malformed one is error 5.
+    BSTR empty = SysAllocString(L"");
+    vbrun::clear_error();
+    rtcSendKeys(empty, nullptr);
+    expect(vbrun::last_error() == 0, "SendKeys of nothing");
+    SysFreeString(empty);
+    BSTR bad = SysAllocString(L"(");
+    rtcSendKeys(bad, nullptr);
+    expect(vbrun::last_error() == 5, "SendKeys of junk is error 5");
+    vbrun::clear_error();
+    SysFreeString(bad);
+}
+
 int main() {
     test_state();
     test_strings();
@@ -699,6 +750,7 @@ int main() {
     test_variant_for();
     test_index_reference();
     test_ime_and_friend();
+    test_send_keys();
     test_clock();
     if (failures == 0) {
         std::puts("system more ok");

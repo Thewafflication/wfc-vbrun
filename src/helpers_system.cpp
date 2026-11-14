@@ -5,6 +5,7 @@
 // number selects the entry "NAME=value" of that position (a number below 1 is
 // error 5).
 
+#include <cwctype>
 #include <string>
 #include <vector>
 
@@ -383,6 +384,181 @@ LONG ime_state() {
 }
 
 }  // namespace
+
+namespace {
+
+struct NamedKey {
+    const wchar_t* name;
+    WORD key;
+};
+
+const NamedKey kNamedKeys[] = {
+    {L"BACKSPACE", VK_BACK}, {L"BS", VK_BACK},        {L"BKSP", VK_BACK},
+    {L"BREAK", VK_CANCEL},   {L"CAPSLOCK", VK_CAPITAL},
+    {L"DELETE", VK_DELETE},  {L"DEL", VK_DELETE},     {L"DOWN", VK_DOWN},
+    {L"END", VK_END},        {L"ENTER", VK_RETURN},   {L"ESC", VK_ESCAPE},
+    {L"HELP", VK_HELP},      {L"HOME", VK_HOME},      {L"INSERT", VK_INSERT},
+    {L"INS", VK_INSERT},     {L"LEFT", VK_LEFT},      {L"NUMLOCK", VK_NUMLOCK},
+    {L"PGDN", VK_NEXT},      {L"PGUP", VK_PRIOR},     {L"PRTSC", VK_SNAPSHOT},
+    {L"RIGHT", VK_RIGHT},    {L"SCROLLLOCK", VK_SCROLL},
+    {L"TAB", VK_TAB},        {L"UP", VK_UP},
+};
+
+constexpr unsigned kShift = 1;
+constexpr unsigned kControl = 2;
+constexpr unsigned kAlt = 4;
+
+struct KeyParser {
+    const std::wstring& text;
+    std::vector<vbrun::KeyEvent>& events;
+    std::size_t at = 0;
+
+    void modifiers_down(const unsigned modifiers) {
+        const WORD keys[3] = {VK_SHIFT, VK_CONTROL, VK_MENU};
+        for (int bit = 0; bit < 3; ++bit) {
+            if ((modifiers & (1U << bit)) != 0) {
+                events.push_back({keys[bit], false, false});
+            }
+        }
+    }
+
+    void modifiers_up(const unsigned modifiers) {
+        const WORD keys[3] = {VK_SHIFT, VK_CONTROL, VK_MENU};
+        for (int bit = 2; bit >= 0; --bit) {
+            if ((modifiers & (1U << bit)) != 0) {
+                events.push_back({keys[bit], true, false});
+            }
+        }
+    }
+
+    void press(const WORD key, const bool unicode, const unsigned modifiers,
+               const int count) {
+        modifiers_down(modifiers);
+        for (int again = 0; again < count; ++again) {
+            events.push_back({key, false, unicode});
+            events.push_back({key, true, unicode});
+        }
+        modifiers_up(modifiers);
+    }
+
+    void literal(const wchar_t character, const unsigned modifiers,
+                 const int count) {
+        const SHORT scan = VkKeyScanW(character);
+        if (scan == -1) {
+            press(static_cast<WORD>(character), true, modifiers, count);
+            return;
+        }
+        const unsigned shifts = static_cast<unsigned>(scan >> 8) & 7U;
+        press(static_cast<WORD>(scan & 0xFF), false, modifiers | shifts,
+              count);
+    }
+
+    // {NAME}, {NAME count}, {character}, {character count}.
+    bool braced(const unsigned modifiers) {
+        std::size_t close = at + 1;
+        if (close < text.size() && text[close] == L'}') {
+            ++close;  // the character } itself
+        }
+        close = text.find(L'}', close);
+        if (close == std::wstring::npos) {
+            return false;
+        }
+        std::wstring body = text.substr(at + 1, close - at - 1);
+        at = close + 1;
+        int count = 1;
+        const std::size_t blank = body.find(L' ', 1);
+        if (blank != std::wstring::npos) {
+            const std::wstring digits = body.substr(blank + 1);
+            if (digits.empty() ||
+                digits.find_first_not_of(L"0123456789") !=
+                    std::wstring::npos) {
+                return false;
+            }
+            count = std::stoi(digits);
+            body.erase(blank);
+        }
+        if (body.size() == 1) {
+            literal(body[0], modifiers, count);
+            return true;
+        }
+        for (wchar_t& character : body) {
+            character = static_cast<wchar_t>(std::towupper(character));
+        }
+        if (body.size() >= 2 && body[0] == L'F') {
+            const long number = std::wcstol(body.c_str() + 1, nullptr, 10);
+            if (number >= 1 && number <= 16) {
+                press(static_cast<WORD>(VK_F1 + number - 1), false, modifiers,
+                      count);
+                return true;
+            }
+        }
+        for (const NamedKey& named : kNamedKeys) {
+            if (body == named.name) {
+                press(named.key, false, modifiers, count);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Keys up to the end, or up to the ) that closes a group.
+    bool sequence(const bool in_group) {
+        unsigned pending = 0;
+        while (at < text.size()) {
+            const wchar_t character = text[at];
+            if (character == L'+' || character == L'^' || character == L'%') {
+                pending |= character == L'+'   ? kShift
+                           : character == L'^' ? kControl
+                                               : kAlt;
+                ++at;
+                continue;
+            }
+            if (character == L')') {
+                return in_group && pending == 0;
+            }
+            if (character == L'(') {
+                ++at;
+                std::vector<vbrun::KeyEvent> inner;
+                KeyParser group{text, inner, at};
+                if (!group.sequence(true) || group.at >= text.size()) {
+                    return false;
+                }
+                at = group.at + 1;
+                modifiers_down(pending);
+                events.insert(events.end(), inner.begin(), inner.end());
+                modifiers_up(pending);
+            } else if (character == L'{') {
+                if (!braced(pending)) {
+                    return false;
+                }
+            } else if (character == L'~') {
+                press(VK_RETURN, false, pending, 1);
+                ++at;
+            } else {
+                literal(character, pending, 1);
+                ++at;
+            }
+            pending = 0;
+        }
+        return !in_group && pending == 0;
+    }
+};
+
+}  // namespace
+
+namespace vbrun {
+
+bool parse_send_keys(const std::wstring& text, std::vector<KeyEvent>& events) {
+    events.clear();
+    KeyParser parser{text, events, 0};
+    if (!parser.sequence(false)) {
+        events.clear();
+        return false;
+    }
+    return true;
+}
+
+}  // namespace vbrun
 
 extern "C" {
 
@@ -767,6 +943,48 @@ LONG WINAPI rtcIMEStatus() {
 // that defines it is error 97.
 void WINAPI __vbaFailedFriend() {
     static_cast<void>(vbrun::raise(97));
+}
+
+
+// SendKeys string, wait: the keys go to the window that has the focus.
+void WINAPI rtcSendKeys(const BSTR keys, const VARIANT* const wait) {
+    const std::wstring text(keys == nullptr ? L"" : keys, SysStringLen(keys));
+    std::vector<vbrun::KeyEvent> events;
+    if (!vbrun::parse_send_keys(text, events)) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    bool waiting = false;
+    if (wait != nullptr && wait->vt != VT_ERROR) {
+        VARIANT flag;
+        VariantInit(&flag);
+        if (SUCCEEDED(VariantChangeType(&flag, const_cast<VARIANT*>(wait), 0,
+                                        VT_BOOL))) {
+            waiting = flag.boolVal != VARIANT_FALSE;
+        }
+    }
+    std::vector<INPUT> inputs;
+    for (const vbrun::KeyEvent& event : events) {
+        INPUT input = {};
+        input.type = INPUT_KEYBOARD;
+        if (event.unicode) {
+            input.ki.wScan = event.key;
+            input.ki.dwFlags = KEYEVENTF_UNICODE;
+        } else {
+            input.ki.wVk = event.key;
+        }
+        if (event.up) {
+            input.ki.dwFlags |= KEYEVENTF_KEYUP;
+        }
+        inputs.push_back(input);
+    }
+    if (!inputs.empty()) {
+        SendInput(static_cast<UINT>(inputs.size()), inputs.data(),
+                  sizeof(INPUT));
+        if (waiting) {
+            Sleep(10);
+        }
+    }
 }
 
 }  // extern "C"

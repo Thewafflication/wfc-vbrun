@@ -15,6 +15,9 @@
 
 #include <oleauto.h>
 
+#include <string>
+#include <vector>
+
 namespace vbrun {
 
 // A run-time error of the program (`Err.Number`): remembered for the thread
@@ -42,5 +45,18 @@ HRESULT raise_hresult(HRESULT result);
 // The message of a Visual Basic error number (the generic one when there is
 // none; null for 0).
 const wchar_t* error_message(int number);
+
+// One key press or release of SendKeys: a virtual key, or (unicode) the
+// character itself.
+struct KeyEvent {
+    WORD key;
+    bool up;
+    bool unicode;
+};
+
+// The key events for a SendKeys string (+ shift, ^ control, % alt, ~ enter,
+// ( ) groups, {NAME} and {NAME count} for named keys); false when the string
+// is not valid (SendKeys then raises error 5).
+bool parse_send_keys(const std::wstring& text, std::vector<KeyEvent>& events);
 
 }  // namespace vbrun
