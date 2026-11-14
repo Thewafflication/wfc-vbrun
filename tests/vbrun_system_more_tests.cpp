@@ -40,6 +40,7 @@ SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
+void WINAPI rtcAppleScript();
 void WINAPI rtcSendKeys(BSTR keys, const VARIANT* wait);
 HRESULT WINAPI __vbaHresultCheckObj(HRESULT result, IUnknown* object,
                                     const IID* iid, LONG extra);
@@ -682,6 +683,9 @@ void test_ime_and_friend() {
            "a good HRESULT of an object is no error");
     __vbaHresultCheckObj(DISP_E_TYPEMISMATCH, nullptr, nullptr, 0);
     expect(vbrun::last_error() == 13, "a failed call on an object");
+    vbrun::clear_error();
+    rtcAppleScript();
+    expect(vbrun::last_error() == 5, "AppleScript is error 5");
     vbrun::clear_error();
     __vbaFailedFriend();
     expect(vbrun::last_error() == 97, "a failed Friend call is error 97");

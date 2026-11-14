@@ -488,3 +488,5 @@ rtcIMEStatus
 __vbaFailedFriend
 __vbaHresultCheckObj
 rtcSendKeys
+rtcAppleScript
+rtcCreateObject

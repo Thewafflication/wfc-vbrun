@@ -16,6 +16,7 @@ VARIANT* WINAPI rtcCreateObject2(VARIANT* result, BSTR class_name,
 VARIANT* WINAPI rtcGetObject(VARIANT* result, const VARIANT* path,
                              const VARIANT* class_name);
 IUnknown* WINAPI __vbaNew(const void* info);
+VARIANT* WINAPI rtcCreateObject(VARIANT* result, BSTR class_name);
 void WINAPI __vbaNew2(const void* info, void** object);
 }
 
@@ -68,6 +69,13 @@ int main() {
         expect(stored == nullptr && vbrun::last_error() == 429,
                "New of a missing class is error 429");
         vbrun::clear_error();
+    }
+    {
+        VARIANT old;
+        old.vt = VT_I4;
+        old.lVal = 1;
+        expect(rtcCreateObject(&old, nullptr) == &old && old.vt == VT_EMPTY,
+               "the older CreateObject gives an empty Variant");
     }
     BSTR none = SysAllocString(L"No.Such.Class.Wfc");
     rtcCreateObject2(&result, none, nullptr);

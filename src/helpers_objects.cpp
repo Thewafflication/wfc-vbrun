@@ -196,4 +196,11 @@ void WINAPI __vbaNew2(const void* const info, void** const object) {
     *object = create_from(static_cast<const ClassInfo*>(info));
 }
 
+// The older form of CreateObject: it makes nothing and hands back an empty
+// Variant (the program uses CreateObject2).
+VARIANT* WINAPI rtcCreateObject(VARIANT* const result, const BSTR) {
+    VariantInit(result);
+    return result;
+}
+
 }  // extern "C"

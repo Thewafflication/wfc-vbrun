@@ -987,4 +987,10 @@ void WINAPI rtcSendKeys(const BSTR keys, const VARIANT* const wait) {
     }
 }
 
+
+// AppleScript is a Macintosh feature: on Windows it is error 5.
+void WINAPI rtcAppleScript() {
+    static_cast<void>(vbrun::raise(5));
+}
+
 }  // extern "C"
