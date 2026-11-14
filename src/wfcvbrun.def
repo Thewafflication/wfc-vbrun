@@ -498,7 +498,7 @@ EXPORTS
     rtcIsMissing @592
     rtcRandomNext @593
     rtcRandomize @594
-    rtcMsgBox=vbrun_stub_595 @595
+    rtcMsgBox @595
     rtcInputBox=vbrun_stub_596 @596
     rtcAppActivate=vbrun_stub_597 @597
     rtcDoEvents @598

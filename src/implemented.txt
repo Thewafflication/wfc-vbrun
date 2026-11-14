@@ -465,3 +465,4 @@ __vbaRedimPreserveVar
 __vbaVarIndexLoad
 __vbaVarIndexStore
 __vbaVarIndexStoreObj
+rtcMsgBox

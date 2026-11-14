@@ -15,6 +15,9 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+SHORT WINAPI rtcMsgBox(const VARIANT* prompt, LONG buttons,
+                       const VARIANT* title, const VARIANT* help_file,
+                       const VARIANT* context);
 VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* result, const VARIANT* holder,
                                    LONG count, ...);
 VARIANT* __cdecl __vbaVarIndexStore(VARIANT* holder, LONG count, ...);

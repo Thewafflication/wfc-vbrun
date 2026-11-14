@@ -258,4 +258,66 @@ double WINAPI rtcShell(const VARIANT* const command, const LONG style) {
     return static_cast<double>(process.dwProcessId);
 }
 
+// MsgBox(prompt, buttons, title): the dialog and the number of the button
+// pressed. Buttons outside the Visual Basic constants count as vbOKOnly. A
+// missing title is the name of the program.
+SHORT WINAPI rtcMsgBox(const VARIANT* const prompt, LONG buttons,
+                       const VARIANT* const title,
+                       const VARIANT* const help_file,
+                       const VARIANT* const context) {
+    static_cast<void>(help_file);
+    static_cast<void>(context);
+    if ((buttons & 0xF) > 5 || (buttons & 0xF0) > 0x40 ||
+        (buttons & 0xF00) > 0x300) {
+        buttons = 0;
+    }
+    if (prompt != nullptr && prompt->vt == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return 0;
+    }
+    std::wstring text;
+    if (prompt != nullptr && prompt->vt != VT_EMPTY) {
+        VARIANT converted;
+        VariantInit(&converted);
+        if (FAILED(VariantChangeType(&converted,
+                                     const_cast<VARIANT*>(prompt), 0,
+                                     VT_BSTR))) {
+            static_cast<void>(vbrun::raise(13));
+            return 0;
+        }
+        text.assign(converted.bstrVal == nullptr ? L"" : converted.bstrVal,
+                    SysStringLen(converted.bstrVal));
+        VariantClear(&converted);
+    }
+    std::wstring caption;
+    const bool titled = title != nullptr && title->vt != VT_ERROR;
+    if (titled) {
+        VARIANT converted;
+        VariantInit(&converted);
+        if (SUCCEEDED(VariantChangeType(&converted,
+                                        const_cast<VARIANT*>(title), 0,
+                                        VT_BSTR))) {
+            caption.assign(
+                converted.bstrVal == nullptr ? L"" : converted.bstrVal,
+                SysStringLen(converted.bstrVal));
+        }
+        VariantClear(&converted);
+    } else {
+        wchar_t path[MAX_PATH] = {};
+        GetModuleFileNameW(nullptr, path, MAX_PATH);
+        caption = path;
+        const auto slash = caption.find_last_of(L"\\/");
+        if (slash != std::wstring::npos) {
+            caption.erase(0, slash + 1);
+        }
+        const auto dot = caption.find_last_of(L'.');
+        if (dot != std::wstring::npos) {
+            caption.erase(dot);
+        }
+    }
+    return static_cast<SHORT>(MessageBoxW(GetActiveWindow(), text.c_str(),
+                                          caption.c_str(),
+                                          static_cast<UINT>(buttons)));
+}
+
 }  // extern "C"
