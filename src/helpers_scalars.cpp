@@ -1408,6 +1408,32 @@ VARIANT* __cdecl __vbaRedimPreserveVar(const LONG type, VARIANT* const holder,
     return redim_variant(true, type, holder, dimensions, bounds);
 }
 
+// The same with a record description after the dimension count (used only for
+// user types, which are not handled here).
+VARIANT* __cdecl __vbaRedimVar2(const LONG type, VARIANT* const holder,
+                                const LONG dimensions, const void* const info,
+                                ...) {
+    va_list list;
+    static_cast<void>(info);
+    va_start(list, info);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return redim_variant(false, type, holder, dimensions, bounds);
+}
+
+VARIANT* __cdecl __vbaRedimPreserveVar2(const LONG type, VARIANT* const holder,
+                                        const LONG dimensions,
+                                        const void* const info, ...) {
+    va_list list;
+    static_cast<void>(info);
+    va_start(list, info);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return redim_variant(true, type, holder, dimensions, bounds);
+}
+
 // The core of Erase: frees the data of the array (elements included) and,
 // for a dynamic array, the array itself. A locked array is error 10.
 static LONG erase_array(SAFEARRAY** const slot) {

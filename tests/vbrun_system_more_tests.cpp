@@ -51,6 +51,11 @@ VARIANT* __cdecl __vbaRedimVar(LONG type, VARIANT* holder, LONG dimensions,
                                ...);
 VARIANT* __cdecl __vbaRedimPreserveVar(LONG type, VARIANT* holder,
                                        LONG dimensions, ...);
+VARIANT* __cdecl __vbaRedimVar2(LONG type, VARIANT* holder, LONG dimensions,
+                                const void* info, ...);
+VARIANT* __cdecl __vbaRedimPreserveVar2(LONG type, VARIANT* holder,
+                                        LONG dimensions, const void* info,
+                                        ...);
 VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* result, const VARIANT* holder,
                                    LONG count, ...);
 VARIANT* __cdecl __vbaVarIndexStore(VARIANT* holder, LONG count, ...);
@@ -292,6 +297,19 @@ void test_redim() {
     __vbaRedimVar(VT_R8, &holder, 1, 2, 0);
     expect(vbrun::last_error() == 13, "another element type is error 13");
     vbrun::clear_error();
+    VariantClear(&holder);
+    __vbaRedimVar2(VT_I4, &holder, 1, nullptr, 3, 0);
+    expect(holder.vt == (VT_ARRAY | VT_I4) && holder.parray != nullptr &&
+               holder.parray->rgsabound[0].cElements == 4,
+           "ReDim of a Variant with a record");
+    at = 2;
+    value = 5;
+    SafeArrayPutElement(holder.parray, &at, &value);
+    __vbaRedimPreserveVar2(VT_I4, &holder, 1, nullptr, 6, 0);
+    got = 0;
+    SafeArrayGetElement(holder.parray, &at, &got);
+    expect(holder.parray->rgsabound[0].cElements == 7 && got == 5,
+           "ReDim Preserve of a Variant with a record");
     VariantClear(&holder);
 }
 
