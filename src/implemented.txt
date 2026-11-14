@@ -476,3 +476,7 @@ __vbaRedimVar2
 __vbaRedimPreserveVar2
 __vbaNew
 __vbaNew2
+rtcSetDateVar
+rtcSetDateBstr
+rtcSetTimeVar
+rtcSetTimeBstr

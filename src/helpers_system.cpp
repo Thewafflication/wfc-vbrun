@@ -252,6 +252,74 @@ bool variant_text(const VARIANT* const value, std::wstring& text) {
 
 }  // namespace
 
+namespace {
+
+// Sets the local date and/or time; the part not given keeps its value. Setting
+// the clock needs the privilege for it: without it, error 70 (permission
+// denied).
+int set_clock(const SYSTEMTIME& wanted, const bool date, const bool time) {
+    SYSTEMTIME now = {};
+    GetLocalTime(&now);
+    if (date) {
+        now.wYear = wanted.wYear;
+        now.wMonth = wanted.wMonth;
+        now.wDay = wanted.wDay;
+    }
+    if (time) {
+        now.wHour = wanted.wHour;
+        now.wMinute = wanted.wMinute;
+        now.wSecond = wanted.wSecond;
+        now.wMilliseconds = 0;
+    }
+    HANDLE token = nullptr;
+    if (OpenProcessToken(GetCurrentProcess(),
+                         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0) {
+        return 70;
+    }
+    TOKEN_PRIVILEGES privileges = {};
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    if (LookupPrivilegeValueW(nullptr, L"SeSystemtimePrivilege",
+                              &privileges.Privileges[0].Luid) == 0) {
+        CloseHandle(token);
+        return 70;
+    }
+    AdjustTokenPrivileges(token, FALSE, &privileges, 0, nullptr, nullptr);
+    const bool adjusted = GetLastError() == ERROR_SUCCESS;
+    CloseHandle(token);
+    if (!adjusted || SetLocalTime(&now) == 0) {
+        return 70;
+    }
+    return 0;
+}
+
+// Date or Time of a text or a Date Variant as a clock reading; false after
+// raising error 13 (type mismatch) or 5.
+bool clock_of(const VARIANT* const value, SYSTEMTIME& reading) {
+    if (value == nullptr) {
+        static_cast<void>(vbrun::raise(5));
+        return false;
+    }
+    VARIANT plain;
+    VariantInit(&plain);
+    VARIANT date;
+    VariantInit(&date);
+    bool ok = false;
+    if (SUCCEEDED(VariantCopyInd(&plain, const_cast<VARIANT*>(value))) &&
+        (plain.vt == VT_BSTR || plain.vt == VT_DATE)) {
+        ok = SUCCEEDED(VariantChangeType(&date, &plain, 0, VT_DATE)) &&
+             VariantTimeToSystemTime(date.date, &reading) != 0;
+    }
+    VariantClear(&plain);
+    VariantClear(&date);
+    if (!ok) {
+        static_cast<void>(vbrun::raise(13));
+    }
+    return ok;
+}
+
+}  // namespace
+
 extern "C" {
 
 // Environ$(name or number).
@@ -577,6 +645,52 @@ BSTR WINAPI rtcInputBox(const VARIANT* const prompt, const VARIANT* const title,
         reinterpret_cast<const DLGTEMPLATE*>(data.data()), GetActiveWindow(),
         input_dialog_proc, reinterpret_cast<LPARAM>(&state));
     return SysAllocString(state.accepted ? state.text.c_str() : L"");
+}
+
+
+// Date = value and Time = value as statements: the clock of the computer.
+void WINAPI rtcSetDateVar(const VARIANT* const value) {
+    SYSTEMTIME reading = {};
+    if (clock_of(value, reading)) {
+        const int failure = set_clock(reading, true, false);
+        if (failure != 0) {
+            static_cast<void>(vbrun::raise(failure));
+        }
+    }
+}
+
+void WINAPI rtcSetDateBstr(const BSTR text) {
+    if (text == nullptr) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    VARIANT value;
+    VariantInit(&value);
+    value.vt = VT_BSTR;
+    value.bstrVal = text;
+    rtcSetDateVar(&value);
+}
+
+void WINAPI rtcSetTimeVar(const VARIANT* const value) {
+    SYSTEMTIME reading = {};
+    if (clock_of(value, reading)) {
+        const int failure = set_clock(reading, false, true);
+        if (failure != 0) {
+            static_cast<void>(vbrun::raise(failure));
+        }
+    }
+}
+
+void WINAPI rtcSetTimeBstr(const BSTR text) {
+    if (text == nullptr) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    VARIANT value;
+    VariantInit(&value);
+    value.vt = VT_BSTR;
+    value.bstrVal = text;
+    rtcSetTimeVar(&value);
 }
 
 }  // extern "C"

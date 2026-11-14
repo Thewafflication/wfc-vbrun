@@ -39,6 +39,10 @@ SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
+void WINAPI rtcSetDateVar(const VARIANT* value);
+void WINAPI rtcSetDateBstr(BSTR text);
+void WINAPI rtcSetTimeVar(const VARIANT* value);
+void WINAPI rtcSetTimeBstr(BSTR text);
 VARIANT* WINAPI rtcStrConvVar2(VARIANT* result, VARIANT* operand,
                                LONG conversion, LCID locale);
 SAFEARRAY* __cdecl __vbaRedim(ULONG features, LONG element_size,
@@ -473,6 +477,38 @@ void test_app_activate() {
 
 }  // namespace
 
+void test_clock() {
+    // Setting the clock to the reading it has is harmless; without the
+    // privilege it is error 70.
+    SYSTEMTIME now = {};
+    GetLocalTime(&now);
+    wchar_t text[64] = {};
+    std::swprintf(text, 64, L"%04d-%02d-%02d", now.wYear, now.wMonth,
+                  now.wDay);
+    BSTR date_text = SysAllocString(text);
+    vbrun::clear_error();
+    rtcSetDateBstr(date_text);
+    const int date_error = vbrun::last_error();
+    expect(date_error == 0 || date_error == 70, "Date = text");
+    SysFreeString(date_text);
+    VARIANT value;
+    VariantInit(&value);
+    value.vt = VT_I4;
+    value.lVal = 5;
+    vbrun::clear_error();
+    rtcSetTimeVar(&value);
+    expect(vbrun::last_error() == 13, "Time = number is error 13");
+    vbrun::clear_error();
+    rtcSetDateBstr(nullptr);
+    expect(vbrun::last_error() == 5, "Date = nothing is error 5");
+    vbrun::clear_error();
+    BSTR junk = SysAllocString(L"not a time");
+    rtcSetTimeBstr(junk);
+    expect(vbrun::last_error() == 13, "Time = junk is error 13");
+    vbrun::clear_error();
+    SysFreeString(junk);
+}
+
 int main() {
     test_state();
     test_strings();
@@ -483,6 +519,7 @@ int main() {
     test_shell();
     test_dialogs();
     test_app_activate();
+    test_clock();
     if (failures == 0) {
         std::puts("system more ok");
     }
