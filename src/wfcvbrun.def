@@ -371,11 +371,11 @@ EXPORTS
     __vbaVarForNext=vbrun_stub_465 @465
     __vbaVarIdiv @466
     __vbaVarImp @467
-    __vbaVarIndexLoad=vbrun_stub_468 @468
+    __vbaVarIndexLoad @468
     __vbaVarIndexLoadRef=vbrun_stub_469 @469
     __vbaVarIndexLoadRefLock=vbrun_stub_470 @470
-    __vbaVarIndexStore=vbrun_stub_471 @471
-    __vbaVarIndexStoreObj=vbrun_stub_472 @472
+    __vbaVarIndexStore @471
+    __vbaVarIndexStoreObj @472
     __vbaVarInt @473
     __vbaVarLike @474
     __vbaVarLikeVar @475

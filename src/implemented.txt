@@ -462,3 +462,6 @@ __vbaRedim
 __vbaRedimPreserve
 __vbaRedimVar
 __vbaRedimPreserveVar
+__vbaVarIndexLoad
+__vbaVarIndexStore
+__vbaVarIndexStoreObj

@@ -15,6 +15,10 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* result, const VARIANT* holder,
+                                   LONG count, ...);
+VARIANT* __cdecl __vbaVarIndexStore(VARIANT* holder, LONG count, ...);
+VARIANT* __cdecl __vbaVarIndexStoreObj(VARIANT* holder, LONG count, ...);
 VARIANT* __cdecl __vbaRedimVar(LONG type, VARIANT* holder, LONG dimensions,
                                ...);
 VARIANT* __cdecl __vbaRedimPreserveVar(LONG type, VARIANT* holder,

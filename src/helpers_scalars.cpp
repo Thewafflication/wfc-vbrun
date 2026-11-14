@@ -1739,6 +1739,179 @@ LONG WINAPI __vbaAptOffset(const LONG) {
     return 0;
 }
 
+// v(i, j, ...) on a Variant that holds an array: the subscripts are Variants
+// (rounded to Long); the wrong number of them or one outside the bounds is
+// error 9. The array of a by-reference Variant is the one it points to.
+static SAFEARRAY* indexed_array(const VARIANT* const holder,
+                                const LONG count) {
+    if (count <= 0) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    if ((holder->vt & VT_ARRAY) == 0) {
+        static_cast<void>(vbrun::raise(13));
+        return nullptr;
+    }
+    SAFEARRAY* const array = (holder->vt & VT_BYREF) != 0 ? *holder->pparray
+                                                         : holder->parray;
+    if (array == nullptr || array->cDims != count) {
+        static_cast<void>(vbrun::raise(9));
+        return nullptr;
+    }
+    return array;
+}
+
+static bool subscripts_of(const std::vector<VARIANT>& values,
+                          const std::size_t first, const LONG count,
+                          std::vector<LONG>& indices) {
+    for (LONG index = 0; index < count; ++index) {
+        VARIANT number;
+        VariantInit(&number);
+        const HRESULT status = VariantChangeType(
+            &number, const_cast<VARIANT*>(&values[first + index]), 0, VT_I4);
+        if (FAILED(status)) {
+            static_cast<void>(vbrun::raise_hresult(status));
+            return false;
+        }
+        indices.push_back(number.lVal);
+    }
+    return true;
+}
+
+static void take_values(va_list& list, const std::size_t n,
+                        std::vector<VARIANT>& values) {
+    for (std::size_t index = 0; index < n; ++index) {
+        values.push_back(va_arg(list, VARIANT));
+    }
+}
+
+VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* const result,
+                                   const VARIANT* const holder,
+                                   const LONG count, ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values;
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
+                values);
+    va_end(list);
+    VariantInit(result);
+    SAFEARRAY* const array = indexed_array(holder, count);
+    std::vector<LONG> indices;
+    if (array == nullptr || !subscripts_of(values, 0, count, indices)) {
+        return result;
+    }
+    VARTYPE type = VT_EMPTY;
+    SafeArrayGetVartype(array, &type);
+    if (type == VT_VARIANT) {
+        const HRESULT status = SafeArrayGetElement(array, indices.data(),
+                                                   result);
+        if (FAILED(status)) {
+            static_cast<void>(vbrun::raise(status == DISP_E_BADINDEX
+                                               ? 9
+                                               : vbrun::error_of_hresult(
+                                                     status)));
+        }
+        return result;
+    }
+    if (type == VT_EMPTY || type == VT_RECORD || type == VT_I1 ||
+        type == VT_ERROR) {
+        static_cast<void>(vbrun::raise(type == VT_ERROR ? 13 : 458));
+        return result;
+    }
+    if (type == VT_DECIMAL) {
+        DECIMAL number = {};
+        if (FAILED(SafeArrayGetElement(array, indices.data(), &number))) {
+            static_cast<void>(vbrun::raise(9));
+            return result;
+        }
+        result->decVal = number;
+        result->vt = VT_DECIMAL;
+        return result;
+    }
+    // The element goes in the union of the Variant, as its own type.
+    const HRESULT status = SafeArrayGetElement(array, indices.data(),
+                                               &result->lVal);
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise(status == DISP_E_BADINDEX ? 9 : 5));
+        return result;
+    }
+    result->vt = type;
+    return result;
+}
+
+// v(i, j, ...) = value (mode Let) or Set v(i, j, ...) = object: the value
+// comes before the subscripts.
+static VARIANT* store_element(VARIANT* const holder, const LONG count,
+                              va_list& list, const bool object) {
+    std::vector<VARIANT> values;
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) + 1U : 0U,
+                values);
+    SAFEARRAY* const array = indexed_array(holder, count);
+    std::vector<LONG> indices;
+    if (array == nullptr || !subscripts_of(values, 1, count, indices)) {
+        return holder;
+    }
+    VARTYPE type = VT_EMPTY;
+    SafeArrayGetVartype(array, &type);
+    const VARIANT& value = values[0];
+    HRESULT status = S_OK;
+    if (type == VT_VARIANT) {
+        status = SafeArrayPutElement(array, indices.data(),
+                                     const_cast<VARIANT*>(&value));
+    } else if (type == VT_DISPATCH || type == VT_UNKNOWN || object) {
+        const auto given = static_cast<VARTYPE>(value.vt & ~VT_BYREF);
+        if (given != VT_DISPATCH && given != VT_UNKNOWN) {
+            static_cast<void>(vbrun::raise(object ? 424 : 13));
+            return holder;
+        }
+        IUnknown* const element = (value.vt & VT_BYREF) != 0
+                                      ? *value.ppunkVal
+                                      : value.punkVal;
+        status = SafeArrayPutElement(array, indices.data(), element);
+    } else if (type == VT_BSTR) {
+        VARIANT text;
+        VariantInit(&text);
+        status = VariantChangeType(&text, const_cast<VARIANT*>(&value), 0,
+                                   VT_BSTR);
+        if (SUCCEEDED(status)) {
+            status = SafeArrayPutElement(array, indices.data(), text.bstrVal);
+            VariantClear(&text);
+        }
+    } else {
+        VARIANT converted;
+        VariantInit(&converted);
+        status = VariantChangeType(&converted, const_cast<VARIANT*>(&value), 0,
+                                   type);
+        if (SUCCEEDED(status)) {
+            status = SafeArrayPutElement(array, indices.data(),
+                                         &converted.lVal);
+        }
+    }
+    if (FAILED(status)) {
+        static_cast<void>(vbrun::raise(
+            status == DISP_E_BADINDEX ? 9 : vbrun::error_of_hresult(status)));
+    }
+    return holder;
+}
+
+VARIANT* __cdecl __vbaVarIndexStore(VARIANT* const holder, const LONG count,
+                                    ...) {
+    va_list list;
+    va_start(list, count);
+    store_element(holder, count, list, false);
+    va_end(list);
+    return holder;
+}
+
+VARIANT* __cdecl __vbaVarIndexStoreObj(VARIANT* const holder, const LONG count,
+                                       ...) {
+    va_list list;
+    va_start(list, count);
+    store_element(holder, count, list, true);
+    va_end(list);
+    return holder;
+}
+
 // Set v = <an object in a Variant>: the destination Variant takes the object
 // (SetVar: from a temporary, which is emptied; SetVarAddref: a new reference).
 // What is not an object is error 13.
