@@ -456,3 +456,4 @@ __vbaAryConstruct2
 __vbaVarSetVar
 __vbaVarSetVarAddref
 rtcShell
+rtcStrConvVar2

@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 
 #include "vbrun_helpers.hpp"
@@ -482,6 +483,57 @@ VARIANT* WINAPI rtcStrConvVar(VARIANT* const result, VARIANT* const operand,
         text = widened;
     }
     return give_text(result, text);
+}
+
+// StrConv with a locale: the conversion of rtcStrConvVar, and FromUnicode
+// (128), which turns the text into the bytes of the ANSI code page of the
+// locale. Unicode (64) and FromUnicode cannot be combined with each other or
+// with another conversion (error 5).
+VARIANT* WINAPI rtcStrConvVar2(VARIANT* const result, VARIANT* const operand,
+                               const LONG conversion, const LCID locale) {
+    VariantInit(result);
+    if ((conversion & ~0xC0) != 0 && (conversion & 0xC0) != 0) {
+        static_cast<void>(vbrun::raise(kInvalidArgument));
+        return result;
+    }
+    if ((conversion & 0xC0) == 0xC0) {
+        static_cast<void>(vbrun::raise(kInvalidArgument));
+        return result;
+    }
+    if ((conversion & 0x80) == 0) {
+        return rtcStrConvVar(result, operand, conversion);
+    }
+    if (is_null(operand)) {
+        return give_null(result);
+    }
+    std::wstring text;
+    if (!text_of(operand, text)) {
+        return result;
+    }
+    char page[8] = {};
+    if (GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE, page, 8) == 0) {
+        static_cast<void>(vbrun::raise(kInvalidArgument));
+        return result;
+    }
+    UINT code_page = static_cast<UINT>(std::atoi(page));
+    if (code_page == 0) {
+        code_page = CP_ACP;
+    }
+    const int size =
+        text.empty() ? 0
+                     : WideCharToMultiByte(code_page, 0, text.data(),
+                                           static_cast<int>(text.size()),
+                                           nullptr, 0, nullptr, nullptr);
+    std::string bytes(static_cast<std::size_t>(size), '\0');
+    if (size != 0) {
+        WideCharToMultiByte(code_page, 0, text.data(),
+                            static_cast<int>(text.size()), bytes.data(), size,
+                            nullptr, nullptr);
+    }
+    result->bstrVal =
+        SysAllocStringByteLen(bytes.data(), static_cast<UINT>(bytes.size()));
+    result->vt = VT_BSTR;
+    return result;
 }
 
 // Chr(code): a character of the ANSI code page.

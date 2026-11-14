@@ -8,12 +8,15 @@
 #include <oleauto.h>
 
 #include <cstdio>
+#include <cstring>
 #include <cwchar>
 #include <string>
 
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+VARIANT* WINAPI rtcStrConvVar2(VARIANT* result, VARIANT* operand,
+                               LONG conversion, LCID locale);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
