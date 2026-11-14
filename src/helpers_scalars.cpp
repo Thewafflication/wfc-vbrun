@@ -2155,6 +2155,138 @@ LONG WINAPI __vbaCyForNext(LONGLONG* const counter, const LONGLONG limit,
     return currency_loop_runs(*counter, limit, step);
 }
 
+// For counter = start To limit Step step on Variants. The three values are
+// brought to one type (by the table of Visual Basic: Integer, Long, Single,
+// Double, Currency, Date, Decimal or Byte; text counts as Double and Empty as
+// Integer); a Null is error 94 and anything else not numeric error 13. The
+// result is 1 when the loop body runs.
+static const unsigned char kForType[18][18] = {
+    {2, 1, 2, 3, 4, 5, 6, 7, 5, 10, 10, 2, 10, 10, 14, 10, 10, 17},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 1, 10, 10, 1, 10, 10, 1},
+    {2, 1, 2, 3, 4, 5, 6, 7, 5, 10, 10, 2, 10, 10, 14, 10, 10, 2},
+    {3, 1, 3, 3, 5, 5, 6, 7, 5, 10, 10, 3, 10, 10, 14, 10, 10, 3},
+    {4, 1, 4, 5, 4, 5, 6, 7, 5, 10, 10, 4, 10, 10, 14, 10, 10, 4},
+    {5, 1, 5, 5, 5, 5, 6, 7, 5, 10, 10, 5, 10, 10, 14, 10, 10, 5},
+    {6, 1, 6, 6, 6, 6, 6, 7, 6, 10, 10, 6, 10, 10, 14, 10, 10, 6},
+    {7, 1, 7, 7, 7, 7, 7, 7, 7, 10, 10, 7, 10, 10, 14, 10, 10, 7},
+    {5, 1, 5, 5, 5, 5, 6, 7, 5, 10, 10, 5, 10, 10, 14, 10, 10, 5},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {2, 1, 2, 3, 4, 5, 6, 7, 5, 10, 10, 2, 10, 10, 14, 10, 10, 2},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {14, 1, 14, 14, 14, 14, 14, 14, 14, 10, 10, 14, 10, 10, 14, 10, 10, 7},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+    {17, 1, 2, 3, 4, 5, 6, 7, 5, 10, 10, 2, 10, 10, 14, 10, 10, 17},
+};
+
+static VARTYPE plain_type(const VARIANT* const value) {
+    return static_cast<VARTYPE>(value->vt & ~VT_BYREF);
+}
+
+static VARTYPE for_type(const VARIANT* const start, const VARIANT* const limit,
+                        const VARIANT* const step) {
+    const VARTYPE vts[3] = {plain_type(start), plain_type(step),
+                            plain_type(limit)};
+    for (const VARTYPE vt : vts) {
+        if (vt > 0x11) {
+            static_cast<void>(vbrun::raise(13));
+            return VT_ERROR;
+        }
+    }
+    const VARTYPE type = static_cast<VARTYPE>(
+        kForType[kForType[vts[0]][vts[1]]][vts[2]]);
+    if (type == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return VT_ERROR;
+    }
+    if (type == 10) {
+        static_cast<void>(vbrun::raise(13));
+        return VT_ERROR;
+    }
+    return type;
+}
+
+static bool for_convert(VARIANT* const destination, const VARIANT* const source,
+                        const VARTYPE type) {
+    VARIANT plain;
+    VariantInit(&plain);
+    VariantCopyInd(&plain, const_cast<VARIANT*>(source));
+    VariantClear(destination);
+    const HRESULT hr = VariantChangeType(destination, &plain, 0, type);
+    VariantClear(&plain);
+    if (FAILED(hr)) {
+        static_cast<void>(vbrun::raise(hr == DISP_E_OVERFLOW ? 6 : 13));
+        return false;
+    }
+    return true;
+}
+
+// Whether the loop goes on: counter <= limit for a step of zero or more,
+// counter >= limit for a negative step.
+static LONG for_runs(const VARIANT* const counter, const VARIANT* const step,
+                     const VARIANT* const limit) {
+    VARIANT zero;
+    VariantInit(&zero);
+    VARIANT converted;
+    VariantInit(&converted);
+    zero.vt = VT_I2;
+    zero.iVal = 0;
+    bool negative = false;
+    if (SUCCEEDED(VariantChangeType(&converted, &zero, 0, step->vt))) {
+        negative = VarCmp(const_cast<VARIANT*>(step), &converted,
+                          LOCALE_USER_DEFAULT, 0) == VARCMP_LT;
+    }
+    VariantClear(&converted);
+    const HRESULT order = VarCmp(const_cast<VARIANT*>(counter),
+                                 const_cast<VARIANT*>(limit),
+                                 LOCALE_USER_DEFAULT, 0);
+    if (negative) {
+        return order == VARCMP_GT || order == VARCMP_EQ ? 1 : 0;
+    }
+    return order == VARCMP_LT || order == VARCMP_EQ ? 1 : 0;
+}
+
+LONG WINAPI __vbaVarForInit(VARIANT* const counter, VARIANT* const step,
+                            VARIANT* const limit, const VARIANT* const start,
+                            const VARIANT* const limit_in,
+                            const VARIANT* const step_in) {
+    const VARTYPE type = for_type(start, limit_in, step_in);
+    if (type == VT_ERROR) {
+        return 0;
+    }
+    if (!for_convert(counter, start, type) ||
+        !for_convert(step, step_in, type) ||
+        !for_convert(limit, limit_in, type)) {
+        return 0;
+    }
+    return for_runs(counter, step, limit);
+}
+
+LONG WINAPI __vbaVarForNext(VARIANT* const counter, VARIANT* const step,
+                            VARIANT* const limit) {
+    VARIANT sum;
+    VariantInit(&sum);
+    const HRESULT added = VarAdd(counter, step, &sum);
+    if (FAILED(added)) {
+        static_cast<void>(vbrun::raise(added == DISP_E_OVERFLOW ? 6 : 13));
+        return 0;
+    }
+    const VARTYPE type = counter->vt;
+    VARIANT back;
+    VariantInit(&back);
+    const HRESULT changed = VariantChangeType(&back, &sum, 0, type);
+    VariantClear(&sum);
+    if (FAILED(changed)) {
+        static_cast<void>(vbrun::raise(6));
+        return 0;
+    }
+    VariantClear(counter);
+    *counter = back;
+    return for_runs(counter, step, limit);
+}
+
 // The minuend comes first here (left - right), unlike the String helpers.
 LONGLONG WINAPI __vbaCySub(const LONGLONG left, const LONGLONG right) {
     CY a;

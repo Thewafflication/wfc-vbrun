@@ -480,3 +480,5 @@ rtcSetDateVar
 rtcSetDateBstr
 rtcSetTimeVar
 rtcSetTimeBstr
+__vbaVarForInit
+__vbaVarForNext

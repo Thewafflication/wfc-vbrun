@@ -39,6 +39,10 @@ SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
+LONG WINAPI __vbaVarForInit(VARIANT* counter, VARIANT* step, VARIANT* limit,
+                            const VARIANT* start, const VARIANT* limit_in,
+                            const VARIANT* step_in);
+LONG WINAPI __vbaVarForNext(VARIANT* counter, VARIANT* step, VARIANT* limit);
 void WINAPI rtcSetDateVar(const VARIANT* value);
 void WINAPI rtcSetDateBstr(BSTR text);
 void WINAPI rtcSetTimeVar(const VARIANT* value);
@@ -509,6 +513,104 @@ void test_clock() {
     SysFreeString(junk);
 }
 
+VARIANT number(const VARTYPE type, const double value) {
+    VARIANT result;
+    VariantInit(&result);
+    result.vt = type;
+    switch (type) {
+        case VT_I2:
+            result.iVal = static_cast<SHORT>(value);
+            break;
+        case VT_I4:
+            result.lVal = static_cast<LONG>(value);
+            break;
+        case VT_UI1:
+            result.bVal = static_cast<BYTE>(value);
+            break;
+        default:
+            result.dblVal = value;
+            break;
+    }
+    return result;
+}
+
+void test_variant_for() {
+    // For i = 1 To 3 (Integers): three turns, then the counter is 4.
+    VARIANT counter;
+    VARIANT step;
+    VARIANT limit;
+    VariantInit(&counter);
+    VariantInit(&step);
+    VariantInit(&limit);
+    VARIANT start = number(VT_I2, 1);
+    VARIANT end = number(VT_I2, 3);
+    VARIANT by = number(VT_I2, 1);
+    int turns = 0;
+    LONG go = __vbaVarForInit(&counter, &step, &limit, &start, &end, &by);
+    while (go != 0 && turns < 10) {
+        ++turns;
+        go = __vbaVarForNext(&counter, &step, &limit);
+    }
+    expect(turns == 3 && counter.vt == VT_I2 && counter.iVal == 4,
+           "Variant For of Integers");
+    // Mixed types go to the widest: Integer start, Double step.
+    VARIANT half = number(VT_R8, 0.5);
+    turns = 0;
+    go = __vbaVarForInit(&counter, &step, &limit, &start, &end, &half);
+    while (go != 0 && turns < 20) {
+        ++turns;
+        go = __vbaVarForNext(&counter, &step, &limit);
+    }
+    expect(turns == 5 && counter.vt == VT_R8, "Variant For with a Double");
+    // A negative step counts down: 3 To 1 Step -1.
+    VARIANT down = number(VT_I2, -1);
+    turns = 0;
+    go = __vbaVarForInit(&counter, &step, &limit, &end, &start, &down);
+    while (go != 0 && turns < 10) {
+        ++turns;
+        go = __vbaVarForNext(&counter, &step, &limit);
+    }
+    expect(turns == 3 && counter.iVal == 0, "Variant For counting down");
+    // A loop that does not run.
+    go = __vbaVarForInit(&counter, &step, &limit, &end, &start, &by);
+    expect(go == 0, "Variant For that does not run");
+    // A Byte counter past 255 is an overflow (error 6).
+    VARIANT byte_start = number(VT_UI1, 254);
+    VARIANT byte_end = number(VT_UI1, 255);
+    VARIANT byte_by = number(VT_UI1, 1);
+    vbrun::clear_error();
+    go = __vbaVarForInit(&counter, &step, &limit, &byte_start, &byte_end,
+                         &byte_by);
+    expect(counter.vt == VT_UI1 && go != 0, "Variant For of Bytes");
+    go = __vbaVarForNext(&counter, &step, &limit);
+    expect(go != 0 && counter.bVal == 255, "Byte at the limit");
+    go = __vbaVarForNext(&counter, &step, &limit);
+    expect(go == 0 && vbrun::last_error() == 6, "Byte overflow is error 6");
+    vbrun::clear_error();
+    // Null is error 94; text that is not a number is error 13.
+    VARIANT null_value;
+    VariantInit(&null_value);
+    null_value.vt = VT_NULL;
+    __vbaVarForInit(&counter, &step, &limit, &null_value, &end, &by);
+    expect(vbrun::last_error() == 94, "Variant For of Null is error 94");
+    vbrun::clear_error();
+    VARIANT word = text(L"abc");
+    __vbaVarForInit(&counter, &step, &limit, &word, &end, &by);
+    expect(vbrun::last_error() == 13, "Variant For of text is error 13");
+    vbrun::clear_error();
+    VariantClear(&word);
+    VARIANT digits = text(L"2");
+    turns = 0;
+    go = __vbaVarForInit(&counter, &step, &limit, &digits, &end, &by);
+    while (go != 0 && turns < 10) {
+        ++turns;
+        go = __vbaVarForNext(&counter, &step, &limit);
+    }
+    expect(turns == 2 && counter.vt == VT_R8, "Variant For of text");
+    VariantClear(&digits);
+    VariantClear(&counter);
+}
+
 int main() {
     test_state();
     test_strings();
@@ -519,6 +621,7 @@ int main() {
     test_shell();
     test_dialogs();
     test_app_activate();
+    test_variant_for();
     test_clock();
     if (failures == 0) {
         std::puts("system more ok");
