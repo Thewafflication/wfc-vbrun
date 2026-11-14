@@ -290,9 +290,9 @@ EXPORTS
     __vbaRecUniToAnsi=vbrun_stub_384 @384
     __vbaRedim @385
     __vbaRedimPreserve @386
-    __vbaRedimPreserveVar=vbrun_stub_387 @387
+    __vbaRedimPreserveVar @387
     __vbaRedimPreserveVar2=vbrun_stub_388 @388
-    __vbaRedimVar=vbrun_stub_389 @389
+    __vbaRedimVar @389
     __vbaRefVarAry @390
     __vbaResume=vbrun_stub_391 @391
     __vbaRsetFixstr=vbrun_stub_392 @392

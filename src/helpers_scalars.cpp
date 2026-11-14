@@ -1207,16 +1207,10 @@ void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
 // the order of the dimensions). Redimensioning an array that exists frees its
 // data (error 10 for a fixed-size or locked one); a bound with the upper below
 // the lower is error 9.
-SAFEARRAY* __cdecl __vbaRedim(const ULONG features, const LONG element_size,
-                              SAFEARRAY** const slot, const void* const info,
-                              const LONG dimensions, ...) {
-    va_list list;
-    va_start(list, dimensions);
-    std::vector<LONG> bounds;
-    for (LONG index = 0; index < dimensions * 2; ++index) {
-        bounds.push_back(va_arg(list, LONG));
-    }
-    va_end(list);
+static SAFEARRAY* redim_core(const ULONG features, const LONG element_size,
+                             SAFEARRAY** const slot, const void* const info,
+                             const LONG dimensions,
+                             const std::vector<LONG>& bounds) {
     if (dimensions <= 0) {
         static_cast<void>(vbrun::raise(9));
         return *slot;
@@ -1285,21 +1279,8 @@ SAFEARRAY* __cdecl __vbaRedim(const ULONG features, const LONG element_size,
 
 // ReDim Preserve: the first dimension (the last one of the declaration) may
 // change its upper bound; the others keep their bounds. The data stays.
-SAFEARRAY* __cdecl __vbaRedimPreserve(const ULONG features,
-                                      const LONG element_size,
-                                      SAFEARRAY** const slot,
-                                      const void* const info,
-                                      const LONG dimensions, ...) {
-    static_cast<void>(features);
-    static_cast<void>(element_size);
-    static_cast<void>(info);
-    va_list list;
-    va_start(list, dimensions);
-    std::vector<LONG> bounds;
-    for (LONG index = 0; index < dimensions * 2; ++index) {
-        bounds.push_back(va_arg(list, LONG));
-    }
-    va_end(list);
+static SAFEARRAY* preserve_core(SAFEARRAY** const slot, const LONG dimensions,
+                                const std::vector<LONG>& bounds) {
     SAFEARRAY* const array = *slot;
     if (array == nullptr || dimensions <= 0 || array->cDims != dimensions) {
         static_cast<void>(vbrun::raise(9));
@@ -1332,6 +1313,99 @@ SAFEARRAY* __cdecl __vbaRedimPreserve(const ULONG features,
         static_cast<void>(vbrun::raise_hresult(status));
     }
     return array;
+}
+
+static void take_bounds(va_list& list, const LONG dimensions,
+                        std::vector<LONG>& bounds) {
+    for (LONG index = 0; index < dimensions * 2; ++index) {
+        bounds.push_back(va_arg(list, LONG));
+    }
+}
+
+SAFEARRAY* __cdecl __vbaRedim(const ULONG features, const LONG element_size,
+                              SAFEARRAY** const slot, const void* const info,
+                              const LONG dimensions, ...) {
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return redim_core(features, element_size, slot, info, dimensions, bounds);
+}
+
+SAFEARRAY* __cdecl __vbaRedimPreserve(const ULONG features,
+                                      const LONG element_size,
+                                      SAFEARRAY** const slot,
+                                      const void* const info,
+                                      const LONG dimensions, ...) {
+    static_cast<void>(features);
+    static_cast<void>(element_size);
+    static_cast<void>(info);
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return preserve_core(slot, dimensions, bounds);
+}
+
+// ReDim of a Variant that holds an array of the type `type`.
+static VARIANT* redim_variant(const bool preserve, const LONG type,
+                              VARIANT* const holder, const LONG dimensions,
+                              const std::vector<LONG>& bounds) {
+    SAFEARRAY** slot = &holder->parray;
+    if ((holder->vt & VT_BYREF) != 0) {
+        slot = holder->pparray;
+    }
+    const auto wanted = static_cast<VARTYPE>(type | VT_ARRAY);
+    const auto have = static_cast<VARTYPE>(holder->vt & ~VT_BYREF);
+    const bool empty = holder->vt == VT_EMPTY;
+    if (!empty && have != wanted) {
+        static_cast<void>(vbrun::raise(13));
+        return holder;
+    }
+    if (empty) {
+        *slot = nullptr;
+    }
+    SAFEARRAY* sample = SafeArrayCreateVector(static_cast<VARTYPE>(type), 0, 1);
+    if (sample == nullptr) {
+        static_cast<void>(vbrun::raise(7));
+        return holder;
+    }
+    const ULONG features = sample->fFeatures;
+    const LONG size = static_cast<LONG>(sample->cbElements);
+    SafeArrayDestroy(sample);
+    if (preserve) {
+        preserve_core(slot, dimensions, bounds);
+    } else {
+        redim_core(features, size, slot, reinterpret_cast<const void*>(
+                                             static_cast<std::uintptr_t>(type)),
+                   dimensions, bounds);
+    }
+    if (*slot != nullptr) {
+        holder->vt = static_cast<VARTYPE>(wanted | (holder->vt & VT_BYREF));
+    }
+    return holder;
+}
+
+VARIANT* __cdecl __vbaRedimVar(const LONG type, VARIANT* const holder,
+                               const LONG dimensions, ...) {
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return redim_variant(false, type, holder, dimensions, bounds);
+}
+
+VARIANT* __cdecl __vbaRedimPreserveVar(const LONG type, VARIANT* const holder,
+                                       const LONG dimensions, ...) {
+    va_list list;
+    va_start(list, dimensions);
+    std::vector<LONG> bounds;
+    take_bounds(list, dimensions, bounds);
+    va_end(list);
+    return redim_variant(true, type, holder, dimensions, bounds);
 }
 
 // The core of Erase: frees the data of the array (elements included) and,

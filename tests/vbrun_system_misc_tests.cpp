@@ -15,6 +15,10 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+VARIANT* __cdecl __vbaRedimVar(LONG type, VARIANT* holder, LONG dimensions,
+                               ...);
+VARIANT* __cdecl __vbaRedimPreserveVar(LONG type, VARIANT* holder,
+                                       LONG dimensions, ...);
 SAFEARRAY* __cdecl __vbaRedim(ULONG features, LONG element_size,
                               SAFEARRAY** slot, const void* info,
                               LONG dimensions, ...);

@@ -460,3 +460,5 @@ rtcStrConvVar2
 rtcSetCurrentCalendar
 __vbaRedim
 __vbaRedimPreserve
+__vbaRedimVar
+__vbaRedimPreserveVar
