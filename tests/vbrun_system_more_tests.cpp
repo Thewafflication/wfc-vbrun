@@ -39,6 +39,12 @@ SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
 VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 double WINAPI rtcShell(const VARIANT* command, LONG style);
+VARIANT* __cdecl __vbaVarIndexLoadRef(VARIANT* result, const VARIANT* holder,
+                                      LONG count, ...);
+VARIANT* __cdecl __vbaVarIndexLoadRefLock(VARIANT* result,
+                                          const VARIANT* holder,
+                                          SAFEARRAY** locked, LONG count,
+                                          ...);
 LONG WINAPI __vbaVarForInit(VARIANT* counter, VARIANT* step, VARIANT* limit,
                             const VARIANT* start, const VARIANT* limit_in,
                             const VARIANT* step_in);
@@ -534,6 +540,54 @@ VARIANT number(const VARTYPE type, const double value) {
     return result;
 }
 
+void test_index_reference() {
+    // v(1) of an array of Long as a reference: the element itself.
+    SAFEARRAYBOUND bound = {3, 0};
+    SAFEARRAY* array = SafeArrayCreate(VT_I4, 1, &bound);
+    LONG at = 1;
+    LONG value = 77;
+    SafeArrayPutElement(array, &at, &value);
+    VARIANT holder;
+    VariantInit(&holder);
+    holder.vt = VT_ARRAY | VT_I4;
+    holder.parray = array;
+    VARIANT subscript = number(VT_I4, 1);
+    VARIANT result;
+    VariantInit(&result);
+    VARIANT* got = __vbaVarIndexLoadRef(&result, &holder, 1, subscript);
+    expect(got == &result && result.vt == (VT_BYREF | VT_I4) &&
+               *result.plVal == 77,
+           "element as a reference");
+    *result.plVal = 5;
+    LONG read = 0;
+    SafeArrayGetElement(array, &at, &read);
+    expect(read == 5, "the reference writes the element");
+    // The Lock form locks the array.
+    SAFEARRAY* locked = nullptr;
+    VariantInit(&result);
+    __vbaVarIndexLoadRefLock(&result, &holder, &locked, 1, subscript);
+    expect(locked == array && array->cLocks == 1, "reference with a lock");
+    SafeArrayUnlock(array);
+    // An array of Variants gives the Variant element itself.
+    SAFEARRAY* variants = SafeArrayCreate(VT_VARIANT, 1, &bound);
+    VARIANT element = number(VT_I4, 9);
+    SafeArrayPutElement(variants, &at, &element);
+    holder.parray = variants;
+    holder.vt = VT_ARRAY | VT_VARIANT;
+    VariantInit(&result);
+    got = __vbaVarIndexLoadRef(&result, &holder, 1, subscript);
+    expect(got != &result && got->vt == VT_I4 && got->lVal == 9,
+           "Variant element as a reference");
+    // A subscript out of range is error 9.
+    VARIANT far_away = number(VT_I4, 40);
+    vbrun::clear_error();
+    __vbaVarIndexLoadRef(&result, &holder, 1, far_away);
+    expect(vbrun::last_error() == 9, "reference out of range is error 9");
+    vbrun::clear_error();
+    SafeArrayDestroy(variants);
+    SafeArrayDestroy(array);
+}
+
 void test_variant_for() {
     // For i = 1 To 3 (Integers): three turns, then the counter is 4.
     VARIANT counter;
@@ -622,6 +676,7 @@ int main() {
     test_dialogs();
     test_app_activate();
     test_variant_for();
+    test_index_reference();
     test_clock();
     if (failures == 0) {
         std::puts("system more ok");

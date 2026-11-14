@@ -1766,7 +1766,7 @@ BSTR WINAPI __vbaStrFixstr(const LONG length, const wchar_t* const text) {
 static wchar_t* fixed_target(LONG& length, const VARIANT*& holder,
                              wchar_t* target) {
     if (length == 0xFFFF) {
-        if ((holder->vt & VT_BYREF) == 0 || holder->vt != (VT_BYREF | VT_BSTR)) {
+        if (holder->vt != (VT_BYREF | VT_BSTR)) {
             static_cast<void>(vbrun::raise(13));
             return nullptr;
         }
@@ -1812,8 +1812,9 @@ wchar_t* WINAPI __vbaLsetFixstr(const LONG length, wchar_t* const target,
 
 wchar_t* WINAPI __vbaLsetFixstrFree(const LONG length, wchar_t* const target,
                                     const BSTR source) {
-    wchar_t* const result = lset_core(
-        length, reinterpret_cast<const VARIANT*>(target), target, source, false);
+    wchar_t* const result =
+        lset_core(length, reinterpret_cast<const VARIANT*>(target), target,
+                  source, false);
     SysFreeString(source);
     return result;
 }
@@ -1826,8 +1827,9 @@ wchar_t* WINAPI __vbaRsetFixstr(const LONG length, wchar_t* const target,
 
 wchar_t* WINAPI __vbaRsetFixstrFree(const LONG length, wchar_t* const target,
                                     const BSTR source) {
-    wchar_t* const result = lset_core(
-        length, reinterpret_cast<const VARIANT*>(target), target, source, true);
+    wchar_t* const result =
+        lset_core(length, reinterpret_cast<const VARIANT*>(target), target,
+                  source, true);
     SysFreeString(source);
     return result;
 }
@@ -1935,6 +1937,74 @@ VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* const result,
     }
     result->vt = type;
     return result;
+}
+
+// v(i, j, ...) as a reference (an argument passed by reference): a Variant
+// that points at the element, or the element itself when it is a Variant. The
+// Lock form also locks the array and hands it back through `locked`.
+static VARIANT* index_reference(VARIANT* const result,
+                                const VARIANT* const holder, const LONG count,
+                                std::vector<VARIANT>& values,
+                                SAFEARRAY** const locked) {
+    SAFEARRAY* const array = indexed_array(holder, count);
+    std::vector<LONG> indices;
+    if (array == nullptr || !subscripts_of(values, 0, count, indices)) {
+        return result;
+    }
+    VARTYPE type = VT_EMPTY;
+    SafeArrayGetVartype(array, &type);
+    if (type == VT_EMPTY || type == VT_RECORD || type == VT_I1 ||
+        type == VT_ERROR) {
+        static_cast<void>(vbrun::raise(type == VT_ERROR ? 13 : 458));
+        return result;
+    }
+    void* element = nullptr;
+    if (FAILED(SafeArrayPtrOfIndex(array, indices.data(), &element)) ||
+        element == nullptr) {
+        static_cast<void>(vbrun::raise(9));
+        return result;
+    }
+    if (locked != nullptr) {
+        SafeArrayLock(array);
+        *locked = array;
+    }
+    if (type == VT_VARIANT) {
+        return static_cast<VARIANT*>(element);
+    }
+    result->vt = static_cast<VARTYPE>(type | VT_BYREF);
+    result->pvarVal = static_cast<VARIANT*>(element);
+    return result;
+}
+
+VARIANT* __cdecl __vbaVarIndexLoadRef(VARIANT* const result,
+                                      const VARIANT* const holder,
+                                      const LONG count, ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values;
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
+                values);
+    va_end(list);
+    if (result->vt != VT_EMPTY) {
+        VariantClear(result);
+    }
+    return index_reference(result, holder, count, values, nullptr);
+}
+
+VARIANT* __cdecl __vbaVarIndexLoadRefLock(VARIANT* const result,
+                                          const VARIANT* const holder,
+                                          SAFEARRAY** const locked,
+                                          const LONG count, ...) {
+    va_list list;
+    va_start(list, count);
+    std::vector<VARIANT> values;
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
+                values);
+    va_end(list);
+    if (result->vt != VT_EMPTY) {
+        VariantClear(result);
+    }
+    return index_reference(result, holder, count, values, locked);
 }
 
 // v(i, j, ...) = value (mode Let) or Set v(i, j, ...) = object: the value
@@ -2077,8 +2147,8 @@ LONG WINAPI rtcMacId(const BSTR text) {
                         4, nullptr, nullptr);
     ULONG result = 0;
     for (const char character : characters) {
-        result = (result << 8) |
-                 static_cast<unsigned char>(character == '\0' ? ' ' : character);
+        const char used = character == '\0' ? ' ' : character;
+        result = (result << 8) | static_cast<unsigned char>(used);
     }
     return static_cast<LONG>(result);
 }

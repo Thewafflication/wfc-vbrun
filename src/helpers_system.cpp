@@ -90,7 +90,8 @@ BOOL CALLBACK match_window(HWND window, LPARAM parameter) {
     if (search->by_process) {
         DWORD owner = 0;
         GetWindowThreadProcessId(window, &owner);
-        if (owner == search->process && GetWindow(window, GW_OWNER) == nullptr) {
+        if (owner == search->process &&
+            GetWindow(window, GW_OWNER) == nullptr) {
             search->found = window;
             return FALSE;
         }

@@ -482,3 +482,5 @@ rtcSetTimeVar
 rtcSetTimeBstr
 __vbaVarForInit
 __vbaVarForNext
+__vbaVarIndexLoadRef
+__vbaVarIndexLoadRefLock
