@@ -499,7 +499,7 @@ EXPORTS
     rtcRandomNext @593
     rtcRandomize @594
     rtcMsgBox @595
-    rtcInputBox=vbrun_stub_596 @596
+    rtcInputBox @596
     rtcAppActivate @597
     rtcDoEvents @598
     rtcSendKeys=vbrun_stub_599 @599

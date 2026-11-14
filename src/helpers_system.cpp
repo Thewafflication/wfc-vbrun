@@ -117,6 +117,141 @@ BOOL CALLBACK match_window(HWND window, LPARAM parameter) {
 
 }  // namespace
 
+namespace {
+
+// What the InputBox dialog shows and gives back.
+struct InputDialog {
+    std::wstring prompt;
+    std::wstring caption;
+    std::wstring text;
+    bool accepted = false;
+};
+
+constexpr int kPromptId = 100;
+constexpr int kEditId = 101;
+
+INT_PTR CALLBACK input_dialog_proc(HWND dialog, UINT message, WPARAM wparam,
+                                   LPARAM lparam) {
+    auto* const state = reinterpret_cast<InputDialog*>(
+        GetWindowLongPtrW(dialog, GWLP_USERDATA));
+    switch (message) {
+        case WM_INITDIALOG: {
+            SetWindowLongPtrW(dialog, GWLP_USERDATA, lparam);
+            auto* const initial = reinterpret_cast<InputDialog*>(lparam);
+            SetWindowTextW(dialog, initial->caption.c_str());
+            SetDlgItemTextW(dialog, kPromptId, initial->prompt.c_str());
+            SetDlgItemTextW(dialog, kEditId, initial->text.c_str());
+            SendDlgItemMessageW(dialog, kEditId, EM_SETSEL, 0, -1);
+            SetFocus(GetDlgItem(dialog, kEditId));
+            return FALSE;
+        }
+        case WM_COMMAND:
+            if (LOWORD(wparam) == IDOK && state != nullptr) {
+                wchar_t buffer[4096] = {};
+                GetDlgItemTextW(dialog, kEditId, buffer, 4095);
+                state->text = buffer;
+                state->accepted = true;
+                EndDialog(dialog, IDOK);
+                return TRUE;
+            }
+            if (LOWORD(wparam) == IDCANCEL) {
+                EndDialog(dialog, IDCANCEL);
+                return TRUE;
+            }
+            return FALSE;
+        case WM_CLOSE:
+            EndDialog(dialog, IDCANCEL);
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
+void add_word(std::vector<WORD>& data, const WORD value) {
+    data.push_back(value);
+}
+
+void add_text(std::vector<WORD>& data, const wchar_t* const text) {
+    for (const wchar_t* at = text; *at != L'\0'; ++at) {
+        data.push_back(static_cast<WORD>(*at));
+    }
+    data.push_back(0);
+}
+
+void align_dword(std::vector<WORD>& data) {
+    if ((data.size() & 1U) != 0) {
+        data.push_back(0);
+    }
+}
+
+void add_item(std::vector<WORD>& data, const DWORD style, const short x,
+              const short y, const short width, const short height,
+              const WORD id, const WORD class_atom) {
+    align_dword(data);
+    add_word(data, static_cast<WORD>(style & 0xFFFFU));
+    add_word(data, static_cast<WORD>(style >> 16U));
+    add_word(data, 0);
+    add_word(data, 0);
+    add_word(data, static_cast<WORD>(x));
+    add_word(data, static_cast<WORD>(y));
+    add_word(data, static_cast<WORD>(width));
+    add_word(data, static_cast<WORD>(height));
+    add_word(data, id);
+    add_word(data, 0xFFFF);
+    add_word(data, class_atom);
+    add_word(data, 0);  // no initial text
+    add_word(data, 0);  // no creation data
+}
+
+// The dialog template: a prompt, an edit box, OK and Cancel.
+std::vector<WORD> input_template() {
+    std::vector<WORD> data;
+    const DWORD style = WS_POPUP | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME |
+                        DS_CENTER | DS_SETFONT;
+    add_word(data, static_cast<WORD>(style & 0xFFFFU));
+    add_word(data, static_cast<WORD>(style >> 16U));
+    add_word(data, 0);
+    add_word(data, 0);
+    add_word(data, 4);  // items
+    add_word(data, 0);
+    add_word(data, 0);
+    add_word(data, 260);
+    add_word(data, 96);
+    add_word(data, 0);  // no menu
+    add_word(data, 0);  // default class
+    add_word(data, 0);  // title set at run time
+    add_word(data, 8);  // font size
+    add_text(data, L"MS Shell Dlg");
+    add_item(data, WS_CHILD | WS_VISIBLE | SS_LEFT, 8, 8, 190, 48,
+             kPromptId, 0x0082);
+    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
+             206, 8, 46, 14, IDOK, 0x0080);
+    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 206,
+             26, 46, 14, IDCANCEL, 0x0080);
+    add_item(data,
+             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL,
+             8, 72, 244, 14, kEditId, 0x0081);
+    return data;
+}
+
+bool variant_text(const VARIANT* const value, std::wstring& text) {
+    if (value == nullptr || value->vt == VT_ERROR || value->vt == VT_EMPTY) {
+        return false;
+    }
+    VARIANT converted;
+    VariantInit(&converted);
+    if (FAILED(VariantChangeType(&converted, const_cast<VARIANT*>(value), 0,
+                                 VT_BSTR))) {
+        return false;
+    }
+    text.assign(converted.bstrVal == nullptr ? L"" : converted.bstrVal,
+                SysStringLen(converted.bstrVal));
+    VariantClear(&converted);
+    return true;
+}
+
+}  // namespace
+
 extern "C" {
 
 // Environ$(name or number).
@@ -403,6 +538,45 @@ void WINAPI rtcAppActivate(const VARIANT* const title,
         ShowWindow(search.found, SW_RESTORE);
     }
     SetForegroundWindow(search.found);
+}
+
+// InputBox(prompt, title, default, x, y, helpfile, context): the dialog and
+// the text typed; an empty string when the dialog is cancelled. A Null prompt
+// is error 94.
+BSTR WINAPI rtcInputBox(const VARIANT* const prompt, const VARIANT* const title,
+                        const VARIANT* const initial, const VARIANT* const x,
+                        const VARIANT* const y, const VARIANT* const help_file,
+                        const VARIANT* const context) {
+    static_cast<void>(x);
+    static_cast<void>(y);
+    static_cast<void>(help_file);
+    static_cast<void>(context);
+    if (prompt != nullptr && prompt->vt == VT_NULL) {
+        static_cast<void>(vbrun::raise(94));
+        return nullptr;
+    }
+    InputDialog state;
+    variant_text(prompt, state.prompt);
+    if (!variant_text(title, state.caption)) {
+        wchar_t path[MAX_PATH] = {};
+        GetModuleFileNameW(nullptr, path, MAX_PATH);
+        state.caption = path;
+        const auto slash = state.caption.find_last_of(L"\\/");
+        if (slash != std::wstring::npos) {
+            state.caption.erase(0, slash + 1);
+        }
+        const auto dot = state.caption.find_last_of(L'.');
+        if (dot != std::wstring::npos) {
+            state.caption.erase(dot);
+        }
+    }
+    variant_text(initial, state.text);
+    const std::vector<WORD> data = input_template();
+    DialogBoxIndirectParamW(
+        GetModuleHandleW(nullptr),
+        reinterpret_cast<const DLGTEMPLATE*>(data.data()), GetActiveWindow(),
+        input_dialog_proc, reinterpret_cast<LPARAM>(&state));
+    return SysAllocString(state.accepted ? state.text.c_str() : L"");
 }
 
 }  // extern "C"

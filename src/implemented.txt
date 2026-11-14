@@ -467,3 +467,4 @@ __vbaVarIndexStore
 __vbaVarIndexStoreObj
 rtcMsgBox
 rtcAppActivate
+rtcInputBox

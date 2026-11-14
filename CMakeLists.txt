@@ -255,6 +255,26 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_foreach_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_foreach_tests)
     add_test(NAME TC-MP0009-vbrun-foreach COMMAND vbrun_foreach_tests)
+    # The smaller exports: state, strings, arrays, loops, Shell and dialogs.
+    add_executable(
+      vbrun_system_more_tests
+      tests/vbrun_system_more_tests.cpp
+      src/helpers_scalars.cpp
+      src/helpers_system.cpp
+      src/helpers_varstrings.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(
+      vbrun_system_more_tests
+      PRIVATE oleaut32 user32 advapi32
+    )
+    wfc_vbrun_harden(vbrun_system_more_tests)
+    add_test(NAME TC-MP0009-vbrun-systemmore COMMAND vbrun_system_more_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-systemmore
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
     # CreateObject and GetObject.
     add_executable(
       vbrun_objects_tests
