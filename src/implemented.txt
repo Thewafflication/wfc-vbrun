@@ -457,3 +457,4 @@ __vbaVarSetVar
 __vbaVarSetVarAddref
 rtcShell
 rtcStrConvVar2
+rtcSetCurrentCalendar

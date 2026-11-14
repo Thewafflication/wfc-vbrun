@@ -15,6 +15,8 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+void WINAPI rtcSetCurrentCalendar(LONG calendar);
+SHORT WINAPI rtcGetCurrentCalendar();
 VARIANT* WINAPI rtcStrConvVar2(VARIANT* result, VARIANT* operand,
                                LONG conversion, LCID locale);
 double WINAPI rtcShell(const VARIANT* command, LONG style);

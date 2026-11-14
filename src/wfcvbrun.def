@@ -602,7 +602,7 @@ EXPORTS
     rtcCharValueBstr @696
     rtcBstrFromChar @697
     rtcVarBstrFromChar @698
-    rtcSetCurrentCalendar=vbrun_stub_699 @699
+    rtcSetCurrentCalendar @699
     rtcGetCurrentCalendar @700
     _adj_fdiv_m32i=vbrun_stub_701 @701
     rtcFormatNumber @702

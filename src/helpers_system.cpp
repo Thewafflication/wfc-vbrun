@@ -117,9 +117,21 @@ LONG WINAPI rtcGetHostLCID() {
     return static_cast<LONG>(GetUserDefaultLCID());
 }
 
-// The calendar: 0 for the Gregorian one.
+// The calendar: 0 for the Gregorian one, 1 for the Hijri one. The date
+// functions of this library work in the Gregorian calendar whichever is set.
+static SHORT g_calendar = 0;
+
 SHORT WINAPI rtcGetCurrentCalendar() {
-    return 0;
+    return g_calendar;
+}
+
+// Calendar = 0 or 1 (error 5 for any other value).
+void WINAPI rtcSetCurrentCalendar(const LONG calendar) {
+    if (calendar < 0 || calendar > 1) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    g_calendar = static_cast<SHORT>(calendar);
 }
 
 // A String of one character from an ANSI code (0 to 255), and its Variant
