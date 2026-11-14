@@ -15,6 +15,8 @@ VARIANT* WINAPI rtcCreateObject2(VARIANT* result, BSTR class_name,
                                  BSTR server);
 VARIANT* WINAPI rtcGetObject(VARIANT* result, const VARIANT* path,
                              const VARIANT* class_name);
+IUnknown* WINAPI __vbaNew(const void* info);
+void WINAPI __vbaNew2(const void* info, void** object);
 }
 
 namespace {
@@ -35,6 +37,38 @@ int main() {
     VARIANT result;
     VariantInit(&result);
 
+    {
+        struct Info {
+            DWORD flags;
+            const CLSID* clsid;
+            const IID* iid;
+        };
+        const CLSID std_font = {0x0BE35203,
+                                0x8F91,
+                                0x11CE,
+                                {0x9D, 0xE3, 0x00, 0xAA, 0x00, 0x4B, 0xB8,
+                                 0x51}};
+        const Info font = {0, &std_font, nullptr};
+        IUnknown* made = __vbaNew(&font);
+        expect(made != nullptr, "New of a class");
+        if (made != nullptr) {
+            made->Release();
+        }
+        void* stored = nullptr;
+        __vbaNew2(&font, &stored);
+        expect(stored != nullptr, "New of a class into a variable");
+        if (stored != nullptr) {
+            static_cast<IUnknown*>(stored)->Release();
+        }
+        const CLSID nothing = {};
+        const Info missing = {0, &nothing, nullptr};
+        vbrun::clear_error();
+        stored = &stored;
+        __vbaNew2(&missing, &stored);
+        expect(stored == nullptr && vbrun::last_error() == 429,
+               "New of a missing class is error 429");
+        vbrun::clear_error();
+    }
     BSTR none = SysAllocString(L"No.Such.Class.Wfc");
     rtcCreateObject2(&result, none, nullptr);
     expect(result.vt == VT_EMPTY && vbrun::last_error() == 429,

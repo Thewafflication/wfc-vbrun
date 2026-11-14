@@ -474,3 +474,5 @@ __vbaRsetFixstr
 __vbaRsetFixstrFree
 __vbaRedimVar2
 __vbaRedimPreserveVar2
+__vbaNew
+__vbaNew2

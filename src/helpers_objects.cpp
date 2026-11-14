@@ -67,6 +67,33 @@ IUnknown* bind_name(const BSTR name) {
     return SUCCEEDED(bound) ? object : nullptr;
 }
 
+
+// What `New` of a class is given: a flags word, then the class and the
+// interface to ask for (null means IUnknown).
+struct ClassInfo {
+    DWORD flags;
+    const CLSID* clsid;
+    const IID* iid;
+};
+
+// The new object of a class; failure is error 429.
+IUnknown* create_from(const ClassInfo* const info) {
+    if (info == nullptr || info->clsid == nullptr) {
+        static_cast<void>(vbrun::raise(kCannotCreate));
+        return nullptr;
+    }
+    IUnknown* object = nullptr;
+    const HRESULT made = CoCreateInstance(
+        *info->clsid, nullptr, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER,
+        info->iid == nullptr ? IID_IUnknown : *info->iid,
+        reinterpret_cast<void**>(&object));
+    if (FAILED(made) || object == nullptr) {
+        static_cast<void>(vbrun::raise(kCannotCreate));
+        return nullptr;
+    }
+    return object;
+}
+
 }  // namespace
 
 extern "C" {
@@ -157,6 +184,16 @@ VARIANT* WINAPI rtcGetObject(VARIANT* const result, const VARIANT* const path,
         return result;
     }
     return give(result, object);
+}
+
+// New of a class: the object, or error 429 when it cannot be made.
+IUnknown* WINAPI __vbaNew(const void* const info) {
+    return create_from(static_cast<const ClassInfo*>(info));
+}
+
+// The same, stored in *object (null when it fails).
+void WINAPI __vbaNew2(const void* const info, void** const object) {
+    *object = create_from(static_cast<const ClassInfo*>(info));
 }
 
 }  // extern "C"
