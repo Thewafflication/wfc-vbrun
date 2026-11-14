@@ -14,6 +14,8 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+void WINAPI __vbaAryConstruct(SAFEARRAY* destination,
+                              const SAFEARRAY* declaration);
 LONG WINAPI rtcMacId(BSTR text);
 LONG WINAPI __vbaCyForInit(LONGLONG* counter, LONGLONG start, LONGLONG limit,
                            LONGLONG step);

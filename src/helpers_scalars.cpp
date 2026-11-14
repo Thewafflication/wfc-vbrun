@@ -1165,6 +1165,42 @@ static void destroy_array(SAFEARRAY** const slot) {
     }
 }
 
+// Builds an array (an embedded or fixed-size one of a Type or a procedure)
+// from the descriptor of its declaration: the descriptor is copied and, for an
+// array that does not live inside its owner, the data allocated.
+static void construct_array(SAFEARRAY* const destination,
+                            const SAFEARRAY* const declaration) {
+    const size_t bounds =
+        declaration->cDims > 1 ? declaration->cDims - 1U : 0U;
+    std::memcpy(destination, declaration,
+                sizeof(SAFEARRAY) + bounds * sizeof(SAFEARRAYBOUND));
+    if ((destination->fFeatures & FADF_EMBEDDED) != 0) {
+        return;
+    }
+    const HRESULT status = SafeArrayAllocData(destination);
+    if (FAILED(status) || destination->pvData == nullptr) {
+        static_cast<void>(vbrun::raise(7));  // out of memory
+    }
+}
+
+void WINAPI __vbaAryConstruct(SAFEARRAY* const destination,
+                              const SAFEARRAY* const declaration) {
+    construct_array(destination, declaration);
+}
+
+// The same for an array of records: a declaration that already has record
+// information is not valid here (error 5).
+void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
+                               const SAFEARRAY* const declaration,
+                               const void* const records) {
+    static_cast<void>(records);
+    if ((declaration->fFeatures & FADF_RECORD) != 0) {
+        static_cast<void>(vbrun::raise(5));
+        return;
+    }
+    construct_array(destination, declaration);
+}
+
 // The core of Erase: frees the data of the array (elements included) and,
 // for a dynamic array, the array itself. A locked array is error 10.
 static LONG erase_array(SAFEARRAY** const slot) {

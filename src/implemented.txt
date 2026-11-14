@@ -451,3 +451,5 @@ __vbaEraseKeepData
 __vbaCyForInit
 __vbaCyForNext
 rtcMacId
+__vbaAryConstruct
+__vbaAryConstruct2

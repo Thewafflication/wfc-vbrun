@@ -67,8 +67,8 @@ EXPORTS
     _CIsqrt=vbrun_stub_161 @161
     _CItan=vbrun_stub_162 @162
     __vbaAptOffset @163
-    __vbaAryConstruct2=vbrun_stub_164 @164
-    __vbaAryConstruct=vbrun_stub_165 @165
+    __vbaAryConstruct2 @164
+    __vbaAryConstruct @165
     __vbaAryCopy @166
     __vbaAryDestruct @167
     __vbaAryMove @168
