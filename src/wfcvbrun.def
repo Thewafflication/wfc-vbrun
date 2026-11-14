@@ -503,7 +503,7 @@ EXPORTS
     rtcAppActivate=vbrun_stub_597 @597
     rtcDoEvents @598
     rtcSendKeys=vbrun_stub_599 @599
-    rtcShell=vbrun_stub_600 @600
+    rtcShell @600
     rtcArray @601
     __vbaVargUnk @602
     __vbaVargUnkAddref @603

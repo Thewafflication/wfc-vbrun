@@ -193,4 +193,57 @@ VARIANT* WINAPI rtcCommandVar(VARIANT* const result) {
     return result;
 }
 
+// Shell(command, style): starts the program and gives its process id. The
+// window style is 0 to 9 (error 5 otherwise); a program that cannot be
+// started is error 53 (not found), 76 (path not found) or 7 (memory).
+double WINAPI rtcShell(const VARIANT* const command, const LONG style) {
+    if (static_cast<unsigned>(style) > 9U) {
+        static_cast<void>(vbrun::raise(5));
+        return 0.0;
+    }
+    std::wstring line;
+    if (command != nullptr) {
+        VARIANT text;
+        VariantInit(&text);
+        if (FAILED(VariantChangeType(&text, const_cast<VARIANT*>(command), 0,
+                                     VT_BSTR))) {
+            static_cast<void>(vbrun::raise(13));
+            return 0.0;
+        }
+        line.assign(text.bstrVal == nullptr ? L"" : text.bstrVal,
+                    SysStringLen(text.bstrVal));
+        VariantClear(&text);
+    }
+    line.push_back(L'\0');
+    STARTUPINFOW startup = {};
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = static_cast<WORD>(style);
+    PROCESS_INFORMATION process = {};
+    SetLastError(0);
+    if (CreateProcessW(nullptr, line.data(), nullptr, nullptr, FALSE, 0,
+                       nullptr, nullptr, &startup, &process) == 0) {
+        switch (GetLastError()) {
+            case ERROR_FILE_NOT_FOUND:
+                static_cast<void>(vbrun::raise(53));
+                break;
+            case ERROR_PATH_NOT_FOUND:
+                static_cast<void>(vbrun::raise(76));
+                break;
+            case ERROR_NOT_ENOUGH_MEMORY:
+            case ERROR_OUTOFMEMORY:
+                static_cast<void>(vbrun::raise(7));
+                break;
+            default:
+                static_cast<void>(vbrun::raise(5));
+                break;
+        }
+        return 0.0;
+    }
+    WaitForInputIdle(process.hProcess, 10000);
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+    return static_cast<double>(process.dwProcessId);
+}
+
 }  // extern "C"
