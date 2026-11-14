@@ -321,6 +321,69 @@ bool clock_of(const VARIANT* const value, SYSTEMTIME& reading) {
 
 }  // namespace
 
+namespace {
+
+using ImeContextFn = HANDLE(WINAPI*)(HWND);
+using ImeReleaseFn = BOOL(WINAPI*)(HWND, HANDLE);
+using ImeIsFn = BOOL(WINAPI*)(HKL);
+using ImeOpenFn = BOOL(WINAPI*)(HANDLE);
+using ImeConversionFn = BOOL(WINAPI*)(HANDLE, DWORD*, DWORD*);
+
+// The state of the input method editor of the window that has the focus, in
+// the numbers of the vbIMEModes of Visual Basic (-1 when there is none to ask).
+LONG ime_state() {
+    const HMODULE imm = LoadLibraryW(L"imm32.dll");
+    if (imm == nullptr) {
+        return -1;
+    }
+    const auto context = reinterpret_cast<ImeContextFn>(
+        GetProcAddress(imm, "ImmGetContext"));
+    const auto release = reinterpret_cast<ImeReleaseFn>(
+        GetProcAddress(imm, "ImmReleaseContext"));
+    const auto is_ime =
+        reinterpret_cast<ImeIsFn>(GetProcAddress(imm, "ImmIsIME"));
+    const auto is_open = reinterpret_cast<ImeOpenFn>(
+        GetProcAddress(imm, "ImmGetOpenStatus"));
+    const auto conversion = reinterpret_cast<ImeConversionFn>(
+        GetProcAddress(imm, "ImmGetConversionStatus"));
+    if (context == nullptr || release == nullptr || is_ime == nullptr ||
+        is_open == nullptr || conversion == nullptr) {
+        return -1;
+    }
+    const HWND window = GetFocus();
+    const HANDLE input = context(window);
+    const WORD language = PRIMARYLANGID(GetSystemDefaultLangID());
+    LONG state = -1;
+    DWORD mode = 0;
+    DWORD sentence = 0;
+    const bool japanese = language == LANG_JAPANESE;
+    const bool korean = language == LANG_KOREAN;
+    if (input == nullptr) {
+        state = japanese ? 3 : -1;
+    } else if (!is_ime(GetKeyboardLayout(0)) || !is_open(input)) {
+        state = japanese ? 2 : (korean ? 8 : 2);
+    } else if (conversion(input, &mode, &sentence) == 0) {
+        state = -1;
+    } else if (japanese) {
+        if ((mode & 1U) != 0) {
+            state = (mode & 2U) != 0 ? ((mode & 8U) != 0 ? 5 : 6) : 4;
+        } else {
+            state = (mode & 8U) != 0 ? 7 : 8;
+        }
+    } else if (korean) {
+        state = (mode & 1U) != 0 ? ((mode & 8U) != 0 ? 9 : 10)
+                                 : ((mode & 8U) != 0 ? 7 : 8);
+    } else {
+        state = (mode & 1U) != 0 ? 1 : 2;
+    }
+    if (input != nullptr) {
+        release(window, input);
+    }
+    return state;
+}
+
+}  // namespace
+
 extern "C" {
 
 // Environ$(name or number).
@@ -692,6 +755,18 @@ void WINAPI rtcSetTimeBstr(const BSTR text) {
     value.vt = VT_BSTR;
     value.bstrVal = text;
     rtcSetTimeVar(&value);
+}
+
+
+// IMEStatus: the mode of the input method editor (-1 when there is none).
+LONG WINAPI rtcIMEStatus() {
+    return ime_state();
+}
+
+// A Friend member called on an object that is not an instance of the class
+// that defines it is error 97.
+void WINAPI __vbaFailedFriend() {
+    static_cast<void>(vbrun::raise(97));
 }
 
 }  // extern "C"

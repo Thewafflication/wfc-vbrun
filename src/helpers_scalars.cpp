@@ -885,6 +885,31 @@ HRESULT WINAPI __vbaHresultCheck(const HRESULT result) {
     return result;
 }
 
+// The same for a call on an object: when the object reports rich error
+// information for the interface, it is taken (and so cleared) before the
+// error is raised.
+HRESULT WINAPI __vbaHresultCheckObj(const HRESULT result,
+                                    IUnknown* const object,
+                                    const IID* const iid, const LONG) {
+    if (FAILED(result)) {
+        ISupportErrorInfo* support = nullptr;
+        if (object != nullptr && iid != nullptr &&
+            SUCCEEDED(object->QueryInterface(
+                IID_ISupportErrorInfo, reinterpret_cast<void**>(&support))) &&
+            support != nullptr) {
+            if (support->InterfaceSupportsErrorInfo(*iid) == S_OK) {
+                IErrorInfo* info = nullptr;
+                if (GetErrorInfo(0, &info) == S_OK && info != nullptr) {
+                    info->Release();
+                }
+            }
+            support->Release();
+        }
+        static_cast<void>(vbrun::raise_hresult(result));
+    }
+    return result;
+}
+
 // LBound/UBound(array, dimension): error 9 for a missing array or a
 // dimension outside 1..dimensions.
 static const SAFEARRAYBOUND* array_bound(const SHORT dimension,

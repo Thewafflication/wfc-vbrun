@@ -484,3 +484,6 @@ __vbaVarForInit
 __vbaVarForNext
 __vbaVarIndexLoadRef
 __vbaVarIndexLoadRefLock
+rtcIMEStatus
+__vbaFailedFriend
+__vbaHresultCheckObj
