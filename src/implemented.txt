@@ -453,3 +453,5 @@ __vbaCyForNext
 rtcMacId
 __vbaAryConstruct
 __vbaAryConstruct2
+__vbaVarSetVar
+__vbaVarSetVarAddref

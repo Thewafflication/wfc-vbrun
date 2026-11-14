@@ -14,6 +14,8 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
+VARIANT* WINAPI __vbaVarSetVar(VARIANT* destination, VARIANT* source);
+VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* destination, VARIANT* source);
 void WINAPI __vbaAryConstruct(SAFEARRAY* destination,
                               const SAFEARRAY* declaration);
 LONG WINAPI rtcMacId(BSTR text);

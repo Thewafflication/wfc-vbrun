@@ -389,8 +389,8 @@ EXPORTS
     __vbaVarSetObjAddref @483
     __vbaVarSetUnk @484
     __vbaVarSetUnkAddref @485
-    __vbaVarSetVar=vbrun_stub_486 @486
-    __vbaVarSetVarAddref=vbrun_stub_487 @487
+    __vbaVarSetVar @486
+    __vbaVarSetVarAddref @487
     __vbaVarSub @488
     __vbaVarTextCmpEq @489
     __vbaVarTextCmpGe @490

@@ -1532,6 +1532,61 @@ LONG WINAPI __vbaAptOffset(const LONG) {
     return 0;
 }
 
+// Set v = <an object in a Variant>: the destination Variant takes the object
+// (SetVar: from a temporary, which is emptied; SetVarAddref: a new reference).
+// What is not an object is error 13.
+static VARIANT* set_variant_object_from(VARIANT* const original,
+                                        VARIANT* const source_in,
+                                        const bool take_over) {
+    VARIANT* destination = original;
+    VARIANT* source = source_in;
+    if (destination->vt == (VT_BYREF | VT_VARIANT)) {
+        destination = destination->pvarVal;
+    }
+    if (source->vt == (VT_BYREF | VT_VARIANT)) {
+        source = source->pvarVal;
+    }
+    const auto type = static_cast<VARTYPE>(source->vt & ~VT_BYREF);
+    if (type != VT_DISPATCH && type != VT_UNKNOWN) {
+        static_cast<void>(vbrun::raise(13));
+        return original;
+    }
+    IUnknown* const object = (source->vt & VT_BYREF) != 0
+                                 ? *source->ppunkVal
+                                 : source->punkVal;
+    if (!take_over && object != nullptr) {
+        object->AddRef();
+    }
+    if ((destination->vt & VT_BYREF) != 0) {
+        // A reference to an object variable: the old object goes.
+        IUnknown** const slot = destination->ppunkVal;
+        IUnknown* const old = *slot;
+        *slot = object;
+        if (old != nullptr) {
+            old->Release();
+        }
+    } else {
+        VARIANT old = *destination;
+        destination->vt = type;
+        destination->punkVal = object;
+        VariantClear(&old);
+    }
+    if (take_over) {
+        source->vt = VT_EMPTY;
+    }
+    return original;
+}
+
+VARIANT* WINAPI __vbaVarSetVar(VARIANT* const destination,
+                               VARIANT* const source) {
+    return set_variant_object_from(destination, source, true);
+}
+
+VARIANT* WINAPI __vbaVarSetVarAddref(VARIANT* const destination,
+                                     VARIANT* const source) {
+    return set_variant_object_from(destination, source, false);
+}
+
 // MacID("TEXT"): the four characters of the string as a Long, the first one
 // in the high byte (a short string is padded with spaces).
 LONG WINAPI rtcMacId(const BSTR text) {
