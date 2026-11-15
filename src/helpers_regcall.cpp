@@ -271,4 +271,147 @@ HRESULT WINAPI Zombie_Invoke(Zombie*, DISPID, const IID*, LCID, WORD,
     return kZombieFailure;
 }
 
+// BASIC_CLASS is the interface a Visual Basic class instance shows outside:
+// its AddRef and Release are the Zombie's (the same code in the reference), and
+// QueryInterface asks the object inside without clearing the result first.
+ULONG WINAPI BASIC_CLASS_AddRef(Zombie* const self) {
+    return self->inner->AddRef();
+}
+
+ULONG WINAPI BASIC_CLASS_Release(Zombie* const self) {
+    return self->inner->Release();
+}
+
+HRESULT WINAPI BASIC_CLASS_QueryInterface(Zombie* const self,
+                                          const IID* const iid,
+                                          void** const out) {
+    return self->inner->QueryInterface(*iid, out);
+}
+
+// A dispinterface has one piece of type information.
+HRESULT WINAPI BASIC_DISPINTERFACE_GetTICount(void* /*self*/,
+                                              UINT* const count) {
+    *count = 1;
+    return S_OK;
+}
+
+// A Variant moved into the destination (the old value is freed). An object
+// that is the source gives its default value instead, and is released.
+VARIANT* VBRUN_FASTCALL __vbaVarMove(VARIANT* const destination,
+                                     VARIANT* const source) {
+    if (V_VT(destination) >= VT_BSTR) {
+        __vbaFreeVar(destination);
+    }
+    if (V_VT(source) == VT_DISPATCH && V_DISPATCH(source) != nullptr) {
+        IDispatch* const object = V_DISPATCH(source);
+        std::uint32_t head = 0;
+        std::memcpy(destination, &head, sizeof(head));
+        DISPPARAMS none = {nullptr, nullptr, 0, 0};
+        const HRESULT result = object->Invoke(
+            DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD | DISPATCH_PROPERTYGET,
+            &none, destination, nullptr, nullptr);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+        } else if (V_VT(destination) == VT_DISPATCH) {
+            static_cast<void>(vbrun::raise(13));
+        }
+        object->Release();
+        std::memcpy(source, &head, sizeof(head));
+        return destination;
+    }
+    std::memcpy(destination, source, sizeof(VARIANT));
+    std::uint32_t head = 0;
+    std::memcpy(source, &head, sizeof(head));
+    return destination;
+}
+
+// The Variant of a by-reference argument freed through its reference: the
+// string, object or array it points at is released and the pointer cleared; a
+// plain Variant is freed as it is.
+void VBRUN_FASTCALL __vbaFreeVarg(VARIANT* const variant) {
+    const VARTYPE type = V_VT(variant);
+    if (type < VT_BSTR) {
+        std::uint32_t head = 0;
+        std::memcpy(variant, &head, sizeof(head));
+    }
+    if ((type & kByRef) == 0) {
+        __vbaFreeVar(variant);
+        return;
+    }
+    const VARTYPE base = type & static_cast<VARTYPE>(~kByRef);
+    if (base == VT_BSTR) {
+        BSTR* const slot = V_BSTRREF(variant);
+        if (*slot != nullptr) {
+            SysFreeString(*slot);
+            *slot = nullptr;
+        }
+    } else if (base == VT_DISPATCH || base == VT_UNKNOWN) {
+        IUnknown** const slot = V_UNKNOWNREF(variant);
+        if (*slot != nullptr) {
+            (*slot)->Release();
+            *slot = nullptr;
+        }
+    } else if ((base & VT_ARRAY) != 0) {
+        SAFEARRAY** const slot = V_ARRAYREF(variant);
+        if (*slot != nullptr) {
+            if ((*slot)->cLocks != 0) {
+                static_cast<void>(vbrun::raise(10));
+            }
+            const HRESULT result = SafeArrayDestroy(*slot);
+            if (FAILED(result)) {
+                static_cast<void>(vbrun::raise_hresult(result));
+            }
+            *slot = nullptr;
+        }
+    }
+}
+
+// A by-reference argument as the Variant it stands for, without freeing
+// anything: a plain Variant is returned as it is, a reference to a Variant
+// gives the Variant behind it, and any other reference is read into the
+// destination (the value is copied, not duplicated).
+VARIANT* VBRUN_FASTCALL __vbaVarVargNofree(VARIANT* const destination,
+                                           VARIANT* const source) {
+    const VARTYPE type = V_VT(source);
+    if ((type & kByRef) == 0) {
+        return source;
+    }
+    if (type == kVariantByRef) {
+        return V_VARIANTREF(source);
+    }
+    const VARTYPE base = type & static_cast<VARTYPE>(~kByRef);
+    V_VT(destination) = base;
+    const void* const target = source->byref;
+    switch (base) {
+        case VT_UI1:
+            std::memcpy(&destination->bVal, target, 1);
+            break;
+        case VT_I2:
+        case VT_BOOL:
+            std::memcpy(&destination->iVal, target, 2);
+            break;
+        case VT_I4:
+        case VT_R4:
+        case VT_ERROR:
+        case VT_BSTR:
+        case VT_DISPATCH:
+        case VT_UNKNOWN:
+            std::memcpy(&destination->lVal, target, 4);
+            break;
+        case VT_R8:
+        case VT_CY:
+        case VT_DATE:
+            std::memcpy(&destination->dblVal, target, 8);
+            break;
+        case VT_DECIMAL:
+            std::memcpy(destination, target, sizeof(DECIMAL));
+            V_VT(destination) = VT_DECIMAL;
+            break;
+        default:
+            static_cast<void>(vbrun::raise(5));
+            break;
+    }
+    return destination;
+}
+
 }  // extern "C"

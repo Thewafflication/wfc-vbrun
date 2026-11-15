@@ -35,7 +35,7 @@ EXPORTS
     __vbaFreeObj @129
     __vbaFreeStr @130
     __vbaFreeVar @131
-    __vbaFreeVarg=vbrun_stub_132 @132
+    __vbaFreeVarg @132
     __vbaI2Abs @133
     __vbaI2I4 @134
     __vbaI2Sgn @135
@@ -48,8 +48,8 @@ EXPORTS
     __vbaUI1Sgn @142
     __vbaVarCopy @143
     __vbaVarDup @144
-    __vbaVarMove=vbrun_stub_145 @145
-    __vbaVarVargNofree=vbrun_stub_146 @146
+    __vbaVarMove @145
+    __vbaVarVargNofree @146
     __vbaVarZero @147
     __vbaVargParmRef @148
     __vbaVargVar @149
@@ -313,9 +313,9 @@ EXPORTS
     __vbaStrComp @407
     __vbaStrCompVar @408
     __vbaStrCy @409
-    BASIC_CLASS_QueryInterface=vbrun_stub_410 @410
-    BASIC_CLASS_AddRef=vbrun_stub_411 @411
-    BASIC_CLASS_Release=vbrun_stub_412 @412
+    BASIC_CLASS_QueryInterface @410
+    BASIC_CLASS_AddRef @411
+    BASIC_CLASS_Release @412
     BASIC_CLASS_GetIDsOfNames=vbrun_stub_413 @413
     BASIC_CLASS_Invoke=vbrun_stub_414 @414
     __vbaStrDate @415
@@ -323,7 +323,7 @@ EXPORTS
     __vbaStrI2 @417
     __vbaStrI4 @418
     __vbaStrLike @419
-    BASIC_DISPINTERFACE_GetTICount=vbrun_stub_420 @420
+    BASIC_DISPINTERFACE_GetTICount @420
     BASIC_DISPINTERFACE_GetTypeInfo=vbrun_stub_421 @421
     __vbaStrR4 @422
     __vbaStrR8 @423

@@ -517,3 +517,10 @@ Zombie_GetTypeInfoCount
 Zombie_GetTypeInfo
 Zombie_GetIDsOfNames
 Zombie_Invoke
+BASIC_CLASS_AddRef
+BASIC_CLASS_Release
+BASIC_CLASS_QueryInterface
+BASIC_DISPINTERFACE_GetTICount
+__vbaVarMove
+__vbaFreeVarg
+__vbaVarVargNofree

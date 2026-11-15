@@ -39,6 +39,10 @@ VARIANT* VBRUN_FASTCALL __vbaVargVar(VARIANT* source, std::uintptr_t unused,
                                      VARIANT* result);
 VARIANT* VBRUN_FASTCALL __vbaVargVarRef(VARIANT* destination,
                                         VARIANT* source);
+VARIANT* VBRUN_FASTCALL __vbaVarMove(VARIANT* destination, VARIANT* source);
+void VBRUN_FASTCALL __vbaFreeVarg(VARIANT* variant);
+VARIANT* VBRUN_FASTCALL __vbaVarVargNofree(VARIANT* destination,
+                                           VARIANT* source);
 }
 
 struct Zombie {
@@ -58,6 +62,11 @@ HRESULT WINAPI Zombie_GetTypeInfo(Zombie* self, UINT index, LCID lcid,
 HRESULT WINAPI Zombie_GetIDsOfNames(Zombie* self, const IID* iid,
                                     OLECHAR** names, UINT count, LCID lcid,
                                     DISPID* ids);
+ULONG WINAPI BASIC_CLASS_AddRef(Zombie* self);
+ULONG WINAPI BASIC_CLASS_Release(Zombie* self);
+HRESULT WINAPI BASIC_CLASS_QueryInterface(Zombie* self, const IID* iid,
+                                          void** out);
+HRESULT WINAPI BASIC_DISPINTERFACE_GetTICount(void* self, UINT* count);
 HRESULT WINAPI Zombie_Invoke(Zombie* self, DISPID id, const IID* iid,
                              LCID lcid, WORD flags, DISPPARAMS* params,
                              VARIANT* result, EXCEPINFO* info, UINT* arg);
@@ -236,6 +245,143 @@ void variants() {
            "VargVarRef makes a reference");
 }
 
+
+// An object whose default property is the number 41.
+class WithDefault final : public IDispatch {
+public:
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, void**) override {
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++count; }
+    ULONG STDMETHODCALLTYPE Release() override { return --count; }
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID, ITypeInfo**) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR*, UINT, LCID,
+                                            DISPID*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD,
+                                     DISPPARAMS*, VARIANT* result,
+                                     EXCEPINFO*, UINT*) override {
+        if (id != DISPID_VALUE || result == nullptr) {
+            return DISP_E_MEMBERNOTFOUND;
+        }
+        V_VT(result) = VT_I4;
+        V_I4(result) = 41;
+        return S_OK;
+    }
+    ULONG count = 1;
+};
+
+void more_variants() {
+    // VarMove moves a string and empties the source.
+    VARIANT target;
+    VariantInit(&target);
+    V_VT(&target) = VT_BSTR;
+    V_BSTR(&target) = SysAllocString(L"old");
+    VARIANT from;
+    VariantInit(&from);
+    V_VT(&from) = VT_BSTR;
+    V_BSTR(&from) = SysAllocString(L"new");
+    const BSTR held = V_BSTR(&from);
+    expect(__vbaVarMove(&target, &from) == &target &&
+               V_VT(&target) == VT_BSTR && V_BSTR(&target) == held &&
+               V_VT(&from) == VT_EMPTY,
+           "VarMove moves the string");
+    __vbaFreeVar(&target);
+
+    // An object that is moved gives its default value and is released.
+    WithDefault object;
+    object.count = 2;
+    VARIANT holder;
+    VariantInit(&holder);
+    V_VT(&holder) = VT_DISPATCH;
+    V_DISPATCH(&holder) = &object;
+    VARIANT result;
+    VariantInit(&result);
+    __vbaVarMove(&result, &holder);
+    expect(V_VT(&result) == VT_I4 && V_I4(&result) == 41 &&
+               V_VT(&holder) == VT_EMPTY && object.count == 1,
+           "VarMove of an object gives the default value");
+
+    // FreeVarg frees through a reference.
+    BSTR text = SysAllocString(L"x");
+    VARIANT by_text;
+    VariantInit(&by_text);
+    V_VT(&by_text) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&by_text) = &text;
+    __vbaFreeVarg(&by_text);
+    expect(text == nullptr, "FreeVarg frees a string through its reference");
+    Counted counted;
+    counted.count = 2;
+    IUnknown* pointer = &counted;
+    VARIANT by_object;
+    VariantInit(&by_object);
+    V_VT(&by_object) = VT_UNKNOWN | VT_BYREF;
+    V_UNKNOWNREF(&by_object) = &pointer;
+    __vbaFreeVarg(&by_object);
+    expect(pointer == nullptr && counted.count == 1,
+           "FreeVarg releases an object through its reference");
+    VARIANT own;
+    VariantInit(&own);
+    V_VT(&own) = VT_BSTR;
+    V_BSTR(&own) = SysAllocString(L"own");
+    __vbaFreeVarg(&own);
+    expect(V_VT(&own) == VT_EMPTY, "FreeVarg of a plain Variant");
+
+    // VarVargNofree reads through a reference without copying what it owns.
+    VARIANT plain;
+    VariantInit(&plain);
+    V_VT(&plain) = VT_I4;
+    VARIANT scratch;
+    VariantInit(&scratch);
+    expect(__vbaVarVargNofree(&scratch, &plain) == &plain,
+           "a plain Variant is returned as it is");
+    LONG number = 123;
+    VARIANT by_number;
+    VariantInit(&by_number);
+    V_VT(&by_number) = VT_I4 | VT_BYREF;
+    V_I4REF(&by_number) = &number;
+    expect(__vbaVarVargNofree(&scratch, &by_number) == &scratch &&
+               V_VT(&scratch) == VT_I4 && V_I4(&scratch) == 123,
+           "a reference to a Long is read");
+    double real = 2.5;
+    V_VT(&by_number) = VT_R8 | VT_BYREF;
+    V_R8REF(&by_number) = &real;
+    __vbaVarVargNofree(&scratch, &by_number);
+    expect(V_VT(&scratch) == VT_R8 && V_R8(&scratch) == 2.5,
+           "a reference to a Double is read");
+    VARIANT inner;
+    VariantInit(&inner);
+    VARIANT outer;
+    VariantInit(&outer);
+    V_VT(&outer) = VT_VARIANT | VT_BYREF;
+    V_VARIANTREF(&outer) = &inner;
+    expect(__vbaVarVargNofree(&scratch, &outer) == &inner,
+           "a reference to a Variant gives that Variant");
+}
+
+void basic_class() {
+    Counted inner;
+    Zombie object{nullptr, nullptr, &inner};
+    expect(BASIC_CLASS_AddRef(&object) == 2 &&
+               BASIC_CLASS_Release(&object) == 1,
+           "BASIC_CLASS reference counting");
+    void* out = nullptr;
+    expect(BASIC_CLASS_QueryInterface(&object, &IID_IUnknown, &out) == S_OK &&
+               out == static_cast<IUnknown*>(&inner),
+           "BASIC_CLASS QueryInterface");
+    inner.count = 1;
+    UINT count = 0;
+    expect(BASIC_DISPINTERFACE_GetTICount(nullptr, &count) == S_OK &&
+               count == 1,
+           "a dispinterface has one type information");
+}
+
 void zombie() {
     Counted inner;
     Zombie dead{nullptr, nullptr, &inner};
@@ -275,6 +421,8 @@ int main() {
     abs_and_sgn();
     strings_and_objects();
     variants();
+    more_variants();
+    basic_class();
     zombie();
     if (failures == 0) {
         std::printf("vbrun regcall: all checks passed\n");
