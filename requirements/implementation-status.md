@@ -39,6 +39,8 @@ naming it.
 
 | Operators and comparisons on Variants | `REQ-0101` | (part of 334) | 41 | `__vbaVarAdd`, `Sub`, `Mul`, `Div`, `Idiv`, `Mod`, `Pow`, `And`, `Or`, `Xor`, `Eqv`, `Imp`, `Not`, `Neg`, `Abs`, `Fix`, `Int`; the tests `__vbaVarTst*`, `__vbaVarTextTst*` and the Variant results `__vbaVarCmp*`, `__vbaVarTextCmp*`. A compiled program passes the operands right first (`__vbaVarSub(result, right, left)`). Call cases `varops`, taken with `Probe-VbrunCases.ps1 -Initialize` |
 
+| Register-call helpers and the Zombie interface | `REQ-0101`, `REQ-0103` | (part of 334) | 26 | `__vbaI2I4`, `__vbaUI1I2`, `__vbaUI1I4`, `__vbaI2Abs`, `__vbaI4Abs`, `__vbaI2Sgn`, `__vbaI4Sgn`, `__vbaUI1Sgn`, `__vbaStrCopy`, `__vbaStrMove`, `__vbaFreeStr`, `__vbaFreeObj`, `__vbaFreeVar`, `__vbaVarCopy`, `__vbaVarDup`, `__vbaVarZero`, `__vbaVargParmRef`, `__vbaVargVar`, `__vbaVargVarRef` and the seven `Zombie_*` methods. Compiled code passes the first operands in ECX and EDX, so on x86 they are `__fastcall`; written from the disassembly and checked by `vbrun_regcall_tests` (they cannot be called from the 32-bit PowerShell probe). Not yet: `__vbaVarMove`, `__vbaVargVarMove`/`Copy`, `__vbaVarVargNofree`, `__vbaFreeVarg` (large type switches) and the x87 helpers (`__vbaFp*`, `_CI*`, `_adj_*`: the operand is on the FPU stack) |
+
 (Updated with each batch.)
 
 ## Probing the reference

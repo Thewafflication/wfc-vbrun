@@ -75,6 +75,8 @@ set(
   src/helpers_files.cpp
   src/helpers_openfiles.cpp
   src/helpers_varops.cpp
+  src/helpers_regcall.cpp
+  src/vbrun_regcall.hpp
 )
 
 function(wfc_vbrun_harden target)
@@ -304,6 +306,22 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-errobj COMMAND vbrun_errobj_tests)
     set_tests_properties(
       TC-MP0009-vbrun-errobj
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # The helpers called with their operands in registers, and the Zombie
+    # interface.
+    add_executable(
+      vbrun_regcall_tests
+      tests/vbrun_regcall_tests.cpp
+      src/helpers_regcall.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_regcall_tests PRIVATE oleaut32 ole32)
+    wfc_vbrun_harden(vbrun_regcall_tests)
+    add_test(NAME TC-MP0009-vbrun-regcall COMMAND vbrun_regcall_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-regcall
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.

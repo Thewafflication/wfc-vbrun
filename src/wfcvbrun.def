@@ -13,7 +13,7 @@ EXPORTS
     DllUnregisterServer @107
     __vbaAryLock @108
     __vbaBoolErrVar @109
-    __vbaRedimVar2=vbrun_stub_110 @110
+    __vbaRedimVar2 @110
     __vbaStrErrVarCopy @111
     __vbaVarLateMemCallLd @112
     __vbaVarLateMemCallLdRf @113
@@ -32,30 +32,30 @@ EXPORTS
     __vbaFpR4=vbrun_stub_126 @126
     __vbaFpR8=vbrun_stub_127 @127
     __vbaFpUI1=vbrun_stub_128 @128
-    __vbaFreeObj=vbrun_stub_129 @129
-    __vbaFreeStr=vbrun_stub_130 @130
-    __vbaFreeVar=vbrun_stub_131 @131
+    __vbaFreeObj @129
+    __vbaFreeStr @130
+    __vbaFreeVar @131
     __vbaFreeVarg=vbrun_stub_132 @132
-    __vbaI2Abs=vbrun_stub_133 @133
-    __vbaI2I4=vbrun_stub_134 @134
-    __vbaI2Sgn=vbrun_stub_135 @135
-    __vbaI4Abs=vbrun_stub_136 @136
-    __vbaI4Sgn=vbrun_stub_137 @137
-    __vbaStrCopy=vbrun_stub_138 @138
-    __vbaStrMove=vbrun_stub_139 @139
-    __vbaUI1I2=vbrun_stub_140 @140
-    __vbaUI1I4=vbrun_stub_141 @141
-    __vbaUI1Sgn=vbrun_stub_142 @142
-    __vbaVarCopy=vbrun_stub_143 @143
-    __vbaVarDup=vbrun_stub_144 @144
+    __vbaI2Abs @133
+    __vbaI2I4 @134
+    __vbaI2Sgn @135
+    __vbaI4Abs @136
+    __vbaI4Sgn @137
+    __vbaStrCopy @138
+    __vbaStrMove @139
+    __vbaUI1I2 @140
+    __vbaUI1I4 @141
+    __vbaUI1Sgn @142
+    __vbaVarCopy @143
+    __vbaVarDup @144
     __vbaVarMove=vbrun_stub_145 @145
     __vbaVarVargNofree=vbrun_stub_146 @146
-    __vbaVarZero=vbrun_stub_147 @147
-    __vbaVargParmRef=vbrun_stub_148 @148
-    __vbaVargVar=vbrun_stub_149 @149
+    __vbaVarZero @147
+    __vbaVargParmRef @148
+    __vbaVargVar @149
     __vbaVargVarCopy=vbrun_stub_150 @150
     __vbaVargVarMove=vbrun_stub_151 @151
-    __vbaVargVarRef=vbrun_stub_152 @152
+    __vbaVargVarRef @152
     DLLGetDocumentation=vbrun_stub_153 @153
     DllCanUnloadNow @154
     DllGetClassObject @155
@@ -131,7 +131,7 @@ EXPORTS
     __vbaFPFix=vbrun_stub_225 @225
     __vbaFPInt=vbrun_stub_226 @226
     TipUnloadProject=vbrun_stub_227 @227
-    __vbaFailedFriend=vbrun_stub_228 @228
+    __vbaFailedFriend @228
     __vbaFileClose @229
     TipCreateInstanceProject2=vbrun_stub_230 @230
     EbResetProject=vbrun_stub_231 @231
@@ -161,7 +161,7 @@ EXPORTS
     __vbaGosubReturn=vbrun_stub_255 @255
     __vbaHresultCheck @256
     __vbaHresultCheckNonvirt @257
-    __vbaHresultCheckObj=vbrun_stub_258 @258
+    __vbaHresultCheckObj @258
     __vbaI2Cy @259
     __vbaI2ErrVar @260
     __vbaI2ForNextCheck @261
@@ -236,15 +236,15 @@ EXPORTS
     __vbaLenVarB @330
     __vbaLineInputStr @331
     __vbaLineInputVar @332
-    __vbaLsetFixstr=vbrun_stub_333 @333
-    __vbaLsetFixstrFree=vbrun_stub_334 @334
+    __vbaLsetFixstr @333
+    __vbaLsetFixstrFree @334
     __vbaMidStmtBstr @335
     __vbaMidStmtBstrB @336
     __vbaMidStmtVar @337
     __vbaMidStmtVarB @338
     __vbaNameFile @339
-    __vbaNew2=vbrun_stub_340 @340
-    __vbaNew=vbrun_stub_341 @341
+    __vbaNew2 @340
+    __vbaNew @341
     __vbaNextEachAry @342
     __vbaNextEachCollAd @343
     __vbaNextEachCollObj @344
@@ -291,12 +291,12 @@ EXPORTS
     __vbaRedim @385
     __vbaRedimPreserve @386
     __vbaRedimPreserveVar @387
-    __vbaRedimPreserveVar2=vbrun_stub_388 @388
+    __vbaRedimPreserveVar2 @388
     __vbaRedimVar @389
     __vbaRefVarAry @390
     __vbaResume=vbrun_stub_391 @391
-    __vbaRsetFixstr=vbrun_stub_392 @392
-    __vbaRsetFixstrFree=vbrun_stub_393 @393
+    __vbaRsetFixstr @392
+    __vbaRsetFixstrFree @393
     __vbaSetSystemError @394
     __vbaStopExe=vbrun_stub_395 @395
     __vbaStr2Vec @396
@@ -333,13 +333,13 @@ EXPORTS
     __vbaStrToUnicode @427
     __vbaStrUI1 @428
     __vbaStrVarCopy @429
-    Zombie_QueryInterface=vbrun_stub_430 @430
-    Zombie_AddRef=vbrun_stub_431 @431
-    Zombie_Release=vbrun_stub_432 @432
-    Zombie_GetTypeInfoCount=vbrun_stub_433 @433
-    Zombie_GetTypeInfo=vbrun_stub_434 @434
-    Zombie_GetIDsOfNames=vbrun_stub_435 @435
-    Zombie_Invoke=vbrun_stub_436 @436
+    Zombie_QueryInterface @430
+    Zombie_AddRef @431
+    Zombie_Release @432
+    Zombie_GetTypeInfoCount @433
+    Zombie_GetTypeInfo @434
+    Zombie_GetIDsOfNames @435
+    Zombie_Invoke @436
     __vbaStrVarMove @437
     __vbaStrVarVal @438
     __vbaUI1Cy @439
@@ -367,13 +367,13 @@ EXPORTS
     __vbaVarEqv @461
     __vbaVarErrI4 @462
     __vbaVarFix @463
-    __vbaVarForInit=vbrun_stub_464 @464
-    __vbaVarForNext=vbrun_stub_465 @465
+    __vbaVarForInit @464
+    __vbaVarForNext @465
     __vbaVarIdiv @466
     __vbaVarImp @467
     __vbaVarIndexLoad @468
-    __vbaVarIndexLoadRef=vbrun_stub_469 @469
-    __vbaVarIndexLoadRefLock=vbrun_stub_470 @470
+    __vbaVarIndexLoadRef @469
+    __vbaVarIndexLoadRefLock @470
     __vbaVarIndexStore @471
     __vbaVarIndexStoreObj @472
     __vbaVarInt @473
@@ -451,10 +451,10 @@ EXPORTS
     rtcGetMonthOfYear @545
     rtcGetPresentDate @546
     rtcGetSecondOfMinute @547
-    rtcSetDateVar=vbrun_stub_548 @548
-    rtcSetDateBstr=vbrun_stub_549 @549
-    rtcSetTimeVar=vbrun_stub_550 @550
-    rtcSetTimeBstr=vbrun_stub_551 @551
+    rtcSetDateVar @548
+    rtcSetDateBstr @549
+    rtcSetTimeVar @550
+    rtcSetTimeBstr @551
     rtcGetDayOfWeek @552
     rtcGetYear @553
     rtcFileReset @554
@@ -502,7 +502,7 @@ EXPORTS
     rtcInputBox @596
     rtcAppActivate @597
     rtcDoEvents @598
-    rtcSendKeys=vbrun_stub_599 @599
+    rtcSendKeys @599
     rtcShell @600
     rtcArray @601
     __vbaVargUnk @602
@@ -518,7 +518,7 @@ EXPORTS
     rtcGetTimeVar @612
     rtcVarStrFromVar @613
     rtcSqr @614
-    rtcIMEStatus=vbrun_stub_615 @615
+    rtcIMEStatus @615
     rtcLeftCharBstr @616
     rtcLeftCharVar @617
     rtcRightCharBstr @618
@@ -528,9 +528,9 @@ EXPORTS
     rtcStrConvVar @622
     __vbaWriteFile @623
     rtcGetHostLCID @624
-    rtcCreateObject=vbrun_stub_625 @625
+    rtcCreateObject @625
     rtcGetObject @626
-    rtcAppleScript=vbrun_stub_627 @627
+    rtcAppleScript @627
     rtcMidBstr @628
     rtcMidVar @629
     rtcInStr @630
@@ -588,7 +588,7 @@ EXPORTS
     rtcIRR @682
     rtcMIRR @683
     rtcNPV @684
-    rtcErrObj=vbrun_stub_685 @685
+    rtcErrObj @685
     rtUI1FromErrVar @686
     rtcVarDateFromVar @687
     _adj_fdiv_m32=vbrun_stub_688 @688
