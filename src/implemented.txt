@@ -567,3 +567,16 @@ _adj_fprem
 _adj_fprem1
 _adj_fptan
 _allmul
+PutMemVar
+PutMemObj
+SetMemVar
+GetMemEvent
+PutMemEvent
+SetMemNewObj
+EVENT_SINK_AddRef
+EVENT_SINK_Release
+EVENT_SINK2_AddRef
+EVENT_SINK2_Release
+EbLibraryLoad
+EbLibraryUnload
+__vbaAryRecMove

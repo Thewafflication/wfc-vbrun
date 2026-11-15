@@ -74,7 +74,7 @@ EXPORTS
     __vbaAryMove @168
     __vbaAryRebase1Var @169
     __vbaAryRecCopy=vbrun_stub_170 @170
-    __vbaAryRecMove=vbrun_stub_171 @171
+    __vbaAryRecMove @171
     __vbaAryUnlock @172
     __vbaAryVar @173
     __vbaBoolStr @174
@@ -171,8 +171,8 @@ EXPORTS
     EbResetProjectNormal=vbrun_stub_265 @265
     TipUnloadInstance=vbrun_stub_266 @266
     __vbaI4ErrVar @267
-    EbLibraryLoad=vbrun_stub_268 @268
-    EbLibraryUnload=vbrun_stub_269 @269
+    EbLibraryLoad @268
+    EbLibraryUnload @269
     __vbaI4ForNextCheck @270
     EbLoadRunTime=vbrun_stub_271 @271
     __vbaI4Str @272
@@ -213,17 +213,17 @@ EXPORTS
     PutMem4 @307
     PutMem8 @308
     PutMemStr @309
-    PutMemVar=vbrun_stub_310 @310
-    PutMemObj=vbrun_stub_311 @311
-    SetMemVar=vbrun_stub_312 @312
+    PutMemVar @310
+    PutMemObj @311
+    SetMemVar @312
     SetMemObj @313
     GetMemNewObj=vbrun_stub_314 @314
     PutMemNewObj=vbrun_stub_315 @315
-    SetMemNewObj=vbrun_stub_316 @316
+    SetMemNewObj @316
     GetMem1 @317
     PutMem1 @318
-    GetMemEvent=vbrun_stub_319 @319
-    PutMemEvent=vbrun_stub_320 @320
+    GetMemEvent @319
+    PutMemEvent @320
     SetMemEvent=vbrun_stub_321 @321
     __vbaLateMemNamedStAd @322
     __vbaLateMemSt @323
@@ -304,8 +304,8 @@ EXPORTS
     __vbaStrAryToUnicode @398
     __vbaStrBool @399
     EVENT_SINK_QueryInterface=vbrun_stub_400 @400
-    EVENT_SINK_AddRef=vbrun_stub_401 @401
-    EVENT_SINK_Release=vbrun_stub_402 @402
+    EVENT_SINK_AddRef @401
+    EVENT_SINK_Release @402
     EVENT_SINK_GetIDsOfNames=vbrun_stub_403 @403
     EVENT_SINK_Invoke=vbrun_stub_404 @404
     __vbaStrCat @405
@@ -343,8 +343,8 @@ EXPORTS
     __vbaStrVarMove @437
     __vbaStrVarVal @438
     __vbaUI1Cy @439
-    EVENT_SINK2_AddRef=vbrun_stub_440 @440
-    EVENT_SINK2_Release=vbrun_stub_441 @441
+    EVENT_SINK2_AddRef @440
+    EVENT_SINK2_Release @441
     __vbaUI1ErrVar @442
     __vbaUI1Str @443
     __vbaUI1Var @444
