@@ -21,17 +21,17 @@ EXPORTS
     __vbaVarLateMemSt @115
     __vbaVarLateMemStAd @116
     __vbaAryVarVarg=vbrun_stub_117 @117
-    __vbaFpCDblR4=vbrun_stub_118 @118
-    __vbaFpCDblR8=vbrun_stub_119 @119
-    __vbaFpCSngR4=vbrun_stub_120 @120
-    __vbaFpCSngR8=vbrun_stub_121 @121
-    __vbaFpCmpCy=vbrun_stub_122 @122
-    __vbaFpCy=vbrun_stub_123 @123
-    __vbaFpI2=vbrun_stub_124 @124
-    __vbaFpI4=vbrun_stub_125 @125
-    __vbaFpR4=vbrun_stub_126 @126
-    __vbaFpR8=vbrun_stub_127 @127
-    __vbaFpUI1=vbrun_stub_128 @128
+    __vbaFpCDblR4 @118
+    __vbaFpCDblR8 @119
+    __vbaFpCSngR4 @120
+    __vbaFpCSngR8 @121
+    __vbaFpCmpCy @122
+    __vbaFpCy @123
+    __vbaFpI2 @124
+    __vbaFpI4 @125
+    __vbaFpR4 @126
+    __vbaFpR8 @127
+    __vbaFpUI1 @128
     __vbaFreeObj @129
     __vbaFreeStr @130
     __vbaFreeVar @131
@@ -127,9 +127,9 @@ EXPORTS
     __vbaExitEachColl @221
     __vbaExitEachVar @222
     __vbaExitProc=vbrun_stub_223 @223
-    __vbaFPException=vbrun_stub_224 @224
-    __vbaFPFix=vbrun_stub_225 @225
-    __vbaFPInt=vbrun_stub_226 @226
+    __vbaFPException @224
+    __vbaFPFix @225
+    __vbaFPInt @226
     TipUnloadProject=vbrun_stub_227 @227
     __vbaFailedFriend @228
     __vbaFileClose @229
@@ -274,11 +274,11 @@ EXPORTS
     __vbaR4Var @368
     __vbaR8Cy @369
     __vbaR8ErrVar @370
-    __vbaR8FixI2=vbrun_stub_371 @371
-    __vbaR8FixI4=vbrun_stub_372 @372
+    __vbaR8FixI2 @371
+    __vbaR8FixI4 @372
     __vbaR8ForNextCheck @373
-    __vbaR8IntI2=vbrun_stub_374 @374
-    __vbaR8IntI4=vbrun_stub_375 @375
+    __vbaR8IntI2 @374
+    __vbaR8IntI4 @375
     __vbaR8Sgn @376
     __vbaR8Str @377
     __vbaR8Var @378
