@@ -78,6 +78,7 @@ set(
   src/helpers_regcall.cpp
   src/vbrun_regcall.hpp
   src/helpers_x87.cpp
+  src/helpers_x87math.cpp
   src/x87_core.hpp
 )
 
@@ -345,6 +346,18 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-x87 COMMAND vbrun_x87_tests)
     set_tests_properties(
       TC-MP0009-vbrun-x87
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # Sin, Cos, Tan, Atn, Exp, Log, Sqr, the _adj_ divides and _allmul.
+    add_executable(
+      vbrun_x87math_tests
+      tests/vbrun_x87math_tests.cpp
+      src/helpers_x87math.cpp
+    )
+    wfc_vbrun_harden(vbrun_x87math_tests)
+    add_test(NAME TC-MP0009-vbrun-x87math COMMAND vbrun_x87math_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-x87math
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.

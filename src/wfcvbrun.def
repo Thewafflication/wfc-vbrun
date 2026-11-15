@@ -20,7 +20,7 @@ EXPORTS
     __vbaVarLateMemCallSt @114
     __vbaVarLateMemSt @115
     __vbaVarLateMemStAd @116
-    __vbaAryVarVarg=vbrun_stub_117 @117
+    __vbaAryVarVarg @117
     __vbaFpCDblR4 @118
     __vbaFpCDblR8 @119
     __vbaFpCSngR4 @120
@@ -53,19 +53,19 @@ EXPORTS
     __vbaVarZero @147
     __vbaVargParmRef @148
     __vbaVargVar @149
-    __vbaVargVarCopy=vbrun_stub_150 @150
-    __vbaVargVarMove=vbrun_stub_151 @151
+    __vbaVargVarCopy @150
+    __vbaVargVarMove @151
     __vbaVargVarRef @152
     DLLGetDocumentation=vbrun_stub_153 @153
     DllCanUnloadNow @154
     DllGetClassObject @155
-    _CIatan=vbrun_stub_156 @156
-    _CIcos=vbrun_stub_157 @157
-    _CIexp=vbrun_stub_158 @158
-    _CIlog=vbrun_stub_159 @159
-    _CIsin=vbrun_stub_160 @160
-    _CIsqrt=vbrun_stub_161 @161
-    _CItan=vbrun_stub_162 @162
+    _CIatan @156
+    _CIcos @157
+    _CIexp @158
+    _CIlog @159
+    _CIsin @160
+    _CIsqrt @161
+    _CItan @162
     __vbaAptOffset @163
     __vbaAryConstruct2 @164
     __vbaAryConstruct @165
@@ -85,7 +85,7 @@ EXPORTS
     __vbaCastObjVar @179
     __vbaCheckType @180
     __vbaCheckTypeVar @181
-    __vbaChkstk=vbrun_stub_182 @182
+    __vbaChkstk @182
     __vbaCopyBytes @183
     __vbaCopyBytesZero @184
     __vbaCyAbs @185
@@ -229,7 +229,7 @@ EXPORTS
     __vbaLateMemSt @323
     __vbaLateMemStAd @324
     __vbaLbound @325
-    __vbaLdZeroAry=vbrun_stub_326 @326
+    __vbaLdZeroAry @326
     __vbaLenBstr @327
     __vbaLenBstrB @328
     __vbaLenVar @329
@@ -562,7 +562,7 @@ EXPORTS
     rtcAbsVar @656
     rtcIntVar @657
     rtcSgnVar @658
-    _adj_fdiv_m16i=vbrun_stub_659 @659
+    _adj_fdiv_m16i @659
     rtcVarFromFormatVar @660
     rtcDateAdd @661
     rtcDateDiff @662
@@ -591,7 +591,7 @@ EXPORTS
     rtcErrObj @685
     rtUI1FromErrVar @686
     rtcVarDateFromVar @687
-    _adj_fdiv_m32=vbrun_stub_688 @688
+    _adj_fdiv_m32 @688
     rtcGetSetting @689
     rtcSaveSetting @690
     rtcDeleteSetting @691
@@ -604,7 +604,7 @@ EXPORTS
     rtcVarBstrFromChar @698
     rtcSetCurrentCalendar @699
     rtcGetCurrentCalendar @700
-    _adj_fdiv_m32i=vbrun_stub_701 @701
+    _adj_fdiv_m32i @701
     rtcFormatNumber @702
     rtcFormatCurrency @703
     rtcFormatPercent @704
@@ -621,17 +621,17 @@ EXPORTS
     rtcCallByName @715
     rtcCreateObject2 @716
     rtcStrConvVar2 @717
-    _adj_fdiv_m64=vbrun_stub_718 @718
+    _adj_fdiv_m64 @718
     _adj_fdiv_r=vbrun_stub_719 @719
-    _adj_fdivr_m16i=vbrun_stub_720 @720
-    _adj_fdivr_m32=vbrun_stub_721 @721
-    _adj_fdivr_m32i=vbrun_stub_722 @722
-    _adj_fdivr_m64=vbrun_stub_723 @723
-    _adj_fpatan=vbrun_stub_724 @724
-    _adj_fprem=vbrun_stub_725 @725
-    _adj_fprem1=vbrun_stub_726 @726
-    _adj_fptan=vbrun_stub_727 @727
-    _allmul=vbrun_stub_728 @728
+    _adj_fdivr_m16i @720
+    _adj_fdivr_m32 @721
+    _adj_fdivr_m32i @722
+    _adj_fdivr_m64 @723
+    _adj_fpatan @724
+    _adj_fprem @725
+    _adj_fprem1 @726
+    _adj_fptan @727
+    _allmul @728
     TipInvokeMethod2=vbrun_stub_999 @999
     TipInvokeMethod=vbrun_stub_1016 @1016
     IID_IVbaHost=vbrun_stub_1024 @1024

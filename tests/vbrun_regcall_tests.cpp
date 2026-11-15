@@ -41,6 +41,10 @@ VARIANT* VBRUN_FASTCALL __vbaVargVarRef(VARIANT* destination,
                                         VARIANT* source);
 VARIANT* VBRUN_FASTCALL __vbaVarMove(VARIANT* destination, VARIANT* source);
 void VBRUN_FASTCALL __vbaFreeVarg(VARIANT* variant);
+VARIANT* VBRUN_FASTCALL __vbaVargVarMove(VARIANT* target, VARIANT* source);
+VARIANT* VBRUN_FASTCALL __vbaVargVarCopy(VARIANT* target, VARIANT* source);
+VARIANT* VBRUN_FASTCALL __vbaAryVarVarg(VARIANT* result, SAFEARRAY* source);
+SAFEARRAY** WINAPI __vbaLdZeroAry(SAFEARRAY** slot, SAFEARRAY* source);
 VARIANT* VBRUN_FASTCALL __vbaVarVargNofree(VARIANT* destination,
                                            VARIANT* source);
 }
@@ -414,6 +418,90 @@ void zombie() {
            "Invoke fails");
 }
 
+void through_references() {
+    // A value is converted to the type the reference points at.
+    long number = 0;
+    VARIANT by_long;
+    VariantInit(&by_long);
+    V_VT(&by_long) = VT_I4 | VT_BYREF;
+    V_I4REF(&by_long) = &number;
+    VARIANT source;
+    VariantInit(&source);
+    V_VT(&source) = VT_R8;
+    V_R8(&source) = 7.4;
+    expect(__vbaVargVarCopy(&by_long, &source) == &by_long && number == 7 &&
+               V_VT(&source) == VT_R8,
+           "VargVarCopy converts and leaves the source");
+
+    // A string moves in and the source is freed; the old string is freed.
+    BSTR text = SysAllocString(L"old");
+    VARIANT by_text;
+    VariantInit(&by_text);
+    V_VT(&by_text) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&by_text) = &text;
+    VARIANT from;
+    VariantInit(&from);
+    V_VT(&from) = VT_BSTR;
+    V_BSTR(&from) = SysAllocString(L"new");
+    __vbaVargVarMove(&by_text, &from);
+    expect(text != nullptr && std::wcscmp(text, L"new") == 0 &&
+               V_VT(&from) == VT_EMPTY,
+           "VargVarMove stores the string and frees the source");
+    SysFreeString(text);
+
+    // Into a Variant reference the Variant is copied.
+    VARIANT inner;
+    VariantInit(&inner);
+    VARIANT by_variant;
+    VariantInit(&by_variant);
+    V_VT(&by_variant) = VT_VARIANT | VT_BYREF;
+    V_VARIANTREF(&by_variant) = &inner;
+    __vbaVargVarCopy(&by_variant, &source);
+    expect(V_VT(&inner) == VT_R8 && V_R8(&inner) == 7.4,
+           "VargVarCopy into a Variant reference");
+
+    // The target that is not a reference is a plain move.
+    VARIANT plain;
+    VariantInit(&plain);
+    VARIANT value;
+    VariantInit(&value);
+    V_VT(&value) = VT_I2;
+    V_I2(&value) = 5;
+    __vbaVargVarMove(&plain, &value);
+    expect(V_VT(&plain) == VT_I2 && V_I2(&plain) == 5 &&
+               V_VT(&value) == VT_EMPTY,
+           "VargVarMove into a plain Variant");
+
+    // AryVarVarg copies an array of Variants.
+    SAFEARRAYBOUND bound = {3, 0};
+    SAFEARRAY* array = SafeArrayCreate(VT_VARIANT, 1, &bound);
+    VARIANT* elements = static_cast<VARIANT*>(array->pvData);
+    for (int index = 0; index < 3; ++index) {
+        V_VT(&elements[index]) = VT_I4;
+        V_I4(&elements[index]) = index + 10;
+    }
+    VARIANT copied;
+    VariantInit(&copied);
+    __vbaAryVarVarg(&copied, array);
+    VARIANT* made = static_cast<VARIANT*>(V_ARRAY(&copied)->pvData);
+    expect(V_VT(&copied) == (VT_ARRAY | VT_VARIANT) &&
+               V_ARRAY(&copied) != array && V_I4(&made[2]) == 12 &&
+               V_ARRAY(&copied)->rgsabound[0].cElements == 3,
+           "AryVarVarg copies the array");
+    VariantClear(&copied);
+
+    // LdZeroAry takes the data of the source descriptor over.
+    SAFEARRAY* slot = nullptr;
+    void* data = array->pvData;
+    __vbaLdZeroAry(&slot, array);
+    expect(slot != nullptr && slot->pvData == data && array->pvData == nullptr &&
+               slot->cbElements == sizeof(VARIANT) &&
+               slot->rgsabound[0].cElements == 3,
+           "LdZeroAry moves the data to a new descriptor");
+    SafeArrayDestroy(slot);
+    SafeArrayDestroy(array);
+}
+
 }  // namespace
 
 int main() {
@@ -424,6 +512,7 @@ int main() {
     more_variants();
     basic_class();
     zombie();
+    through_references();
     if (failures == 0) {
         std::printf("vbrun regcall: all checks passed\n");
         return 0;

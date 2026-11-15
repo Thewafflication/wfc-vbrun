@@ -415,3 +415,240 @@ VARIANT* VBRUN_FASTCALL __vbaVarVargNofree(VARIANT* const destination,
 }
 
 }  // extern "C"
+
+namespace {
+
+// Stores a Variant into the target of a by-reference Variant (the worker of
+// __vbaVargVarMove and __vbaVargVarCopy): an object source gives its default
+// value, the value is converted to the type the reference points at and
+// written there (the old string or object in the slot is released). When the
+// target is not a reference the Variant is moved or copied as it is.
+VARIANT* store_through_reference(VARIANT* const target,
+                                 VARIANT* const source, const bool move) {
+    if ((V_VT(target) & kByRef) == 0) {
+        return move ? __vbaVarMove(target, source)
+                    : __vbaVarCopy(target, source);
+    }
+    VARIANT defaulted;
+    VariantInit(&defaulted);
+    VARIANT* value = source;
+    if (V_VT(source) == VT_DISPATCH && V_DISPATCH(source) != nullptr) {
+        IDispatch* const object = V_DISPATCH(source);
+        DISPPARAMS none = {nullptr, nullptr, 0, 0};
+        const HRESULT result = object->Invoke(
+            DISPID_VALUE, IID_NULL, 0, DISPATCH_METHOD | DISPATCH_PROPERTYGET,
+            &none, &defaulted, nullptr, nullptr);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+            return target;
+        }
+        if (V_VT(&defaulted) == VT_DISPATCH) {
+            VariantClear(&defaulted);
+            static_cast<void>(vbrun::raise(13));
+            return target;
+        }
+        if (move) {
+            object->Release();
+            V_VT(source) = VT_EMPTY;
+        }
+        value = &defaulted;
+    }
+    const VARTYPE base = V_VT(target) & static_cast<VARTYPE>(~kByRef);
+    if (base == VT_VARIANT) {
+        __vbaVarCopy(V_VARIANTREF(target), value);
+    } else {
+        VARIANT converted;
+        VariantInit(&converted);
+        const HRESULT result = VariantChangeType(&converted, value, 0, base);
+        if (FAILED(result)) {
+            static_cast<void>(vbrun::raise_hresult(result));
+        } else {
+            void* const slot = target->byref;
+            switch (base) {
+                case VT_UI1:
+                    std::memcpy(slot, &converted.bVal, 1);
+                    break;
+                case VT_I2:
+                case VT_BOOL:
+                    std::memcpy(slot, &converted.iVal, 2);
+                    break;
+                case VT_I4:
+                case VT_R4:
+                case VT_ERROR:
+                    std::memcpy(slot, &converted.lVal, 4);
+                    break;
+                case VT_R8:
+                case VT_CY:
+                case VT_DATE:
+                    std::memcpy(slot, &converted.dblVal, 8);
+                    break;
+                case VT_BSTR: {
+                    BSTR* const string = static_cast<BSTR*>(slot);
+                    if (*string != nullptr) {
+                        SysFreeString(*string);
+                    }
+                    *string = converted.bstrVal;
+                    converted.bstrVal = nullptr;
+                    break;
+                }
+                case VT_DISPATCH:
+                case VT_UNKNOWN: {
+                    IUnknown** const object = static_cast<IUnknown**>(slot);
+                    if (*object != nullptr) {
+                        (*object)->Release();
+                    }
+                    *object = converted.punkVal;
+                    converted.punkVal = nullptr;
+                    break;
+                }
+                case VT_DECIMAL:
+                    std::memcpy(slot, &converted, sizeof(DECIMAL));
+                    break;
+                default:
+                    static_cast<void>(vbrun::raise(5));
+                    break;
+            }
+        }
+        VariantClear(&converted);
+    }
+    if (value == &defaulted) {
+        VariantClear(&defaulted);
+    } else if (move) {
+        __vbaFreeVar(source);
+    }
+    return target;
+}
+
+}  // namespace
+
+extern "C" {
+
+// A Variant stored through a by-reference Variant, the source then freed
+// (Move) or left alone (Copy). EDX is the source, ECX the by-reference target.
+VARIANT* VBRUN_FASTCALL __vbaVargVarMove(VARIANT* const target,
+                                         VARIANT* const source) {
+    return store_through_reference(target, source, true);
+}
+
+VARIANT* VBRUN_FASTCALL __vbaVargVarCopy(VARIANT* const target,
+                                         VARIANT* const source) {
+    return store_through_reference(target, source, false);
+}
+
+// A by-reference Variant array as a Variant holding a new array: a copy of the
+// array with every element copied.
+VARIANT* VBRUN_FASTCALL __vbaAryVarVarg(VARIANT* const result,
+                                        SAFEARRAY* const source) {
+    V_VT(result) = static_cast<VARTYPE>(VT_ARRAY | VT_VARIANT);
+    SAFEARRAY* copy = nullptr;
+    if (source->rgsabound[0].cElements == 0) {
+        if (FAILED(SafeArrayAllocDescriptorEx(VT_VARIANT, 1, &copy))) {
+            static_cast<void>(vbrun::raise(7));
+            V_ARRAY(result) = nullptr;
+            return result;
+        }
+        copy->cbElements = sizeof(VARIANT);
+        copy->fFeatures = static_cast<USHORT>(source->fFeatures & ~0x12U);
+        V_ARRAY(result) = copy;
+        return result;
+    }
+    copy = SafeArrayCreate(VT_VARIANT, 1, source->rgsabound);
+    if (copy == nullptr) {
+        static_cast<void>(vbrun::raise(7));
+        V_ARRAY(result) = nullptr;
+        return result;
+    }
+    VARIANT* const from = static_cast<VARIANT*>(source->pvData);
+    VARIANT* const to = static_cast<VARIANT*>(copy->pvData);
+    for (ULONG index = 0; index < copy->rgsabound[0].cElements; ++index) {
+        __vbaVarCopy(&to[index], &from[index]);
+    }
+    V_ARRAY(result) = copy;
+    return result;
+}
+
+// An array descriptor taken over: the slot gets a new descriptor with the
+// source's bounds and data (the source keeps its descriptor, loses its data,
+// and is no longer marked embedded).
+SAFEARRAY** WINAPI __vbaLdZeroAry(SAFEARRAY** const slot,
+                                  SAFEARRAY* const source) {
+    if (*slot != nullptr) {
+        SafeArrayDestroyDescriptor(*slot);
+        *slot = nullptr;
+    }
+    HRESULT result = S_OK;
+    if ((source->fFeatures & FADF_HAVEVARTYPE) != 0) {
+        VARTYPE type = VT_EMPTY;
+        SafeArrayGetVartype(source, &type);
+        result = SafeArrayAllocDescriptorEx(type, source->cDims, slot);
+    } else {
+        result = SafeArrayAllocDescriptor(source->cDims, slot);
+    }
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(result));
+        return slot;
+    }
+    SAFEARRAY* const made = *slot;
+    made->cbElements = source->cbElements;
+    made->fFeatures = static_cast<USHORT>(source->fFeatures & ~0x12U);
+    made->cLocks = 0;
+    std::memcpy(made->rgsabound, source->rgsabound,
+                sizeof(SAFEARRAYBOUND) * source->cDims);
+    source->fFeatures = static_cast<USHORT>(source->fFeatures & ~0x20U);
+    made->pvData = source->pvData;
+    source->pvData = nullptr;
+    return slot;
+}
+
+}  // extern "C"
+
+// The stack probe: EAX is the number of bytes to allocate; every page of them
+// is touched in turn so the guard page moves down, the return frame is moved
+// below the new space, and the space is zeroed.
+#if defined(_MSC_VER) && defined(_M_IX86)
+
+extern "C" __declspec(naked) void __vbaChkstk() {
+    __asm {
+        push ecx
+        push edi
+        push eax
+        cmp eax, 0x1000
+        lea ecx, [esp + 0x10]
+        jae large_frame
+    small_frame:
+        sub ecx, eax
+        mov eax, esp
+        test dword ptr [ecx], eax
+        lea esp, [ecx - 0x10]
+        mov ecx, dword ptr [eax]
+        mov dword ptr [esp], ecx
+        mov ecx, dword ptr [eax + 4]
+        mov dword ptr [esp + 4], ecx
+        mov ecx, dword ptr [eax + 8]
+        mov dword ptr [esp + 8], ecx
+        mov ecx, dword ptr [eax + 0xc]
+        mov dword ptr [esp + 0xc], ecx
+        pop ecx
+        lea edi, [esp + 0xc]
+        shr ecx, 2
+        mov eax, 0
+        rep stosd
+        pop edi
+        pop ecx
+        ret
+    large_frame:
+        sub ecx, 0x1000
+        sub eax, 0x1000
+        test dword ptr [ecx], eax
+        cmp eax, 0x1000
+        jb small_frame
+        jmp large_frame
+    }
+}
+
+#else
+
+// Without a stack of the 32-bit x86 kind to probe there is nothing to do.
+extern "C" void __vbaChkstk() {}
+
+#endif
