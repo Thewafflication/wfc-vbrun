@@ -189,11 +189,14 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     )
     target_link_libraries(vbrun_file_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_file_tests)
+    # Its own working directory: the file tests make files of the same names
+    # and run side by side.
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-openfiles")
     add_test(
       NAME TC-MP0009-vbrun-openfiles
       COMMAND vbrun_file_tests
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/openfiles.expected"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-openfiles"
     )
     set_tests_properties(
       TC-MP0009-vbrun-openfiles
@@ -208,13 +211,16 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     )
     target_link_libraries(vbrun_file_data_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_file_data_tests)
+    # Its own working directory: the file tests make files of the same names
+    # and run side by side.
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filedata")
     add_test(
       NAME TC-MP0009-vbrun-filedata
       COMMAND vbrun_file_data_tests
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileprint.expected"
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileinput.expected"
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filenumbers.expected"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filedata"
     )
     set_tests_properties(
       TC-MP0009-vbrun-filedata
@@ -370,11 +376,14 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     )
     target_link_libraries(vbrun_file_misc_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_file_misc_tests)
+    # Its own working directory: the file tests make files of the same names
+    # and run side by side.
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filemisc")
     add_test(
       NAME TC-MP0009-vbrun-filemisc
       COMMAND vbrun_file_misc_tests
               "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filemisc.expected"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filemisc"
     )
     set_tests_properties(
       TC-MP0009-vbrun-filemisc
