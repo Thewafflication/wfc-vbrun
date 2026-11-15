@@ -218,7 +218,11 @@ void raise_for_status(const unsigned status) {
 
 extern "C" {
 
+// The exception flags of the x87 stay set until they are cleared, so the
+// error clears them (the reference's error path resets the unit) or the next
+// conversion would fail on the old flags.
 void __cdecl vbrun_x87_fail(unsigned status) {
+    __asm fnclex
     vbrun::x87::raise_for_status(status);
 }
 
