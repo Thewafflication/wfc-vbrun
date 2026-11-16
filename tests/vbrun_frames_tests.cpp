@@ -61,6 +61,9 @@ int gosub_passes(void** head) {
     return passes;
 }
 
+#pragma warning(push)
+// The test installs its own frame at fs:[0], on purpose.
+#pragma warning(disable : 4733)
 void frames() {
     void* head = nullptr;
     expect(gosub_passes(&head) == 2 && head == nullptr,
@@ -122,6 +125,8 @@ void frames() {
         mov dword ptr fs:[0], eax
     }
 }
+
+#pragma warning(pop)
 
 }  // namespace
 
