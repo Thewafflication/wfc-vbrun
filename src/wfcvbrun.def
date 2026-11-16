@@ -93,7 +93,7 @@ EXPORTS
     DllFunctionCall=vbrun_stub_187 @187
     __vbaCyAdd @188
     __vbaCyErrVar @189
-    CopyRecord=vbrun_stub_190 @190
+    CopyRecord @190
     __vbaCyFix @191
     __vbaCyForInit @192
     __vbaCyForNext @193
@@ -284,9 +284,9 @@ EXPORTS
     __vbaR8Var @378
     __vbaRaiseEvent=vbrun_stub_379 @379
     __vbaRecAnsiToUni=vbrun_stub_380 @380
-    __vbaRecAssign=vbrun_stub_381 @381
-    __vbaRecDestruct=vbrun_stub_382 @382
-    __vbaRecDestructAnsi=vbrun_stub_383 @383
+    __vbaRecAssign @381
+    __vbaRecDestruct @382
+    __vbaRecDestructAnsi @383
     __vbaRecUniToAnsi=vbrun_stub_384 @384
     __vbaRedim @385
     __vbaRedimPreserve @386

@@ -587,3 +587,7 @@ __vbaOnError
 __vbaExitProc
 GetMemNewObj
 PutMemNewObj
+__vbaRecAssign
+CopyRecord
+__vbaRecDestruct
+__vbaRecDestructAnsi

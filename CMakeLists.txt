@@ -81,6 +81,7 @@ set(
   src/helpers_x87math.cpp
   src/helpers_members.cpp
   src/helpers_frames.cpp
+  src/helpers_records.cpp
   src/x87_core.hpp
 )
 
@@ -375,6 +376,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-members COMMAND vbrun_members_tests)
     set_tests_properties(
       TC-MP0009-vbrun-members
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # Record copy and destroy from a descriptor.
+    add_executable(
+      vbrun_records_tests
+      tests/vbrun_records_tests.cpp
+      src/helpers_records.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_records_tests PRIVATE oleaut32 ole32)
+    wfc_vbrun_harden(vbrun_records_tests)
+    add_test(NAME TC-MP0009-vbrun-records COMMAND vbrun_records_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-records
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # The GoSub list and the error-handler frame helpers.
