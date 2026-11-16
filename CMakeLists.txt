@@ -80,6 +80,7 @@ set(
   src/helpers_x87.cpp
   src/helpers_x87math.cpp
   src/helpers_members.cpp
+  src/helpers_frames.cpp
   src/x87_core.hpp
 )
 
@@ -374,6 +375,21 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-members COMMAND vbrun_members_tests)
     set_tests_properties(
       TC-MP0009-vbrun-members
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # The GoSub list and the error-handler frame helpers.
+    add_executable(
+      vbrun_frames_tests
+      tests/vbrun_frames_tests.cpp
+      src/helpers_frames.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_frames_tests PRIVATE oleaut32 ole32)
+    wfc_vbrun_harden(vbrun_frames_tests)
+    add_test(NAME TC-MP0009-vbrun-frames COMMAND vbrun_frames_tests)
+    set_tests_properties(
+      TC-MP0009-vbrun-frames
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.

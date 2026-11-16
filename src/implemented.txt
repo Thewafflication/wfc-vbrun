@@ -580,3 +580,8 @@ EVENT_SINK2_Release
 EbLibraryLoad
 EbLibraryUnload
 __vbaAryRecMove
+__vbaGosub
+__vbaGosubReturn
+__vbaGosubFree
+__vbaOnError
+__vbaExitProc

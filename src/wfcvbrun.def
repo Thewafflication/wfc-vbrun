@@ -126,7 +126,7 @@ EXPORTS
     TipSetOption=vbrun_stub_220 @220
     __vbaExitEachColl @221
     __vbaExitEachVar @222
-    __vbaExitProc=vbrun_stub_223 @223
+    __vbaExitProc @223
     __vbaFPException @224
     __vbaFPFix @225
     __vbaFPInt @226
@@ -156,9 +156,9 @@ EXPORTS
     __vbaGetFxStr4 @250
     __vbaGetOwner3=vbrun_stub_251 @251
     __vbaGetOwner4=vbrun_stub_252 @252
-    __vbaGosub=vbrun_stub_253 @253
-    __vbaGosubFree=vbrun_stub_254 @254
-    __vbaGosubReturn=vbrun_stub_255 @255
+    __vbaGosub @253
+    __vbaGosubFree @254
+    __vbaGosubReturn @255
     __vbaHresultCheck @256
     __vbaHresultCheckNonvirt @257
     __vbaHresultCheckObj @258
@@ -255,7 +255,7 @@ EXPORTS
     __vbaObjSet @349
     __vbaObjSetAddref @350
     __vbaObjVar @351
-    __vbaOnError=vbrun_stub_352 @352
+    __vbaOnError @352
     __vbaOnGoCheck @353
     __vbaPowerR8 @354
     __vbaPrintFile @355
