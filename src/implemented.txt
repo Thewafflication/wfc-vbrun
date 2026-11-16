@@ -585,3 +585,5 @@ __vbaGosubReturn
 __vbaGosubFree
 __vbaOnError
 __vbaExitProc
+GetMemNewObj
+PutMemNewObj

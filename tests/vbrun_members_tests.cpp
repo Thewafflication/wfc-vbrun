@@ -21,6 +21,8 @@ HRESULT WINAPI SetMemVar(VARIANT* to, VARIANT* from);
 HRESULT WINAPI GetMemEvent(void*, void*, IUnknown** from, IUnknown** to);
 HRESULT WINAPI PutMemEvent(void*, void*, IDispatch** target, VARIANT* value);
 HRESULT WINAPI SetMemNewObj(void*, void*, IUnknown** to, IUnknown* value);
+HRESULT WINAPI GetMemNewObj(void*, void*, IUnknown** from, IUnknown** to);
+HRESULT WINAPI PutMemNewObj(void*, void*, IDispatch** target, VARIANT* value);
 ULONG WINAPI EVENT_SINK_AddRef(void* self);
 ULONG WINAPI EVENT_SINK_Release(void* self);
 ULONG WINAPI EVENT_SINK2_AddRef(void* self);
@@ -184,6 +186,18 @@ void events_and_objects() {
     expect(SetMemNewObj(nullptr, nullptr, &slot, nullptr) == S_OK &&
                slot == nullptr && object.count == 2,
            "SetMemNewObj releases the old object");
+    IUnknown* empty = nullptr;
+    IUnknown* got = nullptr;
+    vbrun::clear_error();
+    expect(GetMemNewObj(nullptr, nullptr, &empty, &got) ==
+                   static_cast<HRESULT>(0x800A005B) &&
+               vbrun::last_error() == 91,
+           "GetMemNewObj of an empty slot is error 91");
+    vbrun::clear_error();
+    IUnknown* filled = &object;
+    expect(GetMemNewObj(nullptr, nullptr, &filled, &got) == S_OK &&
+               got == &object && object.count == 3,
+           "GetMemNewObj of a filled slot copies and counts");
 }
 
 // A fake event sink: an interface pointer inside an object, its table header

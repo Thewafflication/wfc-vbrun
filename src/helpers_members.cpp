@@ -181,6 +181,23 @@ HRESULT WINAPI PutMemEvent(void*, void*, IDispatch** const target,
     return PutMemObj(target, value);
 }
 
+// The auto-instantiating forms: the reference creates the object of a
+// "Dim x As New T" variable on first use through the engine's class table,
+// which is not reproduced here; an empty slot is error 91. A filled slot is
+// GetMemObj and PutMemObj.
+HRESULT WINAPI GetMemNewObj(void*, void*, IUnknown** const from,
+                            IUnknown** const to) {
+    if (*from == nullptr) {
+        return vbrun::raise(kObjectVariableNotSet);
+    }
+    return GetMemEvent(nullptr, nullptr, from, to);
+}
+
+HRESULT WINAPI PutMemNewObj(void*, void*, IDispatch** const target,
+                            VARIANT* const value) {
+    return PutMemObj(target, value);
+}
+
 HRESULT WINAPI SetMemNewObj(void*, void*, IUnknown** const to,
                             IUnknown* const value) {
     if (value != nullptr) {

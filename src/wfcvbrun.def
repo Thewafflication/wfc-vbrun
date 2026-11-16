@@ -217,8 +217,8 @@ EXPORTS
     PutMemObj @311
     SetMemVar @312
     SetMemObj @313
-    GetMemNewObj=vbrun_stub_314 @314
-    PutMemNewObj=vbrun_stub_315 @315
+    GetMemNewObj @314
+    PutMemNewObj @315
     SetMemNewObj @316
     GetMem1 @317
     PutMem1 @318
