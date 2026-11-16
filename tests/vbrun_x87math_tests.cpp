@@ -53,6 +53,7 @@ void _adj_fdivr_m64();
 void _adj_fdivr_m16i();
 void _adj_fdivr_m32i();
 void _adj_fprem();
+void _adj_fdiv_r();
 void _adj_fprem1();
 void _adj_fpatan();
 void _adj_fptan();
@@ -74,6 +75,7 @@ double _adj_fdivr_m64(double, double);
 double _adj_fdivr_m16i(double, std::int16_t);
 double _adj_fdivr_m32i(double, std::int32_t);
 double _adj_fprem(double, double);
+double _adj_fdiv_r(double, double, unsigned);
 double _adj_fprem1(double, double);
 double _adj_fpatan(double, double);
 double _adj_fptan(double);
@@ -118,6 +120,32 @@ double div32(void (*function)(), const double dividend, const float operand) {
         fstp result
     }
     return result;
+}
+
+// st0 = a, st1 = b, st2 = c; the form runs and the registers left are stored
+// (two after a popping form, three otherwise).
+void register_divide(const unsigned form, const bool pops, const double a,
+                     const double b, const double c, double out[3]) {
+    double r0 = 0.0;
+    double r1 = 0.0;
+    double r2 = 0.0;
+    __asm {
+        fld c
+        fld b
+        fld a
+        mov eax, form
+        call _adj_fdiv_r
+        fstp r0
+        fstp r1
+    }
+    if (!pops) {
+        __asm {
+            fstp r2
+        }
+    }
+    out[0] = r0;
+    out[1] = r1;
+    out[2] = r2;
 }
 
 double div64(void (*function)(), const double dividend, const double operand) {
@@ -222,7 +250,32 @@ void arithmetic() {
     expect(div64(_adj_fdivr_m64, 2.0, 7.0) == 3.5, "fdivr m64");
     expect(div16i(_adj_fdivr_m16i, 2.0, 7) == 3.5, "fdivr m16i");
     expect(div32i(_adj_fdivr_m32i, 2.0, 7) == 3.5, "fdivr m32i");
+    // st0 = 7, st1 = 2, st2 = 4.
+    double r[3] = {};
+    register_divide(8, false, 7.0, 2.0, 4.0, r);
+    expect(r[0] == 3.5 && r[1] == 2.0 && r[2] == 4.0, "fdiv st0, st1");
+    register_divide(10, false, 7.0, 2.0, 4.0, r);
+    expect(r[0] == 2.0 / 7.0 && r[1] == 2.0 && r[2] == 4.0, "fdivr st0, st1");
+    register_divide(12, false, 2.0, 7.0, 4.0, r);
+    expect(r[0] == 2.0 && r[1] == 3.5 && r[2] == 4.0, "st1 = st1 / st0");
+    register_divide(13, true, 2.0, 7.0, 4.0, r);
+    expect(r[0] == 3.5 && r[1] == 4.0, "st1 = st1 / st0, pop");
+    register_divide(14, false, 7.0, 2.0, 4.0, r);
+    expect(r[0] == 7.0 && r[1] == 3.5 && r[2] == 4.0, "st1 = st0 / st1");
+    register_divide(15, true, 7.0, 2.0, 4.0, r);
+    expect(r[0] == 3.5 && r[1] == 4.0, "st1 = st0 / st1, pop");
+    register_divide(16, false, 7.0, 4.0, 2.0, r);
+    expect(r[0] == 3.5 && r[1] == 4.0 && r[2] == 2.0, "fdiv st0, st2");
+    register_divide(21, true, 2.0, 4.0, 7.0, r);
+    expect(r[0] == 4.0 && r[1] == 3.5, "st2 = st2 / st0, pop");
+    register_divide(0, false, 7.0, 2.0, 4.0, r);
+    expect(r[0] == 1.0 && r[1] == 2.0, "fdiv st0, st0");
 #else
+    expect(_adj_fdiv_r(7.0, 2.0, 8) == 3.5, "fdiv st0, st1");
+    expect(_adj_fdiv_r(2.0, 7.0, 10) == 3.5, "fdivr st0, st1");
+    expect(_adj_fdiv_r(2.0, 7.0, 13) == 3.5, "st1 = st1 / st0, pop");
+    expect(_adj_fdiv_r(7.0, 2.0, 15) == 3.5, "st1 = st0 / st1, pop");
+    expect(std::isnan(_adj_fdiv_r(7.0, 2.0, 9)), "an invalid form");
     expect(_adj_fdiv_m32(7.0, 2.0F) == 3.5, "fdiv m32");
     expect(_adj_fdiv_m64(7.0, 2.0) == 3.5, "fdiv m64");
     expect(_adj_fdiv_m16i(7.0, 2) == 3.5, "fdiv m16i");

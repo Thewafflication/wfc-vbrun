@@ -78,6 +78,7 @@ char* sink_object(void* const interface_pointer) {
 }
 
 void* library_handle = nullptr;
+thread_local void* context_worker_thread = nullptr;
 
 }  // namespace
 
@@ -244,6 +245,19 @@ ULONG WINAPI EVENT_SINK2_Release(void* const self) {
 void WINAPI EbLibraryLoad(void* const handle) { library_handle = handle; }
 
 void WINAPI EbLibraryUnload() {}
+
+// The worker thread of the calling thread's context is only remembered.
+void WINAPI EbSetContextWorkerThread(void* const thread) {
+    context_worker_thread = thread;
+}
+
+// The interface identifier the reference exports as data:
+// {1D6F7D1E-EACD-11CD-9570-00AA0051E5D4}.
+extern const GUID IID_IVbaHost;
+const GUID IID_IVbaHost = {0x1D6F7D1E,
+                           0xEACD,
+                           0x11CD,
+                           {0x95, 0x70, 0x00, 0xAA, 0x00, 0x51, 0xE5, 0xD4}};
 
 // An array of records moved from the source slot to the destination slot; the
 // array the destination held is destroyed (a fixed-size or embedded array

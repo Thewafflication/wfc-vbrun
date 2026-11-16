@@ -179,7 +179,7 @@ EXPORTS
     __vbaI4Var @273
     EbCreateContext=vbrun_stub_274 @274
     EbDestroyContext=vbrun_stub_275 @275
-    EbSetContextWorkerThread=vbrun_stub_276 @276
+    EbSetContextWorkerThread @276
     __vbaInStr @277
     __vbaInStrB @278
     __vbaInStrVar @279
@@ -622,7 +622,7 @@ EXPORTS
     rtcCreateObject2 @716
     rtcStrConvVar2 @717
     _adj_fdiv_m64 @718
-    _adj_fdiv_r=vbrun_stub_719 @719
+    _adj_fdiv_r @719
     _adj_fdivr_m16i @720
     _adj_fdivr_m32 @721
     _adj_fdivr_m32i @722
@@ -634,7 +634,7 @@ EXPORTS
     _allmul @728
     TipInvokeMethod2=vbrun_stub_999 @999
     TipInvokeMethod=vbrun_stub_1016 @1016
-    IID_IVbaHost=vbrun_stub_1024 @1024
+    IID_IVbaHost @1024
     EbGetObjConnectionCounts=vbrun_stub_1025 @1025
     CreateIExprSrvObj=vbrun_stub_2000 @2000
     EbGetVBAObject=vbrun_stub_2010 @2010

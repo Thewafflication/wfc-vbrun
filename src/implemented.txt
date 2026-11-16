@@ -591,3 +591,6 @@ __vbaRecAssign
 CopyRecord
 __vbaRecDestruct
 __vbaRecDestructAnsi
+_adj_fdiv_r
+IID_IVbaHost
+EbSetContextWorkerThread

@@ -29,6 +29,8 @@ ULONG WINAPI EVENT_SINK2_AddRef(void* self);
 ULONG WINAPI EVENT_SINK2_Release(void* self);
 void WINAPI EbLibraryLoad(void* handle);
 void WINAPI EbLibraryUnload();
+void WINAPI EbSetContextWorkerThread(void* thread);
+extern const GUID IID_IVbaHost;
 HRESULT WINAPI __vbaAryRecMove(void* info, SAFEARRAY** destination,
                                SAFEARRAY** source);
 }
@@ -186,6 +188,12 @@ void events_and_objects() {
     expect(SetMemNewObj(nullptr, nullptr, &slot, nullptr) == S_OK &&
                slot == nullptr && object.count == 2,
            "SetMemNewObj releases the old object");
+    const unsigned char host[16] = {0x1e, 0x7d, 0x6f, 0x1d, 0xcd, 0xea,
+                                    0xcd, 0x11, 0x95, 0x70, 0x00, 0xaa,
+                                    0x00, 0x51, 0xe5, 0xd4};
+    expect(std::memcmp(&IID_IVbaHost, host, sizeof host) == 0,
+           "IID_IVbaHost has the reference's bytes");
+    EbSetContextWorkerThread(nullptr);
     IUnknown* empty = nullptr;
     IUnknown* got = nullptr;
     vbrun::clear_error();
