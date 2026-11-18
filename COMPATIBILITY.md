@@ -51,7 +51,10 @@ Every export is called by at least one test (see
   `VBDllGetClassObject` and the `TipCreateInstance*` calls answer
   `CLASS_E_CLASSNOTAVAILABLE`, `ThunRTMain` runs a program that starts with
   Sub Main only, and `ProcCallEngine`/`MethCallEngine` stop the program
-  with a diagnostic.
+  with a diagnostic. The owner approved this deferral as the compatibility
+  profile of `REQ-0100` (2026-11-18). It affects programs compiled to
+  p-code and programs that start with a form or create the project's own
+  classes.
 - `__vbaExceptHandler` and `__vbaResume` jump into the frames of compiled
   code on x86 only; the runtime's helpers report an error as the
   thread's error, not as an exception, so only hardware exceptions

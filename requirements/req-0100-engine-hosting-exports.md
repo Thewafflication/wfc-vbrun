@@ -100,6 +100,15 @@ Link representative VB6 native executables that import every listed helper famil
 An export or behavior may be deferred only through an approved compatibility
 profile that identifies the affected compiled VB6 programs.
 
+**Approved profile (owner, 2026-11-18):** the object engine and the p-code
+engine are deferred. The affected programs are those compiled to p-code and
+those that start with a form or create the project's own classes. For these
+programs, `VBDllGetClassObject`, `TipCreateInstanceEx`,
+`TipCreateInstanceProject2` and `TipGetAddressOfPredeclaredInstance` answer
+`CLASS_E_CLASSNOTAVAILABLE`. `ThunRTMain` (for a project that does not start
+with Sub Main), `ProcCallEngine` and `MethCallEngine` stop the program with a
+diagnostic and exit code `0x5642`.
+
 ## Implementation Record
 
 All 58 exports have an implementation (`src/implemented.txt`), written
@@ -123,8 +132,8 @@ Deferred: the object engine and the p-code engine are not reproduced.
 - `ProcCallEngine` and `MethCallEngine` do the same.
 
 The affected programs are those compiled to p-code and those that start
-with a form or create the project's own classes. This deferral is listed in
-[COMPATIBILITY.md](../COMPATIBILITY.md), but it is not yet an approved
-compatibility profile.
+with a form or create the project's own classes. The owner approved this
+deferral as a compatibility profile on 2026-11-18 (see Tailoring). It is
+listed in [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).
