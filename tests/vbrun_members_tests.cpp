@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #include "../src/vbrun_helpers.hpp"
 
@@ -30,6 +32,18 @@ ULONG WINAPI EVENT_SINK2_Release(void* self);
 void WINAPI EbLibraryLoad(void* handle);
 void WINAPI EbLibraryUnload();
 void WINAPI EbSetContextWorkerThread(void* thread);
+HRESULT WINAPI EVENT_SINK_QueryInterface(void* self, const IID* iid,
+                                         void** out);
+HRESULT WINAPI EVENT_SINK_GetIDsOfNames(void* self, const IID* iid,
+                                        OLECHAR** names, UINT count,
+                                        LCID locale, DISPID* ids);
+HRESULT WINAPI EVENT_SINK_Invoke(void* self, DISPID member, const IID* iid,
+                                 LCID locale, WORD flags, DISPPARAMS* params,
+                                 VARIANT* result, EXCEPINFO* excep,
+                                 UINT* argument_error);
+HRESULT WINAPI SetMemEvent(void* object, WORD member, IUnknown* value,
+                           IUnknown** slot);
+void __cdecl __vbaRaiseEvent(void* source, DISPID member, LONG count, ...);
 extern const GUID IID_IVbaHost;
 HRESULT WINAPI __vbaAryRecMove(void* info, SAFEARRAY** destination,
                                SAFEARRAY** source);
@@ -120,7 +134,8 @@ void variants() {
            "PutMemVar of Nothing is error 91");
     vbrun::clear_error();
     object.fail = DISP_E_MEMBERNOTFOUND;
-    expect(FAILED(PutMemVar(&target, &holder)), "PutMemVar fails with the call");
+    expect(FAILED(PutMemVar(&target, &holder)),
+           "PutMemVar fails with the call");
     object.fail = S_OK;
     vbrun::clear_error();
 
@@ -208,35 +223,227 @@ void events_and_objects() {
            "GetMemNewObj of a filled slot copies and counts");
 }
 
-// A fake event sink: an interface pointer inside an object, its table header
-// pointing at a record with the offset of the interface.
+// A fake event sink: an interface pointer inside an object. Its table is
+// preceded by a header of three pointer-sized slots whose second points at
+// the sink record: flags, the offset of the interface in the object, the
+// event IID, the handler count (slot 4) and the handler table (slot 5).
 struct Sink {
     char pad[0x24];
     LONG refs;
     char more[0x8];
     void* table;  // the interface pointer is the address of this member
+    LONG pinged;
+    wchar_t seen[4];
 };
 
-void sinks() {
-    // The header sits just below the table: a pointer to the record at table
-    // - 8 (32-bit layout; the bytes are written with memcpy), the record holds
-    // the offset of the interface at +4.
-    unsigned char record[16] = {};
+constexpr std::size_t kSlot = sizeof(void*);
+
+const IID kEvents = {0x9c1e0001,
+                     0x1111,
+                     0x2222,
+                     {0x33, 0x33, 0x44, 0x44, 0x55, 0x55, 0x66, 0x66}};
+
+// The handler of event 1: Ping(ByVal n As Long, s As String), as the probe
+// has it ("ping 4 x", then s becomes "xy").
+HRESULT WINAPI on_ping(Sink* const object, const LONG n, BSTR* const s) {
+    object->pinged = n;
+    std::memcpy(object->seen, *s, (SysStringLen(*s) + 1) * sizeof(wchar_t));
+    BSTR changed = SysAllocString(L"xy");
+    SysFreeString(*s);
+    *s = changed;
+    return S_OK;
+}
+
+struct SinkSetup {
+    unsigned char record[6 * sizeof(void*)] = {};
+    unsigned char handlers[2 * sizeof(void*)] = {};
+};
+
+void make_sink(SinkSetup& setup, Sink& sink, const unsigned flags) {
+    setup.record[0] = static_cast<unsigned char>(flags);
     const std::uintptr_t offset = offsetof(Sink, table);
-    std::memcpy(record + 4, &offset, sizeof(offset));
-    unsigned char block[32] = {};
-    const unsigned char* const record_pointer = record;
-    std::memcpy(block + 4, &record_pointer, sizeof(record_pointer));
+    std::memcpy(setup.record + kSlot, &offset, sizeof offset);
+    const IID* const events = &kEvents;
+    std::memcpy(setup.record + 2 * kSlot, &events, sizeof events);
+    const std::uint16_t count = 1;
+    std::memcpy(setup.record + 4 * kSlot, &count, sizeof count);
+    const unsigned char* const table = setup.handlers;
+    std::memcpy(setup.record + 5 * kSlot, &table, sizeof table);
+    const DISPID ping = 1;
+    std::memcpy(setup.handlers, &ping, sizeof ping);
+    void* const handler = reinterpret_cast<void*>(&on_ping);
+    std::memcpy(setup.handlers + kSlot, &handler, sizeof handler);
+    static_cast<void>(sink);
+}
+
+void sinks() {
+    // The table lives right after the header, so the header and the methods
+    // are one block.
+    struct Block {
+        unsigned char header[3 * sizeof(void*)];
+        void* methods[7];
+    } block = {};
+    SinkSetup setup;
     Sink sink = {};
     sink.refs = 1;
-    sink.table = block + 12;
+    make_sink(setup, sink, 0);
+    const unsigned char* const record = setup.record;
+    std::memcpy(block.header + kSlot, &record, sizeof record);
+    block.methods[0] = reinterpret_cast<void*>(&EVENT_SINK_QueryInterface);
+    block.methods[1] = reinterpret_cast<void*>(&EVENT_SINK_AddRef);
+    block.methods[2] = reinterpret_cast<void*>(&EVENT_SINK_Release);
+    sink.table = block.methods;
     void* const iface = &sink.table;
     expect(EVENT_SINK_AddRef(iface) == 2 && sink.refs == 2,
            "EVENT_SINK_AddRef counts");
     expect(EVENT_SINK_Release(iface) == 1 && sink.refs == 1,
            "EVENT_SINK_Release counts");
+
+    void* out = nullptr;
+    expect(EVENT_SINK_QueryInterface(iface, &IID_IUnknown, &out) == S_OK &&
+               out == iface && sink.refs == 2,
+           "a sink is its own IUnknown, counted");
+    expect(EVENT_SINK_QueryInterface(iface, &kEvents, &out) == S_OK &&
+               out == iface && sink.refs == 3,
+           "a sink answers its event interface");
+    expect(EVENT_SINK_QueryInterface(iface, &IID_IDispatch, &out) ==
+                   E_NOINTERFACE &&
+               out == nullptr,
+           "IDispatch only when the class says so");
+    setup.record[0] = 8;
+    expect(EVENT_SINK_QueryInterface(iface, &IID_IDispatch, &out) == S_OK,
+           "flag 8: the sink is an IDispatch");
+    sink.refs = 1;
+
+    DISPID ids[1] = {0};
+    OLECHAR name[] = L"Ping";
+    OLECHAR* names[] = {name};
+    expect(EVENT_SINK_GetIDsOfNames(iface, &IID_NULL, names, 1, 0, ids) ==
+                   DISP_E_UNKNOWNNAME &&
+               ids[0] == DISPID_UNKNOWN,
+           "a sink knows no names");
+
+    // Invoke of event 1 calls the handler with the object and the arguments
+    // in the order of the declaration; a by-reference argument comes back.
+    VARIANTARG args[2];
+    BSTR s = SysAllocString(L"x");
+    VariantInit(&args[0]);
+    V_VT(&args[0]) = VT_BYREF | VT_BSTR;
+    V_BSTRREF(&args[0]) = &s;
+    VariantInit(&args[1]);
+    V_VT(&args[1]) = VT_I4;
+    V_I4(&args[1]) = 4;
+    DISPPARAMS params = {args, nullptr, 2, 0};
+    expect(EVENT_SINK_Invoke(iface, 1, &IID_NULL, 0, DISPATCH_METHOD, &params,
+                             nullptr, nullptr, nullptr) == S_OK &&
+               sink.pinged == 4 && std::wstring(sink.seen) == L"x" &&
+               std::wstring(s) == L"xy",
+           "EVENT_SINK_Invoke calls the handler ('ping 4 x', s = xy)");
+    expect(EVENT_SINK_Invoke(iface, 2, &IID_NULL, 0, DISPATCH_METHOD, &params,
+                             nullptr, nullptr, nullptr) == S_OK,
+           "an event without a handler is ignored");
+    setup.record[0] = 0x10;
+    expect(
+        EVENT_SINK_Invoke(iface, 2, &IID_NULL, 0, DISPATCH_METHOD, &params,
+                          nullptr, nullptr, nullptr) == DISP_E_MEMBERNOTFOUND,
+        "flag 0x10: an unhandled event is DISP_E_MEMBERNOTFOUND");
+    expect(
+        EVENT_SINK_Invoke(iface, 1, &IID_IUnknown, 0, DISPATCH_METHOD, &params,
+                          nullptr, nullptr, nullptr) == DISP_E_UNKNOWNINTERFACE,
+        "Invoke for an interface is DISP_E_UNKNOWNINTERFACE");
+    SysFreeString(s);
     EbLibraryLoad(nullptr);
     EbLibraryUnload();
+}
+
+// A sink that records the events fired at it.
+class Listener final : public IDispatch {
+public:
+    int calls = 0;
+    DISPID last = 0;
+    LONG first_argument = 0;
+    UINT count = 0;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, void** out) override {
+        *out = this;
+        return S_OK;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return 2; }
+    ULONG STDMETHODCALLTYPE Release() override { return 1; }
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT* n) override {
+        *n = 0;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID, ITypeInfo**) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR*, UINT, LCID,
+                                            DISPID*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD flags,
+                                     DISPPARAMS* params, VARIANT*, EXCEPINFO*,
+                                     UINT*) override {
+        ++calls;
+        last = id;
+        count = params->cArgs;
+        if (flags == DISPATCH_METHOD && params->cArgs == 2) {
+            first_argument = V_I4(&params->rgvarg[1]);
+        }
+        return S_OK;
+    }
+};
+
+void events() {
+    // The source block: the object in slot 2, the sink list from slot 13.
+    struct Node {
+        Node* next;
+        std::uintptr_t sink;
+    };
+    Object owner;
+    Listener first;
+    Listener second;
+    std::vector<unsigned char> source(16 * kSlot, 0);
+    IUnknown* const owner_pointer = &owner;
+    std::memcpy(&source[2 * kSlot], &owner_pointer, sizeof owner_pointer);
+    Node tail = {nullptr, reinterpret_cast<std::uintptr_t>(
+                              static_cast<IDispatch*>(&second))};
+    Node* const head = reinterpret_cast<Node*>(&source[13 * kSlot]);
+    head->next = &tail;
+    head->sink =
+        reinterpret_cast<std::uintptr_t>(static_cast<IDispatch*>(&first));
+    VARIANTARG args[2];
+    VariantInit(&args[0]);
+    V_VT(&args[0]) = VT_BSTR;
+    V_BSTR(&args[0]) = SysAllocString(L"s");
+    VariantInit(&args[1]);
+    V_VT(&args[1]) = VT_I4;
+    V_I4(&args[1]) = 3;
+#if defined(_M_IX86)
+    __vbaRaiseEvent(source.data(), 5, 2, args[0], args[1]);
+#else
+    __vbaRaiseEvent(source.data(), 5, 2, args);
+#endif
+    expect(first.calls == 1 && second.calls == 1 && first.last == 5 &&
+               first.count == 2 && first.first_argument == 3,
+           "RaiseEvent calls every connected sink with the arguments");
+    expect((head->sink & 1) == 0 && owner.count == 1,
+           "RaiseEvent leaves the list and the object as they were");
+    std::vector<unsigned char> quiet(16 * kSlot, 0);
+#if defined(_M_IX86)
+    __vbaRaiseEvent(quiet.data(), 5, 0);
+#else
+    __vbaRaiseEvent(quiet.data(), 5, 0, nullptr);
+#endif
+    expect(first.calls == 1, "an object without sinks raises nothing");
+    VariantClear(&args[0]);
+
+    IUnknown* slot = nullptr;
+    expect(SetMemEvent(nullptr, 0, &owner, &slot) == S_OK && slot == &owner &&
+               owner.count == 2,
+           "SetMemEvent stores the object, counted");
+    expect(SetMemEvent(nullptr, 0, nullptr, &slot) == S_OK && slot == nullptr &&
+               owner.count == 1,
+           "SetMemEvent to Nothing releases it");
 }
 
 void arrays() {
@@ -261,6 +468,7 @@ int main() {
     variants();
     events_and_objects();
     sinks();
+    events();
     arrays();
     if (failures == 0) {
         std::printf("vbrun members: all checks passed\n");

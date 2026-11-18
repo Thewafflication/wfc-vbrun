@@ -37,8 +37,7 @@ VARIANT* VBRUN_FASTCALL __vbaVarZero(VARIANT* destination, VARIANT* source);
 VARIANT* VBRUN_FASTCALL __vbaVargParmRef(VARIANT* argument);
 VARIANT* VBRUN_FASTCALL __vbaVargVar(VARIANT* source, std::uintptr_t unused,
                                      VARIANT* result);
-VARIANT* VBRUN_FASTCALL __vbaVargVarRef(VARIANT* destination,
-                                        VARIANT* source);
+VARIANT* VBRUN_FASTCALL __vbaVargVarRef(VARIANT* destination, VARIANT* source);
 VARIANT* VBRUN_FASTCALL __vbaVarMove(VARIANT* destination, VARIANT* source);
 void VBRUN_FASTCALL __vbaFreeVarg(VARIANT* variant);
 VARIANT* VBRUN_FASTCALL __vbaVargVarMove(VARIANT* target, VARIANT* source);
@@ -58,8 +57,7 @@ struct Zombie {
 extern "C" {
 ULONG WINAPI Zombie_AddRef(Zombie* self);
 ULONG WINAPI Zombie_Release(Zombie* self);
-HRESULT WINAPI Zombie_QueryInterface(Zombie* self, const IID* iid,
-                                     void** out);
+HRESULT WINAPI Zombie_QueryInterface(Zombie* self, const IID* iid, void** out);
 HRESULT WINAPI Zombie_GetTypeInfoCount(Zombie* self, UINT* count);
 HRESULT WINAPI Zombie_GetTypeInfo(Zombie* self, UINT index, LCID lcid,
                                   ITypeInfo** info);
@@ -71,9 +69,18 @@ ULONG WINAPI BASIC_CLASS_Release(Zombie* self);
 HRESULT WINAPI BASIC_CLASS_QueryInterface(Zombie* self, const IID* iid,
                                           void** out);
 HRESULT WINAPI BASIC_DISPINTERFACE_GetTICount(void* self, UINT* count);
-HRESULT WINAPI Zombie_Invoke(Zombie* self, DISPID id, const IID* iid,
-                             LCID lcid, WORD flags, DISPPARAMS* params,
-                             VARIANT* result, EXCEPINFO* info, UINT* arg);
+HRESULT WINAPI BASIC_CLASS_GetIDsOfNames(Zombie* self, const IID* iid,
+                                         OLECHAR** names, UINT count,
+                                         LCID locale, DISPID* ids);
+HRESULT WINAPI BASIC_CLASS_Invoke(Zombie* self, DISPID member, const IID* iid,
+                                  LCID locale, WORD flags, DISPPARAMS* params,
+                                  VARIANT* result, EXCEPINFO* excep,
+                                  UINT* argument_error);
+HRESULT WINAPI BASIC_DISPINTERFACE_GetTypeInfo(Zombie* self, UINT index,
+                                               LCID locale, ITypeInfo** info);
+HRESULT WINAPI Zombie_Invoke(Zombie* self, DISPID id, const IID* iid, LCID lcid,
+                             WORD flags, DISPPARAMS* params, VARIANT* result,
+                             EXCEPINFO* info, UINT* arg);
 }
 
 namespace {
@@ -90,8 +97,7 @@ void expect(const bool ok, const char* const what) {
 // An object that counts its references and answers one interface.
 class Counted final : public IUnknown {
 public:
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,
-                                             void** out) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** out) override {
         if (iid == IID_IUnknown) {
             *out = static_cast<IUnknown*>(this);
             AddRef();
@@ -119,8 +125,7 @@ void conversions() {
     expect(__vbaUI1I2(-1) == 0 && vbrun::last_error() == 6,
            "CByte(-1) overflows");
     vbrun::clear_error();
-    expect(__vbaUI1I4(200) == 200 && vbrun::last_error() == 0,
-           "CByte(200&)");
+    expect(__vbaUI1I4(200) == 200 && vbrun::last_error() == 0, "CByte(200&)");
     expect(__vbaUI1I4(65536) == 0 && vbrun::last_error() == 6,
            "CByte(65536) overflows");
     vbrun::clear_error();
@@ -138,8 +143,7 @@ void abs_and_sgn() {
     static_cast<void>(__vbaI2Abs(-32768));
     expect(vbrun::last_error() == 6, "Abs(-32768) overflows");
     vbrun::clear_error();
-    expect(__vbaI4Abs(-70000) == 70000 && __vbaI4Abs(5) == 5,
-           "Abs of a Long");
+    expect(__vbaI4Abs(-70000) == 70000 && __vbaI4Abs(5) == 5, "Abs of a Long");
     static_cast<void>(__vbaI4Abs(INT32_MIN));
     expect(vbrun::last_error() == 6, "Abs(-2147483648) overflows");
     vbrun::clear_error();
@@ -148,8 +152,7 @@ void abs_and_sgn() {
     expect(__vbaI4Sgn(INT32_MIN) == -1 && __vbaI4Sgn(0) == 0 &&
                __vbaI4Sgn(INT32_MAX) == 1,
            "Sgn of a Long");
-    expect(__vbaUI1Sgn(0) == 0 && __vbaUI1Sgn(1) == 1 &&
-               __vbaUI1Sgn(255) == 1,
+    expect(__vbaUI1Sgn(0) == 0 && __vbaUI1Sgn(1) == 1 && __vbaUI1Sgn(255) == 1,
            "Sgn of a Byte");
 }
 
@@ -249,7 +252,6 @@ void variants() {
            "VargVarRef makes a reference");
 }
 
-
 // An object whose default property is the number 41.
 class WithDefault final : public IDispatch {
 public:
@@ -268,9 +270,9 @@ public:
                                             DISPID*) override {
         return E_NOTIMPL;
     }
-    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD,
-                                     DISPPARAMS*, VARIANT* result,
-                                     EXCEPINFO*, UINT*) override {
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD, DISPPARAMS*,
+                                     VARIANT* result, EXCEPINFO*,
+                                     UINT*) override {
         if (id != DISPID_VALUE || result == nullptr) {
             return DISP_E_MEMBERNOTFOUND;
         }
@@ -369,21 +371,94 @@ void more_variants() {
            "a reference to a Variant gives that Variant");
 }
 
+// An object with one named member (Value, DISPID 3) that answers 77.
+class Named final : public IDispatch {
+public:
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** out) override {
+        if (iid == IID_IUnknown || iid == IID_IDispatch) {
+            *out = static_cast<IDispatch*>(this);
+            AddRef();
+            return S_OK;
+        }
+        *out = nullptr;
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++count; }
+    ULONG STDMETHODCALLTYPE Release() override { return --count; }
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT* n) override {
+        *n = 0;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID,
+                                          ITypeInfo** info) override {
+        *info = nullptr;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR* names, UINT, LCID,
+                                            DISPID* ids) override {
+        ids[0] = names[0][0] == L'V' ? 3 : DISPID_UNKNOWN;
+        return ids[0] == 3 ? S_OK : DISP_E_UNKNOWNNAME;
+    }
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD, DISPPARAMS*,
+                                     VARIANT* result, EXCEPINFO*,
+                                     UINT*) override {
+        if (id != 3) {
+            return DISP_E_MEMBERNOTFOUND;
+        }
+        V_VT(result) = VT_I4;
+        V_I4(result) = 77;
+        return S_OK;
+    }
+    ULONG count = 1;
+};
+
 void basic_class() {
     Counted inner;
     Zombie object{nullptr, nullptr, &inner};
-    expect(BASIC_CLASS_AddRef(&object) == 2 &&
-               BASIC_CLASS_Release(&object) == 1,
-           "BASIC_CLASS reference counting");
+    expect(
+        BASIC_CLASS_AddRef(&object) == 2 && BASIC_CLASS_Release(&object) == 1,
+        "BASIC_CLASS reference counting");
     void* out = nullptr;
     expect(BASIC_CLASS_QueryInterface(&object, &IID_IUnknown, &out) == S_OK &&
                out == static_cast<IUnknown*>(&inner),
            "BASIC_CLASS QueryInterface");
     inner.count = 1;
     UINT count = 0;
-    expect(BASIC_DISPINTERFACE_GetTICount(nullptr, &count) == S_OK &&
-               count == 1,
-           "a dispinterface has one type information");
+    expect(
+        BASIC_DISPINTERFACE_GetTICount(nullptr, &count) == S_OK && count == 1,
+        "a dispinterface has one type information");
+    // The dispatch methods are the object's own; another interface than
+    // IID_NULL is DISP_E_UNKNOWNINTERFACE.
+    Named named;
+    Zombie dispatch{nullptr, nullptr, &named};
+    OLECHAR value[] = L"Value";
+    OLECHAR* names[] = {value};
+    DISPID id = 0;
+    expect(BASIC_CLASS_GetIDsOfNames(&dispatch, &IID_NULL, names, 1, 0, &id) ==
+                   S_OK &&
+               id == 3 && named.count == 1,
+           "BASIC_CLASS_GetIDsOfNames asks the object");
+    expect(BASIC_CLASS_GetIDsOfNames(&dispatch, &IID_IUnknown, names, 1, 0,
+                                     &id) == DISP_E_UNKNOWNINTERFACE,
+           "GetIDsOfNames for an interface is DISP_E_UNKNOWNINTERFACE");
+    DISPPARAMS none = {nullptr, nullptr, 0, 0};
+    VARIANT result;
+    VariantInit(&result);
+    expect(BASIC_CLASS_Invoke(&dispatch, 3, &IID_NULL, 0, DISPATCH_PROPERTYGET,
+                              &none, &result, nullptr, nullptr) == S_OK &&
+               V_VT(&result) == VT_I4 && V_I4(&result) == 77,
+           "BASIC_CLASS_Invoke calls the object");
+    expect(BASIC_CLASS_Invoke(&object, 3, &IID_NULL, 0, DISPATCH_PROPERTYGET,
+                              &none, &result, nullptr,
+                              nullptr) == DISP_E_MEMBERNOTFOUND,
+           "an object without IDispatch has no members");
+    ITypeInfo* info = reinterpret_cast<ITypeInfo*>(&named);
+    expect(BASIC_DISPINTERFACE_GetTypeInfo(&dispatch, 1, 0, &info) ==
+               static_cast<HRESULT>(0x8002802BU),
+           "a dispinterface has no type information 1");
+    expect(BASIC_DISPINTERFACE_GetTypeInfo(&dispatch, 0, 0, &info) == S_OK &&
+               info == nullptr,
+           "type information 0 is the object's");
 }
 
 void zombie() {
@@ -396,14 +471,13 @@ void zombie() {
                out == static_cast<IUnknown*>(&inner),
            "Zombie QueryInterface");
     inner.count = 1;
-    expect(Zombie_QueryInterface(&dead, &IID_IUnknown, nullptr) ==
-               E_INVALIDARG,
+    expect(Zombie_QueryInterface(&dead, &IID_IUnknown, nullptr) == E_INVALIDARG,
            "a null result pointer");
     void* none = &dead;
-    expect(Zombie_QueryInterface(&dead, &IID_IDispatch, &none) ==
-                   E_NOINTERFACE &&
-               none == nullptr,
-           "an unknown interface");
+    expect(
+        Zombie_QueryInterface(&dead, &IID_IDispatch, &none) == E_NOINTERFACE &&
+            none == nullptr,
+        "an unknown interface");
     const auto failure = static_cast<HRESULT>(0x80010007U);
     UINT count = 7;
     expect(Zombie_GetTypeInfoCount(&dead, &count) == failure,
@@ -413,8 +487,8 @@ void zombie() {
     expect(Zombie_GetIDsOfNames(&dead, &IID_NULL, nullptr, 0, 0, nullptr) ==
                failure,
            "GetIDsOfNames fails");
-    expect(Zombie_Invoke(&dead, 0, &IID_NULL, 0, 0, nullptr, nullptr,
-                         nullptr, nullptr) == failure,
+    expect(Zombie_Invoke(&dead, 0, &IID_NULL, 0, 0, nullptr, nullptr, nullptr,
+                         nullptr) == failure,
            "Invoke fails");
 }
 
@@ -468,9 +542,9 @@ void through_references() {
     V_VT(&value) = VT_I2;
     V_I2(&value) = 5;
     __vbaVargVarMove(&plain, &value);
-    expect(V_VT(&plain) == VT_I2 && V_I2(&plain) == 5 &&
-               V_VT(&value) == VT_EMPTY,
-           "VargVarMove into a plain Variant");
+    expect(
+        V_VT(&plain) == VT_I2 && V_I2(&plain) == 5 && V_VT(&value) == VT_EMPTY,
+        "VargVarMove into a plain Variant");
 
     // AryVarVarg copies an array of Variants.
     SAFEARRAYBOUND bound = {3, 0};
@@ -494,7 +568,8 @@ void through_references() {
     SAFEARRAY* slot = nullptr;
     void* data = array->pvData;
     __vbaLdZeroAry(&slot, array);
-    expect(slot != nullptr && slot->pvData == data && array->pvData == nullptr &&
+    expect(slot != nullptr && slot->pvData == data &&
+               array->pvData == nullptr &&
                slot->cbElements == sizeof(VARIANT) &&
                slot->rgsabound[0].cElements == 3,
            "LdZeroAry moves the data to a new descriptor");

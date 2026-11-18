@@ -3,7 +3,9 @@
 The VBRUN compatibility library of WFC: an `MSVBVM60.DLL`-compatible export
 directory (`wfcvbrun.dll`, ordinal base 100, 635 named exports in 1,911 slots)
 with real implementations for the helpers WFC has confirmed against the
-installed reference runtime, and stubs that stop with a diagnostic for the rest.
+installed reference runtime: all 635 have an implementation. The p-code
+entries (`ProcCallEngine`, `MethCallEngine`) stop the program with a
+diagnostic, since WFC has no p-code engine.
 
 - `src/` library sources; `implemented.txt` lists the exports that have an
   implementation, `wfcvbrun.def` and `vbrun_exports.inc` are generated from it.

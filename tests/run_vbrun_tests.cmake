@@ -35,9 +35,10 @@ endfunction()
 
 run_step("layout" 0 layout "${DLL}" "${WORK}/exports.csv")
 run_step("load" 0 load "${DLL}")
-# An unimplemented export names itself and stops the process with 0x5642.
-run_step("stub" 22082 call "${DLL}" "DLLGetDocumentation")
-set(stub_pattern "DLLGetDocumentation \\(ordinal [0-9]+\\) is not implemented")
-if(NOT step_output MATCHES "${stub_pattern}")
-  message(FATAL_ERROR "stub diagnostic missing: ${step_output}")
+# Every export is implemented; the p-code entry, which needs an engine WFC
+# does not have, stops the process with a diagnostic and 0x5642.
+run_step("p-code" 22082 call "${DLL}" "ProcCallEngine")
+set(pcode_pattern "p-code \\(ProcCallEngine\\) is not supported")
+if(NOT step_output MATCHES "${pcode_pattern}")
+  message(FATAL_ERROR "p-code diagnostic missing: ${step_output}")
 endif()

@@ -33,6 +33,9 @@ void __vbaGosubReturn();
 void __vbaGosubFree();
 void __vbaOnError();
 void __vbaExitProc();
+void WINAPI __vbaResume(LONG target);
+int __cdecl __vbaExceptHandler(EXCEPTION_RECORD* record, void* frame,
+                               CONTEXT* context, void* dispatcher);
 }
 
 namespace {
@@ -120,6 +123,28 @@ void frames() {
         call __vbaExitProc
     }
     expect(frame.flags == 0, "ExitProc resets the flags");
+    // Resume outside an error handler is error 20; Resume label inside one
+    // clears the error and leaves the handler (the code jumps itself).
+    vbrun::clear_error();
+    __vbaResume(-2);
+    expect(vbrun::last_error() == 20, "Resume without an error is error 20");
+    static_cast<void>(vbrun::raise(5));
+    frame.flags = 2;
+    __vbaResume(3);
+    expect(vbrun::last_error() == 0 && (frame.flags & 2) == 0,
+           "Resume label clears the error and leaves the handler");
+    // An unwind, or a frame without a procedure, is the next frame's.
+    EXCEPTION_RECORD record = {};
+    record.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+    record.ExceptionFlags = 2;
+    expect(__vbaExceptHandler(&record, &frame, nullptr, nullptr) ==
+               ExceptionContinueSearch,
+           "the handler leaves an unwind alone");
+    record.ExceptionFlags = 0;
+    frame.unused[1] = 0;
+    expect(__vbaExceptHandler(&record, &frame, nullptr, nullptr) ==
+               ExceptionContinueSearch,
+           "the handler leaves a frame without a procedure alone");
     __asm {
         mov eax, previous
         mov dword ptr fs:[0], eax
@@ -138,6 +163,9 @@ LONG WINAPI __vbaGosubReturn(void** head);
 void WINAPI __vbaGosubFree(void** head);
 void WINAPI __vbaOnError(LONG target);
 void __vbaExitProc();
+void WINAPI __vbaResume(LONG target);
+int __cdecl __vbaExceptHandler(EXCEPTION_RECORD* record, void* frame,
+                               CONTEXT* context, void* dispatcher);
 }
 
 namespace {
@@ -164,6 +192,16 @@ void frames() {
     static_cast<void>(vbrun::raise(5));
     __vbaExitProc();
     expect(vbrun::last_error() == 0, "ExitProc clears the error");
+    __vbaResume(-2);
+    expect(vbrun::last_error() == 20, "Resume without an error is error 20");
+    static_cast<void>(vbrun::raise(5));
+    __vbaResume(-1);
+    expect(vbrun::last_error() == 0, "Resume clears the error");
+    EXCEPTION_RECORD record = {};
+    record.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+    expect(__vbaExceptHandler(&record, nullptr, nullptr, nullptr) ==
+               ExceptionContinueSearch,
+           "without frames every exception is the next frame's");
 }
 
 }  // namespace

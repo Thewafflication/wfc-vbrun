@@ -27,6 +27,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <map>
+#include <mutex>
 #include <string>
 
 #include "vbrun_helpers.hpp"
@@ -65,6 +67,7 @@ struct FileSlot {
     bool hit_end = false;    // a read ran into the end
     int width = 0;           // Width # (0: no limit)
     bool denied = false;     // a read met a locked region
+    std::string* capture = nullptr;  // Print on an object: the text goes here
 };
 
 FileSlot g_files[kFileCount + 1];
@@ -193,6 +196,8 @@ bool read_line(FileSlot& file, std::string& line) {
 constexpr int kBadRecordLength = 59;
 constexpr int kTypeMismatch = 13;
 constexpr int kOverflow = 6;
+constexpr int kObjectNotSet = 91;
+constexpr int kNoSuchMember = 438;
 
 // Where a print list's values are read from: the stack of a Visual Basic call
 // (every value in a four byte slot, eight bytes for a Double, a Currency and
@@ -518,6 +523,17 @@ bool put_text(FileSlot& file, const std::string& text) {
     if (text.empty()) {
         return true;
     }
+    if (file.capture != nullptr) {
+        file.capture->append(text);
+        for (const char c : text) {
+            if (c == '\n') {
+                file.column = 0;
+            } else if (c != '\r') {
+                ++file.column;
+            }
+        }
+        return true;
+    }
     if (file.mode == kModeAppend) {
         LARGE_INTEGER end;
         end.QuadPart = 0;
@@ -594,6 +610,9 @@ bool read_value(const int type, ValueReader& reader, Value& value,
     }
 }
 
+void print_items(FileSlot* file, const unsigned char* descriptor,
+                 ValueReader& reader, bool write);
+
 void print_list(const int number, const unsigned char* const descriptor,
                 ValueReader& reader, const bool write) {
     FileSlot* const file = file_of(number);
@@ -604,6 +623,13 @@ void print_list(const int number, const unsigned char* const descriptor,
         static_cast<void>(vbrun::raise(kBadFileMode));
         return;
     }
+    print_items(file, descriptor, reader, write);
+}
+
+// The items of a print list (see __vbaPrintFile) written to a file or, for
+// Print on an object, into the file's capture.
+void print_items(FileSlot* const file, const unsigned char* const descriptor,
+                 ValueReader& reader, const bool write) {
     const int count = descriptor[0] | (descriptor[1] << 8);
     for (int index = 0; index < count; ++index) {
         const int code = descriptor[2 + index];
@@ -660,6 +686,74 @@ void print_list(const int number, const unsigned char* const descriptor,
             }
         }
     }
+}
+
+// The print column of each object Print has written on (a Form, a PictureBox,
+// the Printer): the next Print goes on from there.
+std::mutex g_print_lock;
+std::map<const void*, long long> g_print_columns;
+
+// The text of a Print on an object delivered to its Print member (one String
+// argument); an object without one is error 438.
+void print_on_object(IUnknown* const object, const std::string& text) {
+    IDispatch* dispatch = nullptr;
+    if (FAILED(object->QueryInterface(IID_IDispatch,
+                                      reinterpret_cast<void**>(&dispatch))) ||
+        dispatch == nullptr) {
+        static_cast<void>(vbrun::raise(kNoSuchMember));
+        return;
+    }
+    OLECHAR name[] = L"Print";
+    LPOLESTR names[] = {name};
+    DISPID member = 0;
+    if (FAILED(dispatch->GetIDsOfNames(IID_NULL, names, 1, LOCALE_USER_DEFAULT,
+                                       &member))) {
+        dispatch->Release();
+        static_cast<void>(vbrun::raise(kNoSuchMember));
+        return;
+    }
+    const std::wstring wide = widen(text.data(), text.size());
+    VARIANT argument;
+    VariantInit(&argument);
+    V_VT(&argument) = VT_BSTR;
+    V_BSTR(&argument) =
+        SysAllocStringLen(wide.data(), static_cast<UINT>(wide.size()));
+    DISPPARAMS params = {&argument, nullptr, 1, 0};
+    EXCEPINFO excep = {};
+    const HRESULT result =
+        dispatch->Invoke(member, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_METHOD,
+                         &params, nullptr, &excep, nullptr);
+    VariantClear(&argument);
+    dispatch->Release();
+    SysFreeString(excep.bstrSource);
+    SysFreeString(excep.bstrDescription);
+    SysFreeString(excep.bstrHelpFile);
+    if (FAILED(result)) {
+        static_cast<void>(vbrun::raise_hresult(
+            result == DISP_E_EXCEPTION ? excep.scode : result));
+    }
+}
+
+void print_object(const unsigned char* const descriptor, IUnknown* const object,
+                  ValueReader& reader) {
+    if (object == nullptr) {
+        static_cast<void>(vbrun::raise(kObjectNotSet));
+        return;
+    }
+    std::string text;
+    FileSlot slot;
+    slot.mode = kModeOutput;
+    slot.capture = &text;
+    {
+        const std::lock_guard<std::mutex> hold(g_print_lock);
+        slot.column = g_print_columns[object];
+    }
+    print_items(&slot, descriptor, reader, false);
+    {
+        const std::lock_guard<std::mutex> hold(g_print_lock);
+        g_print_columns[object] = slot.column;
+    }
+    print_on_object(object, text);
 }
 
 // --- Get # and Put # -------------------------------------------------------
@@ -721,10 +815,13 @@ std::string get_bytes(FileSlot& file, const std::size_t size) {
     return bytes;
 }
 
-void put_string(FileSlot& file, std::string& out, const BSTR text) {
+// A String: its length in two bytes first in a Random file and inside a
+// record (`prefixed`).
+void put_string(FileSlot& file, std::string& out, const BSTR text,
+                const bool prefixed = false) {
     const std::string bytes = narrow(text == nullptr ? L"" : text,
                                      text == nullptr ? 0U : SysStringLen(text));
-    if (file.mode == kModeRandom) {
+    if (prefixed || file.mode == kModeRandom) {
         out += static_cast<char>(bytes.size() & 0xFF);
         out += static_cast<char>((bytes.size() >> 8) & 0xFF);
     }
@@ -811,6 +908,415 @@ void put_value(const int code, const void* const value, const long long record,
     }
 }
 
+// The length prefix of a string (two bytes, little endian).
+std::size_t get_length(FileSlot& file) {
+    const std::string prefix = get_bytes(file, 2);
+    return static_cast<unsigned char>(prefix[0]) |
+           (static_cast<std::size_t>(static_cast<unsigned char>(prefix[1]))
+            << 8);
+}
+
+// A string read with its length prefix.
+BSTR get_prefixed(FileSlot& file) {
+    const std::size_t length = get_length(file);
+    const std::string bytes = get_bytes(file, length);
+    const std::wstring wide = widen(bytes.data(), bytes.size());
+    return SysAllocStringLen(wide.data(), static_cast<UINT>(wide.size()));
+}
+
+// A Variant read back from its type and its value.
+void get_variant(FileSlot& file, VARIANT* const target) {
+    const std::string head = get_bytes(file, 2);
+    const VARTYPE type =
+        static_cast<VARTYPE>(static_cast<unsigned char>(head[0]) |
+                             (static_cast<unsigned char>(head[1]) << 8));
+    VariantClear(target);
+    target->vt = type;
+    std::size_t size = 0;
+    switch (type) {
+        case VT_I2:
+        case VT_BOOL:
+            size = 2;
+            break;
+        case VT_I4:
+        case VT_R4:
+        case VT_ERROR:
+            size = 4;
+            break;
+        case VT_UI1:
+            size = 1;
+            break;
+        case VT_R8:
+        case VT_CY:
+        case VT_DATE:
+            size = 8;
+            break;
+        default:
+            break;
+    }
+    if (type == VT_BSTR) {
+        target->bstrVal = get_prefixed(file);
+    } else if (size > 0) {
+        const std::string bytes = get_bytes(file, size);
+        std::memcpy(&target->lVal, bytes.data(), bytes.size());
+    } else if (type != VT_EMPTY && type != VT_NULL) {
+        target->vt = VT_EMPTY;
+        static_cast<void>(vbrun::raise(kTypeMismatch));
+    }
+}
+
+constexpr int kOutOfMemory = 7;
+
+// --- Get # and Put # of records and arrays ---------------------------------
+//
+// The compiler describes what a record (or an array variable) puts in a file
+// with a layout of its own (the "owner" the Owner helpers take): the size of
+// the record (+0), the number of items (+4), the padding a record element of
+// an array has after it (Int16 at +8), then items of 12 bytes from +0xa. An
+// item is a number of bytes copied as they are (+0), a type word (+4), a
+// count (+6) and a length (+0xa). The kinds (low nibble of the type word):
+//   0 String (written with its length in two bytes, also in Binary files)
+//   1 Variant (its type, then its value)
+//   2 record (its layout at the item plus the length)
+//   3 raw element of `length` bytes, 4 raw element of (type >> 8) bytes
+//   5 (type >> 8) bytes of padding, neither read nor written
+//   6 fixed-length String of `length` characters
+// 0x10 repeats the item `count` times (a fixed-size array); 0x20 makes it a
+// dynamic array (a SAFEARRAY pointer in the record), written as its number of
+// dimensions (two bytes) and its bounds (eight bytes each) and then the
+// elements; 0x40 marks an array variable on its own, whose shape a Binary
+// file does not hold. Bytes after the last item are copied as they are.
+
+constexpr unsigned kOwnerString = 0;
+constexpr unsigned kOwnerVariant = 1;
+constexpr unsigned kOwnerRecord = 2;
+constexpr unsigned kOwnerRaw = 3;
+constexpr unsigned kOwnerSized = 4;
+constexpr unsigned kOwnerPadding = 5;
+constexpr unsigned kOwnerFixed = 6;
+constexpr unsigned kOwnerCounted = 0x10;
+constexpr unsigned kOwnerDynamic = 0x20;
+constexpr unsigned kOwnerVariable = 0x40;
+
+std::uint32_t owner_dword(const unsigned char* const p) {
+    std::uint32_t value = 0;
+    std::memcpy(&value, p, sizeof value);
+    return value;
+}
+
+std::uint16_t owner_word(const unsigned char* const p) {
+    std::uint16_t value = 0;
+    std::memcpy(&value, p, sizeof value);
+    return value;
+}
+
+struct RecordIo {
+    FileSlot& file;
+    bool get;
+    std::string out;  // what a Put writes
+    bool failed = false;
+};
+
+void io_record(RecordIo& io, const unsigned char* layout, unsigned char* base);
+
+// The step from one record element to the next.
+std::size_t record_stride(const unsigned char* const layout) {
+    return owner_dword(layout) +
+           static_cast<std::size_t>(
+               static_cast<std::int16_t>(owner_word(layout + 8)));
+}
+
+// The size in memory of one element of an item.
+std::size_t element_size(const unsigned char* const item) {
+    const unsigned type = owner_word(item + 4);
+    switch (type & 0xfu) {
+        case kOwnerString:
+            return sizeof(BSTR);
+        case kOwnerVariant:
+            return sizeof(VARIANT);
+        case kOwnerRecord:
+            return record_stride(item + owner_word(item + 0xa));
+        case kOwnerRaw:
+            return owner_word(item + 0xa);
+        case kOwnerSized:
+        case kOwnerPadding:
+            return (type >> 8) & 0xffu;
+        case kOwnerFixed:
+            return owner_word(item + 0xa) * sizeof(wchar_t);
+        default:
+            return 0;
+    }
+}
+
+void io_raw(RecordIo& io, void* const at, const std::size_t size) {
+    if (size == 0) {
+        return;
+    }
+    if (io.get) {
+        const std::string bytes = get_bytes(io.file, size);
+        std::memcpy(at, bytes.data(), size);
+    } else {
+        io.out.append(static_cast<const char*>(at), size);
+    }
+}
+
+// `count` elements of an item from `at` on.
+void io_elements(RecordIo& io, const unsigned char* const item,
+                 unsigned char* at, const std::size_t count,
+                 const std::size_t stride) {
+    const unsigned kind = owner_word(item + 4) & 0xfu;
+    if (kind == kOwnerRaw || kind == kOwnerSized) {
+        io_raw(io, at, count * stride);
+        return;
+    }
+    for (std::size_t i = 0; i < count && !io.failed; ++i, at += stride) {
+        switch (kind) {
+            case kOwnerString: {
+                BSTR* const text = reinterpret_cast<BSTR*>(at);
+                if (io.get) {
+                    SysFreeString(*text);
+                    *text = get_prefixed(io.file);
+                } else {
+                    put_string(io.file, io.out, *text, true);
+                }
+                break;
+            }
+            case kOwnerVariant:
+                if (io.get) {
+                    get_variant(io.file, reinterpret_cast<VARIANT*>(at));
+                } else if (!variant_bytes(io.file,
+                                          reinterpret_cast<VARIANT*>(at),
+                                          io.out)) {
+                    static_cast<void>(vbrun::raise(kTypeMismatch));
+                    io.failed = true;
+                }
+                break;
+            case kOwnerRecord:
+                io_record(io, item + owner_word(item + 0xa), at);
+                break;
+            case kOwnerFixed: {
+                const std::size_t length = owner_word(item + 0xa);
+                auto* const text = reinterpret_cast<wchar_t*>(at);
+                if (io.get) {
+                    const std::string bytes = get_bytes(io.file, length);
+                    const std::wstring wide = widen(bytes.data(), bytes.size());
+                    for (std::size_t c = 0; c < length; ++c) {
+                        text[c] = c < wide.size() ? wide[c] : L'\0';
+                    }
+                } else {
+                    io.out += narrow(text, length);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+std::size_t element_count(const SAFEARRAY* const array) {
+    if (array == nullptr || array->cDims == 0) {
+        return 0;
+    }
+    std::size_t count = 1;
+    for (USHORT i = 0; i < array->cDims; ++i) {
+        count *= array->rgsabound[i].cElements;
+    }
+    return count;
+}
+
+void destroy_owned(const unsigned char* layout, unsigned char* base);
+
+// Frees what the elements of an item hold (strings, Variants, records).
+void destroy_elements(const unsigned char* const item, unsigned char* at,
+                      const std::size_t count, const std::size_t stride) {
+    const unsigned kind = owner_word(item + 4) & 0xfu;
+    for (std::size_t i = 0; i < count; ++i, at += stride) {
+        if (kind == kOwnerString) {
+            BSTR* const text = reinterpret_cast<BSTR*>(at);
+            SysFreeString(*text);
+            *text = nullptr;
+        } else if (kind == kOwnerVariant) {
+            VariantClear(reinterpret_cast<VARIANT*>(at));
+        } else if (kind == kOwnerRecord) {
+            destroy_owned(item + owner_word(item + 0xa), at);
+        }
+    }
+}
+
+void destroy_array(SAFEARRAY** const slot, const unsigned char* const item) {
+    SAFEARRAY* const array = *slot;
+    if (array == nullptr) {
+        return;
+    }
+    if (array->pvData != nullptr) {
+        if ((owner_word(item + 4) & 0xfu) == kOwnerRecord) {
+            destroy_elements(item, static_cast<unsigned char*>(array->pvData),
+                             element_count(array), array->cbElements);
+        }
+        SafeArrayDestroyData(array);
+    }
+    if ((array->fFeatures & (FADF_AUTO | FADF_STATIC | FADF_EMBEDDED)) == 0) {
+        SafeArrayDestroyDescriptor(array);
+        *slot = nullptr;
+    }
+}
+
+// What a record described by a file layout holds, freed.
+void destroy_owned(const unsigned char* const layout,
+                   unsigned char* const base) {
+    const std::uint32_t items = owner_dword(layout + 4);
+    const unsigned char* item = layout + 0xa;
+    std::size_t offset = 0;
+    for (std::uint32_t i = 0; i < items; ++i, item += 12) {
+        offset += owner_dword(item);
+        const unsigned type = owner_word(item + 4);
+        unsigned char* const at = base + offset;
+        if ((type & kOwnerDynamic) != 0) {
+            destroy_array(reinterpret_cast<SAFEARRAY**>(at), item);
+            offset += sizeof(void*);
+            continue;
+        }
+        const std::size_t count =
+            (type & kOwnerCounted) != 0 ? owner_dword(item + 6) : 1;
+        destroy_elements(item, at, count, element_size(item));
+        offset += count * element_size(item);
+    }
+}
+
+// The features and element size of an array Get makes for an item.
+void new_shape(const unsigned char* const item, USHORT& features, ULONG& size) {
+    const unsigned kind = owner_word(item + 4) & 0xfu;
+    features = kind == kOwnerString    ? FADF_BSTR
+               : kind == kOwnerVariant ? FADF_VARIANT
+                                       : 0;
+    size = static_cast<ULONG>(element_size(item));
+}
+
+// A dynamic array: its shape (unless it is an array variable in a Binary
+// file), then its elements. Get replaces the array by one of the shape read.
+void io_dynamic(RecordIo& io, const unsigned char* const item,
+                SAFEARRAY** const slot) {
+    const unsigned type = owner_word(item + 4);
+    const bool shaped =
+        (type & kOwnerVariable) == 0 || io.file.mode != kModeBinary;
+    if (shaped) {
+        if (io.get) {
+            const std::string head = get_bytes(io.file, 2);
+            const USHORT dimensions =
+                static_cast<USHORT>(static_cast<unsigned char>(head[0]) |
+                                    (static_cast<unsigned char>(head[1]) << 8));
+            destroy_array(slot, item);
+            if (dimensions == 0) {
+                return;
+            }
+            const std::string bounds =
+                get_bytes(io.file, dimensions * sizeof(SAFEARRAYBOUND));
+            if (*slot == nullptr) {
+                SAFEARRAY* array = nullptr;
+                if (FAILED(SafeArrayAllocDescriptor(dimensions, &array))) {
+                    static_cast<void>(vbrun::raise(kOutOfMemory));
+                    io.failed = true;
+                    return;
+                }
+                std::memcpy(array->rgsabound, bounds.data(), bounds.size());
+                new_shape(item, array->fFeatures, array->cbElements);
+                if (FAILED(SafeArrayAllocData(array))) {
+                    SafeArrayDestroyDescriptor(array);
+                    static_cast<void>(vbrun::raise(kOutOfMemory));
+                    io.failed = true;
+                    return;
+                }
+                std::memset(array->pvData, 0,
+                            element_count(array) * array->cbElements);
+                *slot = array;
+            }
+        } else {
+            const SAFEARRAY* const array = *slot;
+            const USHORT dimensions = array != nullptr ? array->cDims : 0;
+            io.out += static_cast<char>(dimensions & 0xff);
+            io.out += static_cast<char>(dimensions >> 8);
+            if (array != nullptr) {
+                io.out.append(reinterpret_cast<const char*>(array->rgsabound),
+                              dimensions * sizeof(SAFEARRAYBOUND));
+            }
+        }
+    }
+    SAFEARRAY* const array = *slot;
+    if (array != nullptr && array->pvData != nullptr) {
+        io_elements(io, item, static_cast<unsigned char*>(array->pvData),
+                    element_count(array), array->cbElements);
+    }
+}
+
+// The items of a record, from `base` on.
+void io_record(RecordIo& io, const unsigned char* const layout,
+               unsigned char* const base) {
+    const std::uint32_t items = owner_dword(layout + 4);
+    const unsigned char* item = layout + 0xa;
+    std::size_t offset = 0;
+    for (std::uint32_t i = 0; i < items && !io.failed; ++i, item += 12) {
+        const std::uint32_t raw = owner_dword(item);
+        io_raw(io, base + offset, raw);
+        offset += raw;
+        const unsigned type = owner_word(item + 4);
+        unsigned char* const at = base + offset;
+        if ((type & kOwnerDynamic) != 0) {
+            io_dynamic(io, item, reinterpret_cast<SAFEARRAY**>(at));
+            offset += sizeof(void*);
+            continue;
+        }
+        if ((type & kOwnerVariable) != 0) {
+            SAFEARRAY* const array = *reinterpret_cast<SAFEARRAY**>(at);
+            if (array != nullptr && array->pvData != nullptr) {
+                io_elements(io, item,
+                            static_cast<unsigned char*>(array->pvData),
+                            element_count(array), array->cbElements);
+            }
+            offset += sizeof(void*);
+            continue;
+        }
+        const std::size_t count =
+            (type & kOwnerCounted) != 0 ? owner_dword(item + 6) : 1;
+        const std::size_t size = element_size(item);
+        if ((type & 0xfu) != kOwnerPadding) {
+            io_elements(io, item, at, count, size);
+        }
+        offset += count * size;
+    }
+    const std::uint32_t size = owner_dword(layout);
+    if (!io.failed && offset < size) {
+        io_raw(io, base + offset, size - offset);
+    }
+}
+
+// Get # or Put # of a record or an array variable.
+void owner_value(const unsigned char* const layout, void* const value,
+                 const long long record, const int number, const bool get) {
+    FileSlot* const file = file_of(number);
+    if (file == nullptr || !data_position(*file, record)) {
+        return;
+    }
+    RecordIo io{*file, get, {}};
+    io_record(io, layout, static_cast<unsigned char*>(value));
+    if (io.failed) {
+        return;
+    }
+    if (!get) {
+        if (file->mode == kModeRandom &&
+            static_cast<long long>(io.out.size()) > file->record_length) {
+            static_cast<void>(vbrun::raise(kBadRecordLength));
+            return;
+        }
+        if (!put_bytes(*file, io.out)) {
+            return;
+        }
+    }
+    if (file->mode == kModeRandom) {
+        ++file->record;
+    }
+}
+
 void get_value(const int code, void* const value, const long long record,
                const int number) {
     FileSlot* const file = file_of(number);
@@ -837,52 +1343,7 @@ void get_value(const int code, void* const value, const long long record,
         SysFreeString(*text);
         *text = SysAllocStringLen(wide.data(), static_cast<UINT>(wide.size()));
     } else {
-        VARIANT* const target = static_cast<VARIANT*>(value);
-        const std::string head = get_bytes(*file, 2);
-        VARTYPE type =
-            static_cast<VARTYPE>(static_cast<unsigned char>(head[0]) |
-                                 (static_cast<unsigned char>(head[1]) << 8));
-        VariantClear(target);
-        target->vt = type;
-        std::size_t size = 0;
-        switch (type) {
-            case VT_I2:
-            case VT_BOOL:
-                size = 2;
-                break;
-            case VT_I4:
-            case VT_R4:
-            case VT_ERROR:
-                size = 4;
-                break;
-            case VT_UI1:
-                size = 1;
-                break;
-            case VT_R8:
-            case VT_CY:
-            case VT_DATE:
-                size = 8;
-                break;
-            default:
-                break;
-        }
-        if (type == VT_BSTR) {
-            const std::string prefix = get_bytes(*file, 2);
-            const std::size_t length =
-                static_cast<unsigned char>(prefix[0]) |
-                (static_cast<std::size_t>(static_cast<unsigned char>(prefix[1]))
-                 << 8);
-            const std::string bytes = get_bytes(*file, length);
-            const std::wstring wide = widen(bytes.data(), bytes.size());
-            target->bstrVal =
-                SysAllocStringLen(wide.data(), static_cast<UINT>(wide.size()));
-        } else if (size > 0) {
-            const std::string bytes = get_bytes(*file, size);
-            std::memcpy(&target->lVal, bytes.data(), bytes.size());
-        } else if (type != VT_EMPTY && type != VT_NULL) {
-            target->vt = VT_EMPTY;
-            static_cast<void>(vbrun::raise(kTypeMismatch));
-        }
+        get_variant(*file, static_cast<VARIANT*>(value));
     }
     if (file->mode == kModeRandom) {
         ++file->record;
@@ -1417,6 +1878,24 @@ void __cdecl __vbaPrintFile(const unsigned char* const descriptor,
 #endif
 }
 
+// object.Print list (a Form, a PictureBox, the Printer): the list is laid out
+// as Print # lays it out, from the object's own column, and the text is handed
+// to the object's Print member.
+void __cdecl __vbaPrintObj(const unsigned char* const descriptor,
+                           IUnknown* const object, ...) {
+#if defined(_M_IX86)
+    StackReader reader(reinterpret_cast<const unsigned char*>(&object) +
+                       sizeof(object));
+    print_object(descriptor, object, reader);
+#else
+    va_list list;
+    va_start(list, object);
+    ListReader reader(list);
+    print_object(descriptor, object, reader);
+    va_end(list);
+#endif
+}
+
 // Write #number, list.
 void __cdecl __vbaWriteFile(const unsigned char* const descriptor,
                             const int number, ...) {
@@ -1470,6 +1949,33 @@ void WINAPI __vbaGet3(const LONG code, void* const value, const SHORT number) {
 void WINAPI __vbaGet4(const LONG code, void* const value, const LONG record,
                       const SHORT number) {
     get_value(code, value, record, number);
+}
+
+// Get # and Put # of a record or an array variable: `layout` describes what
+// goes to the file (see owner_value), `value` is the record or the array
+// variable.
+void WINAPI __vbaPutOwner3(const void* const layout, void* const value,
+                           const SHORT number) {
+    owner_value(static_cast<const unsigned char*>(layout), value, 0, number,
+                false);
+}
+
+void WINAPI __vbaPutOwner4(const void* const layout, void* const value,
+                           const LONG record, const SHORT number) {
+    owner_value(static_cast<const unsigned char*>(layout), value, record,
+                number, false);
+}
+
+void WINAPI __vbaGetOwner3(const void* const layout, void* const value,
+                           const SHORT number) {
+    owner_value(static_cast<const unsigned char*>(layout), value, 0, number,
+                true);
+}
+
+void WINAPI __vbaGetOwner4(const void* const layout, void* const value,
+                           const LONG record, const SHORT number) {
+    owner_value(static_cast<const unsigned char*>(layout), value, record,
+                number, true);
 }
 
 // A fixed length String: `length` characters at `text`.

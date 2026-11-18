@@ -3,12 +3,12 @@
 ; Do not edit.
 LIBRARY wfcvbrun
 EXPORTS
-    ThunRTMain=vbrun_stub_100 @100
-    VBDllUnRegisterServer=vbrun_stub_101 @101
-    VBDllCanUnloadNow=vbrun_stub_102 @102
-    VBDllRegisterServer=vbrun_stub_103 @103
-    VBDllGetClassObject=vbrun_stub_104 @104
-    UserDllMain=vbrun_stub_105 @105
+    ThunRTMain @100
+    VBDllUnRegisterServer @101
+    VBDllCanUnloadNow @102
+    VBDllRegisterServer @103
+    VBDllGetClassObject @104
+    UserDllMain @105
     DllRegisterServer @106
     DllUnregisterServer @107
     __vbaAryLock @108
@@ -56,7 +56,7 @@ EXPORTS
     __vbaVargVarCopy @150
     __vbaVargVarMove @151
     __vbaVargVarRef @152
-    DLLGetDocumentation=vbrun_stub_153 @153
+    DLLGetDocumentation @153
     DllCanUnloadNow @154
     DllGetClassObject @155
     _CIatan @156
@@ -73,14 +73,14 @@ EXPORTS
     __vbaAryDestruct @167
     __vbaAryMove @168
     __vbaAryRebase1Var @169
-    __vbaAryRecCopy=vbrun_stub_170 @170
+    __vbaAryRecCopy @170
     __vbaAryRecMove @171
     __vbaAryUnlock @172
     __vbaAryVar @173
     __vbaBoolStr @174
     __vbaBoolVar @175
     __vbaBoolVarNull @176
-    __vbaCVarAryUdt=vbrun_stub_177 @177
+    __vbaCVarAryUdt @177
     __vbaCastObj @178
     __vbaCastObjVar @179
     __vbaCheckType @180
@@ -89,8 +89,8 @@ EXPORTS
     __vbaCopyBytes @183
     __vbaCopyBytesZero @184
     __vbaCyAbs @185
-    ProcCallEngine=vbrun_stub_186 @186
-    DllFunctionCall=vbrun_stub_187 @187
+    ProcCallEngine @186
+    DllFunctionCall @187
     __vbaCyAdd @188
     __vbaCyErrVar @189
     CopyRecord @190
@@ -98,11 +98,11 @@ EXPORTS
     __vbaCyForInit @192
     __vbaCyForNext @193
     __vbaCyI2 @194
-    TipGetAddressOfPredeclaredInstance=vbrun_stub_195 @195
+    TipGetAddressOfPredeclaredInstance @195
     __vbaCyI4 @196
     __vbaCyInt @197
     __vbaCyMul @198
-    MethCallEngine=vbrun_stub_199 @199
+    MethCallEngine @199
     __vbaCyMulI2 @200
     __vbaCySgn @201
     __vbaCyStr @202
@@ -115,27 +115,27 @@ EXPORTS
     __vbaDateVar @209
     __vbaDerefAry @210
     __vbaDerefAry1 @211
-    __vbaEnd=vbrun_stub_212 @212
+    __vbaEnd @212
     __vbaErase @213
     __vbaEraseKeepData @214
     __vbaEraseNoPop @215
     __vbaError @216
     __vbaErrorOverflow @217
-    __vbaExceptHandler=vbrun_stub_218 @218
+    __vbaExceptHandler @218
     __vbaExitEachAry @219
-    TipSetOption=vbrun_stub_220 @220
+    TipSetOption @220
     __vbaExitEachColl @221
     __vbaExitEachVar @222
     __vbaExitProc @223
     __vbaFPException @224
     __vbaFPFix @225
     __vbaFPInt @226
-    TipUnloadProject=vbrun_stub_227 @227
+    TipUnloadProject @227
     __vbaFailedFriend @228
     __vbaFileClose @229
-    TipCreateInstanceProject2=vbrun_stub_230 @230
-    EbResetProject=vbrun_stub_231 @231
-    EbGetHandleOfExecutingProject=vbrun_stub_232 @232
+    TipCreateInstanceProject2 @230
+    EbResetProject @231
+    EbGetHandleOfExecutingProject @232
     __vbaFileCloseAll @233
     __vbaFileLock @234
     __vbaFileOpen @235
@@ -154,8 +154,8 @@ EXPORTS
     __vbaGet4 @248
     __vbaGetFxStr3 @249
     __vbaGetFxStr4 @250
-    __vbaGetOwner3=vbrun_stub_251 @251
-    __vbaGetOwner4=vbrun_stub_252 @252
+    __vbaGetOwner3 @251
+    __vbaGetOwner4 @252
     __vbaGosub @253
     __vbaGosubFree @254
     __vbaGosubReturn @255
@@ -168,17 +168,17 @@ EXPORTS
     __vbaI2Str @262
     __vbaI2Var @263
     __vbaI4Cy @264
-    EbResetProjectNormal=vbrun_stub_265 @265
-    TipUnloadInstance=vbrun_stub_266 @266
+    EbResetProjectNormal @265
+    TipUnloadInstance @266
     __vbaI4ErrVar @267
     EbLibraryLoad @268
     EbLibraryUnload @269
     __vbaI4ForNextCheck @270
-    EbLoadRunTime=vbrun_stub_271 @271
+    EbLoadRunTime @271
     __vbaI4Str @272
     __vbaI4Var @273
-    EbCreateContext=vbrun_stub_274 @274
-    EbDestroyContext=vbrun_stub_275 @275
+    EbCreateContext @274
+    EbDestroyContext @275
     EbSetContextWorkerThread @276
     __vbaInStr @277
     __vbaInStrB @278
@@ -187,7 +187,7 @@ EXPORTS
     __vbaInputFile @281
     __vbaLateIdCall @282
     __vbaLateIdCallLd @283
-    EbGetErrorInfo=vbrun_stub_284 @284
+    EbGetErrorInfo @284
     __vbaLateIdCallSt @285
     __vbaLateIdNamedCall @286
     __vbaLateIdNamedCallLd @287
@@ -201,8 +201,8 @@ EXPORTS
     __vbaLateMemNamedCall @295
     __vbaLateMemNamedCallLd @296
     __vbaLateMemNamedCallSt @297
-    EbIsProjectOnStack=vbrun_stub_298 @298
-    TipCreateInstanceEx=vbrun_stub_299 @299
+    EbIsProjectOnStack @298
+    TipCreateInstanceEx @299
     GetMem2 @300
     GetMem4 @301
     GetMem8 @302
@@ -224,7 +224,7 @@ EXPORTS
     PutMem1 @318
     GetMemEvent @319
     PutMemEvent @320
-    SetMemEvent=vbrun_stub_321 @321
+    SetMemEvent @321
     __vbaLateMemNamedStAd @322
     __vbaLateMemSt @323
     __vbaLateMemStAd @324
@@ -259,13 +259,13 @@ EXPORTS
     __vbaOnGoCheck @353
     __vbaPowerR8 @354
     __vbaPrintFile @355
-    __vbaPrintObj=vbrun_stub_356 @356
+    __vbaPrintObj @356
     __vbaPut3 @357
     __vbaPut4 @358
     __vbaPutFxStr3 @359
     __vbaPutFxStr4 @360
-    __vbaPutOwner3=vbrun_stub_361 @361
-    __vbaPutOwner4=vbrun_stub_362 @362
+    __vbaPutOwner3 @361
+    __vbaPutOwner4 @362
     __vbaR4Cy @363
     __vbaR4ErrVar @364
     __vbaR4ForNextCheck @365
@@ -282,32 +282,32 @@ EXPORTS
     __vbaR8Sgn @376
     __vbaR8Str @377
     __vbaR8Var @378
-    __vbaRaiseEvent=vbrun_stub_379 @379
-    __vbaRecAnsiToUni=vbrun_stub_380 @380
+    __vbaRaiseEvent @379
+    __vbaRecAnsiToUni @380
     __vbaRecAssign @381
     __vbaRecDestruct @382
     __vbaRecDestructAnsi @383
-    __vbaRecUniToAnsi=vbrun_stub_384 @384
+    __vbaRecUniToAnsi @384
     __vbaRedim @385
     __vbaRedimPreserve @386
     __vbaRedimPreserveVar @387
     __vbaRedimPreserveVar2 @388
     __vbaRedimVar @389
     __vbaRefVarAry @390
-    __vbaResume=vbrun_stub_391 @391
+    __vbaResume @391
     __vbaRsetFixstr @392
     __vbaRsetFixstrFree @393
     __vbaSetSystemError @394
-    __vbaStopExe=vbrun_stub_395 @395
+    __vbaStopExe @395
     __vbaStr2Vec @396
     __vbaStrAryToAnsi @397
     __vbaStrAryToUnicode @398
     __vbaStrBool @399
-    EVENT_SINK_QueryInterface=vbrun_stub_400 @400
+    EVENT_SINK_QueryInterface @400
     EVENT_SINK_AddRef @401
     EVENT_SINK_Release @402
-    EVENT_SINK_GetIDsOfNames=vbrun_stub_403 @403
-    EVENT_SINK_Invoke=vbrun_stub_404 @404
+    EVENT_SINK_GetIDsOfNames @403
+    EVENT_SINK_Invoke @404
     __vbaStrCat @405
     __vbaStrCmp @406
     __vbaStrComp @407
@@ -316,15 +316,15 @@ EXPORTS
     BASIC_CLASS_QueryInterface @410
     BASIC_CLASS_AddRef @411
     BASIC_CLASS_Release @412
-    BASIC_CLASS_GetIDsOfNames=vbrun_stub_413 @413
-    BASIC_CLASS_Invoke=vbrun_stub_414 @414
+    BASIC_CLASS_GetIDsOfNames @413
+    BASIC_CLASS_Invoke @414
     __vbaStrDate @415
     __vbaStrFixstr @416
     __vbaStrI2 @417
     __vbaStrI4 @418
     __vbaStrLike @419
     BASIC_DISPINTERFACE_GetTICount @420
-    BASIC_DISPINTERFACE_GetTypeInfo=vbrun_stub_421 @421
+    BASIC_DISPINTERFACE_GetTypeInfo @421
     __vbaStrR4 @422
     __vbaStrR8 @423
     __vbaStrTextCmp @424
@@ -632,9 +632,9 @@ EXPORTS
     _adj_fprem1 @726
     _adj_fptan @727
     _allmul @728
-    TipInvokeMethod2=vbrun_stub_999 @999
-    TipInvokeMethod=vbrun_stub_1016 @1016
+    TipInvokeMethod2 @999
+    TipInvokeMethod @1016
     IID_IVbaHost @1024
-    EbGetObjConnectionCounts=vbrun_stub_1025 @1025
-    CreateIExprSrvObj=vbrun_stub_2000 @2000
-    EbGetVBAObject=vbrun_stub_2010 @2010
+    EbGetObjConnectionCounts @1025
+    CreateIExprSrvObj @2000
+    EbGetVBAObject @2010

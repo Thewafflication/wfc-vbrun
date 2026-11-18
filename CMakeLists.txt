@@ -82,6 +82,7 @@ set(
   src/helpers_members.cpp
   src/helpers_frames.cpp
   src/helpers_records.cpp
+  src/helpers_engine.cpp
   src/x87_core.hpp
 )
 
@@ -122,7 +123,7 @@ if(WIN32)
     src/wfcvbrun.def
     "${CMAKE_CURRENT_BINARY_DIR}/wfcvbrun.rc"
   )
-  target_link_libraries(wfc_vbrun PRIVATE oleaut32 advapi32)
+  target_link_libraries(wfc_vbrun PRIVATE oleaut32 ole32 advapi32 user32)
   target_include_directories(wfc_vbrun PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
   set_target_properties(
     wfc_vbrun
@@ -138,7 +139,9 @@ endif()
 
 # --- The static library ---------------------------------------------------
 add_library(wfc_vbrun_static STATIC ${wfc_vbrun_sources})
-target_link_libraries(wfc_vbrun_static PUBLIC oleaut32)
+target_link_libraries(
+  wfc_vbrun_static PUBLIC oleaut32 ole32 advapi32 user32
+)
 set_target_properties(wfc_vbrun_static PROPERTIES OUTPUT_NAME wfcvbrun_static)
 wfc_vbrun_harden(wfc_vbrun_static)
 
@@ -406,6 +409,48 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     add_test(NAME TC-MP0009-vbrun-frames COMMAND vbrun_frames_tests)
     set_tests_properties(
       TC-MP0009-vbrun-frames
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # Get # and Put # of records and arrays, Print on an object.
+    add_executable(
+      vbrun_owner_tests
+      tests/vbrun_owner_tests.cpp
+      src/helpers_openfiles.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(vbrun_owner_tests PRIVATE oleaut32 ole32)
+    wfc_vbrun_harden(vbrun_owner_tests)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-owner")
+    add_test(
+      NAME TC-MP0009-vbrun-owner
+      COMMAND vbrun_owner_tests
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-owner"
+    )
+    set_tests_properties(
+      TC-MP0009-vbrun-owner
+      PROPERTIES LABELS "unit;mp-0009;vbrun"
+    )
+    # Declare, End, Stop, the program and DLL entries, contexts, projects.
+    add_executable(
+      vbrun_engine_tests
+      tests/vbrun_engine_tests.cpp
+      src/helpers_engine.cpp
+      src/helpers_openfiles.cpp
+      src/helpers_errors.cpp
+      src/vbrun_state.cpp
+    )
+    target_link_libraries(
+      vbrun_engine_tests PRIVATE oleaut32 ole32 advapi32 user32
+    )
+    wfc_vbrun_harden(vbrun_engine_tests)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-engine")
+    add_test(
+      NAME TC-MP0009-vbrun-engine
+      COMMAND vbrun_engine_tests
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-engine"
+    )
+    set_tests_properties(
+      TC-MP0009-vbrun-engine
       PROPERTIES LABELS "unit;mp-0009;vbrun"
     )
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.

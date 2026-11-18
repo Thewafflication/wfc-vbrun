@@ -242,8 +242,8 @@ ULONG WINAPI Zombie_Release(Zombie* const self) {
     return self->inner->Release();
 }
 
-HRESULT WINAPI Zombie_QueryInterface(Zombie* const self,
-                                     const IID* const iid, void** const out) {
+HRESULT WINAPI Zombie_QueryInterface(Zombie* const self, const IID* const iid,
+                                     void** const out) {
     if (out == nullptr) {
         return E_INVALIDARG;
     }
@@ -261,8 +261,8 @@ HRESULT WINAPI Zombie_GetTypeInfo(Zombie*, UINT, LCID, ITypeInfo**) {
     return kZombieFailure;
 }
 
-HRESULT WINAPI Zombie_GetIDsOfNames(Zombie*, const IID*, OLECHAR**, UINT,
-                                    LCID, DISPID*) {
+HRESULT WINAPI Zombie_GetIDsOfNames(Zombie*, const IID*, OLECHAR**, UINT, LCID,
+                                    DISPID*) {
     return kZombieFailure;
 }
 
@@ -286,6 +286,77 @@ HRESULT WINAPI BASIC_CLASS_QueryInterface(Zombie* const self,
                                           const IID* const iid,
                                           void** const out) {
     return self->inner->QueryInterface(*iid, out);
+}
+
+// The dispatch methods ask the object inside for its IDispatch; a call for
+// another interface than IID_NULL is DISP_E_UNKNOWNINTERFACE, as in the
+// reference.
+static IDispatch* inner_dispatch(Zombie* const self) {
+    IDispatch* dispatch = nullptr;
+    if (self->inner == nullptr ||
+        FAILED(self->inner->QueryInterface(
+            IID_IDispatch, reinterpret_cast<void**>(&dispatch)))) {
+        return nullptr;
+    }
+    return dispatch;
+}
+
+HRESULT WINAPI BASIC_CLASS_GetIDsOfNames(Zombie* const self,
+                                         const IID* const iid,
+                                         OLECHAR** const names,
+                                         const UINT count, const LCID locale,
+                                         DISPID* const ids) {
+    if (!IsEqualIID(*iid, IID_NULL)) {
+        return DISP_E_UNKNOWNINTERFACE;
+    }
+    IDispatch* const dispatch = inner_dispatch(self);
+    if (dispatch == nullptr) {
+        for (UINT i = 0; i < count; ++i) {
+            ids[i] = DISPID_UNKNOWN;
+        }
+        return DISP_E_UNKNOWNNAME;
+    }
+    const HRESULT result =
+        dispatch->GetIDsOfNames(*iid, names, count, locale, ids);
+    dispatch->Release();
+    return result;
+}
+
+HRESULT WINAPI BASIC_CLASS_Invoke(Zombie* const self, const DISPID member,
+                                  const IID* const iid, const LCID locale,
+                                  const WORD flags, DISPPARAMS* const params,
+                                  VARIANT* const result, EXCEPINFO* const excep,
+                                  UINT* const argument_error) {
+    if (!IsEqualIID(*iid, IID_NULL)) {
+        return DISP_E_UNKNOWNINTERFACE;
+    }
+    IDispatch* const dispatch = inner_dispatch(self);
+    if (dispatch == nullptr) {
+        return DISP_E_MEMBERNOTFOUND;
+    }
+    const HRESULT hr = dispatch->Invoke(member, *iid, locale, flags, params,
+                                        result, excep, argument_error);
+    dispatch->Release();
+    return hr;
+}
+
+// The one piece of type information of a dispinterface (index 0; another
+// index is TYPE_E_ELEMENTNOTFOUND), counted for the caller.
+HRESULT WINAPI BASIC_DISPINTERFACE_GetTypeInfo(Zombie* const self,
+                                               const UINT index,
+                                               const LCID locale,
+                                               ITypeInfo** const info) {
+    if (index != 0) {
+        return static_cast<HRESULT>(0x8002802BU);
+    }
+    *info = nullptr;
+    IDispatch* const dispatch = inner_dispatch(self);
+    if (dispatch == nullptr) {
+        return S_OK;
+    }
+    const HRESULT result = dispatch->GetTypeInfo(0, locale, info);
+    dispatch->Release();
+    return result;
 }
 
 // A dispinterface has one piece of type information.
@@ -423,8 +494,8 @@ namespace {
 // value, the value is converted to the type the reference points at and
 // written there (the old string or object in the slot is released). When the
 // target is not a reference the Variant is moved or copied as it is.
-VARIANT* store_through_reference(VARIANT* const target,
-                                 VARIANT* const source, const bool move) {
+VARIANT* store_through_reference(VARIANT* const target, VARIANT* const source,
+                                 const bool move) {
     if ((V_VT(target) & kByRef) == 0) {
         return move ? __vbaVarMove(target, source)
                     : __vbaVarCopy(target, source);
