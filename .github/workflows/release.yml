@@ -1,10 +1,9 @@
 name: Release
 
-# A version tag (the version in VERSION) builds the Release DLL for x86, x64
-# and arm64, packs and signs wfc-vbrun-any-<version>.zip with the WFC release
-# key, and a clean runner verifies the checksums, the index and the
-# signature. Publishing the release from the artifact is a separate step.
-# A manual run with dry_run builds an unsigned package to try the jobs.
+# A version tag (the version in VERSION) builds, tests, packs, signs and
+# verifies wfc-vbrun-any-<version>.zip with the release workflow every WFC
+# library shares (Thewafflication/wfc, .github/workflows/library-release.yml).
+# A manual run with dry_run builds an unsigned package to try it.
 
 on:
   push:
@@ -20,159 +19,9 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Release ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - { arch: x86, platform: Win32, runner: windows-2022 }
-          - { arch: x64, platform: x64, runner: windows-2022 }
-          - { arch: arm64, platform: ARM64, runner: windows-11-arm }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Check the tag against VERSION
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          $version = (Get-Content VERSION -TotalCount 1).Trim()
-          if ($version -ne '${{ github.ref_name }}') {
-            throw "Tag ${{ github.ref_name }} is not VERSION $version."
-          }
-
-      - name: Configure
-        shell: pwsh
-        run: cmake -S . -B out/build -A ${{ matrix.platform }}
-
-      - name: Build
-        shell: pwsh
-        run: cmake --build out/build --config Release
-
-      - name: Test
-        shell: pwsh
-        run: ctest --test-dir out/build -C Release --output-on-failure
-
-      - name: Collect the DLL
-        shell: pwsh
-        run: |
-          $dll = Get-ChildItem out/build -Recurse -Filter wfcvbrun.dll |
-            Where-Object FullName -Match 'Release' | Select-Object -First 1
-          if (-not $dll) { throw 'No Release wfcvbrun.dll.' }
-          New-Item -ItemType Directory -Force out/package-input | Out-Null
-          Copy-Item $dll.FullName out/package-input/
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wfcvbrun-${{ matrix.arch }}
-          path: out/package-input/wfcvbrun.dll
-          if-no-files-found: error
-          retention-days: 14
-
-  package:
-    name: Signed WPM package
-    needs: build
-    runs-on: windows-2022
-    timeout-minutes: 20
-    environment: ${{ inputs.dry_run && 'dry-run' || 'release' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check out the WFC scripts
-        uses: actions/checkout@v4
-        with:
-          repository: Thewafflication/wfc
-          path: wfc
-          sparse-checkout: |
-            scripts
-            release_keys
-            LICENSE
-          sparse-checkout-cone-mode: false
-
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: wfcvbrun-*
-          path: out/download
-
-      - name: Arrange the DLLs
-        shell: pwsh
-        run: |
-          foreach ($arch in 'x86', 'x64', 'arm64') {
-            $target = "out/package-input/$arch"
-            New-Item -ItemType Directory -Force $target | Out-Null
-            Move-Item "out/download/wfcvbrun-$arch/wfcvbrun.dll" $target
-          }
-
-      - name: Install WPM
-        shell: pwsh
-        run: ./wfc/scripts/Install-Wpm.ps1
-
-      - name: Build the package
-        shell: pwsh
-        env:
-          WPM_PRIVATE_KEY: ${{ secrets.WPM_RELEASE_PRIVATE_KEY }}
-          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
-        run: |
-          $sign = @{}
-          $keyPath = Join-Path $env:RUNNER_TEMP 'wfc-release.private'
-          if ($env:DRY_RUN -ne 'true') {
-            if ([string]::IsNullOrWhiteSpace($env:WPM_PRIVATE_KEY)) {
-              throw 'The release environment must define the release key.'
-            }
-            [IO.File]::WriteAllText($keyPath, $env:WPM_PRIVATE_KEY)
-            $sign = @{ SigningKey = $keyPath }
-          }
-          try {
-            ./scripts/Build-WpmPackage.ps1 -WfcRoot wfc @sign
-          } finally {
-            Remove-Item $keyPath -Force -ErrorAction SilentlyContinue
-          }
-
-      - name: Write the index and the checksums
-        shell: pwsh
-        run: >
-          ./wfc/scripts/New-WpmReleaseIndex.ps1 -Directory out/packages
-          -Tag (Get-Content VERSION -TotalCount 1).Trim()
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wfc-vbrun-wpm-packages-${{ github.sha }}
-          path: out/packages/*
-          if-no-files-found: error
-          retention-days: 30
-
-  verify:
-    name: Verify the signed package
-    if: ${{ !inputs.dry_run }}
-    needs: package
-    runs-on: windows-2022
-    timeout-minutes: 15
-    steps:
-      - name: Check out the WFC scripts
-        uses: actions/checkout@v4
-        with:
-          repository: Thewafflication/wfc
-          path: wfc
-          sparse-checkout: |
-            scripts
-            release_keys
-          sparse-checkout-cone-mode: false
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: wfc-vbrun-wpm-packages-${{ github.sha }}
-          path: out/packages
-
-      - name: Install WPM
-        shell: pwsh
-        run: ./wfc/scripts/Install-Wpm.ps1
-
-      - name: Verify the checksums, the index and the signature
-        shell: pwsh
-        run: >
-          ./wfc/scripts/Test-WpmRelease.ps1 -Directory out/packages -Count 1
-          -PublicKey wfc/release_keys/wfc-release.public
+  release:
+    uses: Thewafflication/wfc/.github/workflows/library-release.yml@master
+    with:
+      library: vbrun
+      dry_run: ${{ inputs.dry_run == true }}
+    secrets: inherit
