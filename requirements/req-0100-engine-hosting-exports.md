@@ -85,7 +85,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-engine`, `TC-MP0009-vbrun-members`, `TC-MP0009-vbrun-regcall`, `TC-MP0010-vbrun-dll`, `TC-MP0007-vbrun-library`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -102,4 +102,29 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-Not implemented.
+All 58 exports have an implementation (`src/implemented.txt`), written
+from the reference disassembly and from Visual Basic 6 probe programs built
+with `VB6.EXE /make`:
+
+- `ThunRTMain` runs a project that starts with Sub Main.
+- `DllFunctionCall` binds a Declare'd function and raises the measured errors:
+  53 "File not found", and 452 or 453 "Can't find DLL entry point".
+- The `EVENT_SINK*`, `BASIC_CLASS*`, `BASIC_DISPINTERFACE*` and `Zombie_*`
+  methods follow the reference's vtable layout.
+- `VBDllRegisterServer` and `VBDllUnRegisterServer` write and remove the
+  classes of the project's COM registration data.
+
+Deferred: the object engine and the p-code engine are not reproduced.
+
+- `VBDllGetClassObject`, `TipCreateInstanceEx`, `TipCreateInstanceProject2`
+  and `TipGetAddressOfPredeclaredInstance` answer `CLASS_E_CLASSNOTAVAILABLE`.
+- `ThunRTMain` stops a project that starts with a form, with a diagnostic and
+  exit code `0x5642`.
+- `ProcCallEngine` and `MethCallEngine` do the same.
+
+The affected programs are those compiled to p-code and those that start
+with a form or create the project's own classes. This deferral is listed in
+[COMPATIBILITY.md](../COMPATIBILITY.md), but it is not yet an approved
+compatibility profile.
+
+The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

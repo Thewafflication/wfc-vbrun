@@ -577,6 +577,52 @@ void through_references() {
     SafeArrayDestroy(array);
 }
 
+// The stack probe: EAX bytes below the caller's stack become the new frame,
+// zeroed, with ECX and EDI kept (x86 only; elsewhere it does nothing).
+#if defined(_MSC_VER) && defined(_M_IX86)
+extern "C" void __vbaChkstk();
+
+void stack_probe() {
+    unsigned long moved = 0;
+    unsigned long dirty = 0;
+    unsigned long kept_ecx = 0;
+    unsigned long kept_edi = 0;
+    __asm {
+        mov ebx, esp
+        sub esp, 0x2400
+        mov edi, esp
+        mov ecx, 0x900
+        mov eax, 0xCCCCCCCC
+        rep stosd
+        mov esp, ebx
+        mov ecx, 0x11111111
+        mov edi, 0x22222222
+        mov eax, 0x2400
+        call __vbaChkstk
+        mov kept_ecx, ecx
+        mov kept_edi, edi
+        mov eax, ebx
+        sub eax, esp
+        mov moved, eax
+        mov edi, esp
+        mov ecx, 0x900
+        xor eax, eax
+        repe scasd
+        setnz al
+        mov dirty, eax
+        mov esp, ebx
+    }
+    expect(moved == 0x2400, "Chkstk moves the stack by EAX bytes");
+    expect(dirty == 0, "Chkstk zeroes the new frame");
+    expect(kept_ecx == 0x11111111 && kept_edi == 0x22222222,
+           "Chkstk keeps ECX and EDI");
+}
+#else
+extern "C" void __vbaChkstk();
+
+void stack_probe() { __vbaChkstk(); }
+#endif
+
 }  // namespace
 
 int main() {
@@ -588,6 +634,7 @@ int main() {
     basic_class();
     zombie();
     through_references();
+    stack_probe();
     if (failures == 0) {
         std::printf("vbrun regcall: all checks passed\n");
         return 0;

@@ -49,7 +49,7 @@ there). These images are rendered from the real CI output by
 
 | Platform | Status |
 | --- | --- |
-| Windows x86, x64, ARM64 (MSVC) | CI workflow in place; first run pending |
+| Windows x86, x64, ARM64 (MSVC) | built and tested in CI |
 | Linux x86, x64, ARM through Winelib | x64 and x86 build and test in CI; arm64 builds only (Wine hangs there); `cmake/winelib.cmake` |
 | WebAssembly (Emscripten) | experimental CI job; not possible for this library yet |
 | WFC's own C++ compiler and library | planned; neither exists yet |

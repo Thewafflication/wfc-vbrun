@@ -39,9 +39,9 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0007-vbrun-library`, `TC-MP0010-vbrun-dll`
 
-Build and load the compatibility DLL from a minimal x86 native executable, inspect its PE headers, and verify that supported x64 and ARM64 hosts use the selected compatibility bridge.
+Build and load the compatibility DLL, inspect its PE headers and export directory, and verify that the x64 and ARM64 builds provide the same exports natively, without an x86 bridge.
 
 ## Relationships
 
@@ -59,7 +59,14 @@ profile that identifies the affected compiled VB6 programs.
 `wfcvbrun.dll` (target `wfc_vbrun`, `lib/wfc-vbrun/`) is built for the architecture
 of the build and loads in a GUI-subsystem process. It does not carry the
 reference identity (hash, version, image base); it is a compatible export
-surface, not a copy. Every export is a stub (`ADR-0007`): it writes
-`wfcvbrun: runtime export <name> (ordinal N) is not implemented` to stderr and
-the debugger and ends the process with exit code `0x5642`, because the
-signatures are not known. There is no x86 helper process for x64 and ARM64 hosts, by decision. Verified by `TC-MP0007-vbrun-library`.
+surface with its own implementation of all 635 exports, not a copy (see
+[implementation-status.md](implementation-status.md)).
+
+On x86, compiled programs import the exports under the reference's calling
+conventions. On x64 and ARM64 there is no x86 code to run and, by decision,
+no bridge or helper process (`ADR-0007`); WFC's own native programs link the
+library directly.
+
+`TC-MP0010-vbrun-dll` loads the DLL from a C program and checks its version
+resource and registration. `TC-MP0007-vbrun-library` checks the export
+directory.

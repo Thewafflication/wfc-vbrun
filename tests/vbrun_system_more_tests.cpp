@@ -8,6 +8,7 @@
 
 #include <oleauto.h>
 
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -31,6 +32,17 @@ LONG WINAPI __vbaErase(const void* elements, SAFEARRAY** slot);
 void WINAPI __vbaEraseKeepData(const void* elements, SAFEARRAY** slot);
 void WINAPI __vbaAryConstruct(SAFEARRAY* destination,
                               const SAFEARRAY* declaration);
+BSTR WINAPI rtcBstrFromError(const VARIANT* number);
+VARIANT* WINAPI rtcVarFromError(VARIANT* result, const VARIANT* number);
+void WINAPI __vbaError(LONG number);
+void WINAPI __vbaErrorOverflow();
+void WINAPI __vbaGenerateBoundsError();
+float WINAPI rtcGetTimer();
+void WINAPI rtcBeep();
+LONG WINAPI rtcGetHostLCID();
+void WINAPI __vbaAryConstruct2(SAFEARRAY* destination,
+                               const SAFEARRAY* declaration,
+                               void* information);
 LONG WINAPI __vbaCyForInit(LONGLONG* counter, LONGLONG start, LONGLONG limit,
                            LONGLONG step);
 LONG WINAPI __vbaCyForNext(LONGLONG* counter, LONGLONG limit, LONGLONG step);
@@ -269,6 +281,240 @@ void test_arrays() {
            "array built from a declaration");
     SafeArrayDestroyData(&built);
     SafeArrayDestroy(declaration);
+}
+
+// Record information that only counts its references (and clears nothing).
+class CountedRecord final : public IRecordInfo {
+public:
+    ULONG references = 1;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, void** out) override {
+        *out = nullptr;
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return ++references; }
+    ULONG STDMETHODCALLTYPE Release() override { return --references; }
+    HRESULT STDMETHODCALLTYPE RecordInit(PVOID) override { return S_OK; }
+    HRESULT STDMETHODCALLTYPE RecordClear(PVOID) override { return S_OK; }
+    HRESULT STDMETHODCALLTYPE RecordCopy(PVOID, PVOID) override {
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetGuid(GUID*) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE GetName(BSTR*) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE GetSize(ULONG* size) override {
+        *size = 8;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(ITypeInfo**) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetField(PVOID, LPCOLESTR, VARIANT*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetFieldNoCopy(PVOID, LPCOLESTR, VARIANT*,
+                                             PVOID*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE PutField(ULONG, PVOID, LPCOLESTR,
+                                       VARIANT*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE PutFieldNoCopy(ULONG, PVOID, LPCOLESTR,
+                                             VARIANT*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE GetFieldNames(ULONG*, BSTR*) override {
+        return E_NOTIMPL;
+    }
+    BOOL STDMETHODCALLTYPE IsMatchingType(IRecordInfo*) override {
+        return FALSE;
+    }
+    PVOID STDMETHODCALLTYPE RecordCreate() override { return nullptr; }
+    HRESULT STDMETHODCALLTYPE RecordCreateCopy(PVOID, PVOID*) override {
+        return E_NOTIMPL;
+    }
+    HRESULT STDMETHODCALLTYPE RecordDestroy(PVOID) override {
+        return E_NOTIMPL;
+    }
+};
+
+// A descriptor with the room below it that the features use (the record
+// information, the interface identifier or the element type), filled with
+// garbage the way a stack frame may be.
+struct Framed {
+    BYTE below[16];
+    SAFEARRAY array;
+};
+
+SAFEARRAY declared(const USHORT features, const ULONG size) {
+    SAFEARRAY declaration = {};
+    declaration.cDims = 1;
+    declaration.fFeatures = features;
+    declaration.cbElements = size;
+    declaration.rgsabound[0].cElements = 3;
+    return declaration;
+}
+
+// __vbaAryConstruct2 as the reference does it (MSVBVM60 6.00.9848: the
+// declaration marked FADF_RECORD gives the address of the record information,
+// which SafeArraySetRecordInfo stores; FADF_HAVEIID takes an identifier, and
+// FADF_HAVEVARTYPE the type itself).
+void test_construct_with_information() {
+    CountedRecord record;
+    IRecordInfo* holder = &record;
+    Framed framed;
+    std::memset(&framed, 0xCD, sizeof(framed));
+    SAFEARRAY declaration =
+        declared(FADF_RECORD | FADF_FIXEDSIZE, sizeof(void*));
+    vbrun::clear_error();
+    __vbaAryConstruct2(&framed.array, &declaration, &holder);
+    IRecordInfo* stored = nullptr;
+    expect(vbrun::last_error() == 0 && framed.array.pvData != nullptr &&
+               SUCCEEDED(SafeArrayGetRecordInfo(&framed.array, &stored)) &&
+               stored == &record && record.references == 3,
+           "an array of records keeps its record information");
+    if (stored != nullptr) {
+        stored->Release();
+    }
+    SafeArrayDestroyData(&framed.array);
+    SafeArraySetRecordInfo(&framed.array, nullptr);
+    expect(record.references == 1, "the record information is released");
+
+    std::memset(&framed, 0xCD, sizeof(framed));
+    declaration = declared(FADF_HAVEIID | FADF_UNKNOWN, sizeof(void*));
+    IID iid = IID_IDispatch;
+    __vbaAryConstruct2(&framed.array, &declaration, &iid);
+    GUID got = {};
+    expect(vbrun::last_error() == 0 &&
+               SUCCEEDED(SafeArrayGetIID(&framed.array, &got)) &&
+               IsEqualGUID(got, IID_IDispatch),
+           "an array of an interface keeps its identifier");
+    SafeArrayDestroyData(&framed.array);
+
+    std::memset(&framed, 0xCD, sizeof(framed));
+    declaration = declared(FADF_HAVEVARTYPE, 4);
+    __vbaAryConstruct2(
+        &framed.array, &declaration,
+        reinterpret_cast<void*>(static_cast<std::uintptr_t>(VT_I4)));
+    VARTYPE type = VT_EMPTY;
+    expect(vbrun::last_error() == 0 &&
+               SUCCEEDED(SafeArrayGetVartype(&framed.array, &type)) &&
+               type == VT_I4,
+           "an array of a type keeps the type");
+    SafeArrayDestroyData(&framed.array);
+}
+
+// Error(number) as a compiled Visual Basic 6 program measured it (MSVBVM60
+// 6.00.9848, under On Error Resume Next).
+VARIANT long_value(const LONG value) {
+    VARIANT result;
+    VariantInit(&result);
+    result.vt = VT_I4;
+    result.lVal = value;
+    return result;
+}
+
+bool same_text(BSTR got, const wchar_t* const wanted) {
+    const bool equal = got != nullptr && std::wcscmp(got, wanted) == 0;
+    SysFreeString(got);
+    return equal;
+}
+
+void test_error_function() {
+    vbrun::clear_error();
+    VARIANT got;
+    VariantInit(&got);
+    VARIANT n = long_value(6);
+    rtcVarFromError(&got, &n);
+    expect(got.vt == VT_BSTR && got.bstrVal != nullptr &&
+               std::wcscmp(got.bstrVal, L"Overflow") == 0,
+           "Error(6) is the String \"Overflow\"");
+    VariantClear(&got);
+    n = long_value(1);
+    expect(same_text(rtcBstrFromError(&n),
+                     L"Application-defined or object-defined error"),
+           "Error(1) is the generic message");
+    n = long_value(-1);
+    expect(same_text(rtcBstrFromError(&n),
+                     L"Application-defined or object-defined error") &&
+               vbrun::last_error() == 0,
+           "Error(-1) is the generic message, without an error");
+    n = long_value(0);
+    rtcVarFromError(&got, &n);
+    expect(got.vt == VT_BSTR && SysStringLen(got.bstrVal) == 0 &&
+               vbrun::last_error() == 0,
+           "Error(0) is an empty String");
+    VariantClear(&got);
+
+    got.vt = VT_I2;
+    got.iVal = 7;
+    n = long_value(65536);
+    rtcVarFromError(&got, &n);
+    expect(vbrun::last_error() == 6 && got.vt == VT_I2 && got.iVal == 7,
+           "Error(65536) is error 6 and leaves the result");
+    vbrun::clear_error();
+    VARIANT null_value;
+    VariantInit(&null_value);
+    null_value.vt = VT_NULL;
+    rtcVarFromError(&got, &null_value);
+    expect(vbrun::last_error() == 94, "Error(Null) is error 94");
+    vbrun::clear_error();
+    VARIANT digits = text(L"11");
+    expect(same_text(rtcBstrFromError(&digits), L"Division by zero"),
+           "Error(\"11\") is the message of 11");
+    VariantClear(&digits);
+
+    // The error of the moment: its message, or its own description.
+    __vbaError(11);
+    const VARIANT none = absent();
+    expect(same_text(rtcBstrFromError(&none), L"Division by zero") &&
+               vbrun::last_error() == 11,
+           "Error without an argument is the message of the error");
+    n = long_value(13);
+    expect(same_text(rtcBstrFromError(&n), L"Type mismatch") &&
+               vbrun::last_error() == 11,
+           "Error(13) keeps the error of the moment");
+    vbrun::error_detail().description = L"custom";
+    n = long_value(11);
+    expect(same_text(rtcBstrFromError(&n), L"custom") &&
+               same_text(rtcBstrFromError(&none), L"custom") &&
+               vbrun::error_detail().description == L"custom",
+           "Error of the current number is its description");
+    vbrun::clear_error();
+    expect(rtcBstrFromError(&none) == nullptr,
+           "Error without an argument and without an error is no text");
+}
+
+// Timer, Beep, the host locale and the errors compiled code raises itself
+// (a measured Visual Basic 6 program: Timer has a fraction; an Integer
+// overflow is error 6 and an index out of range error 9; Beep raises none).
+void test_small_entries() {
+    SYSTEMTIME now = {};
+    GetLocalTime(&now);
+    const double seconds = now.wHour * 3600.0 + now.wMinute * 60.0 +
+                           now.wSecond + now.wMilliseconds / 1000.0;
+    const float timer = rtcGetTimer();
+    expect(timer >= 0.0F && timer < 86400.0F &&
+               (std::fabs(timer - seconds) < 2.0 ||
+                std::fabs(timer - seconds) > 86398.0),
+           "Timer is the seconds since midnight");
+    bool fraction = false;
+    for (int i = 0; i < 50 && !fraction; ++i) {
+        const float t = rtcGetTimer();
+        fraction = t != std::floor(t);
+        Sleep(7);
+    }
+    expect(fraction, "Timer has a fraction of a second");
+    vbrun::clear_error();
+    rtcBeep();
+    expect(vbrun::last_error() == 0, "Beep raises no error");
+    expect(IsValidLocale(static_cast<LCID>(rtcGetHostLCID()),
+                         LCID_SUPPORTED) != FALSE,
+           "the host locale is a locale");
+    __vbaErrorOverflow();
+    expect(vbrun::last_error() == 6, "__vbaErrorOverflow is error 6");
+    __vbaGenerateBoundsError();
+    expect(vbrun::last_error() == 9, "__vbaGenerateBoundsError is error 9");
+    vbrun::clear_error();
 }
 
 void test_redim() {
@@ -745,6 +991,9 @@ int main() {
     test_state();
     test_strings();
     test_arrays();
+    test_construct_with_information();
+    test_error_function();
+    test_small_entries();
     test_redim();
     test_index();
     test_loops_and_state();

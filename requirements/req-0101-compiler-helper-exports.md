@@ -361,7 +361,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; the call cases `TC-MP0009-vbrun-cases-*` and `TC-MP0009-vbrun-systemmisc`, `-systemmore`, `-regcall`, `-late`, `-x87`, `-filemisc`, `-filedata`, `-openfiles`, `-owner`, `-foreach`, `-records`, `-frames`, `-midstmt`, `-members`, `-objects`, `-engine`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -378,4 +378,16 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-Not implemented.
+All 334 exports have an implementation (`src/implemented.txt`). Each was
+written from the disassembly of the reference. Where a call can be made from
+outside a running program, it is also compared with the reference: by the
+call cases of `tests/cases`, whose expected results come from the installed
+runtime, or by a Visual Basic 6 probe program.
+
+- The helpers that take operands in registers (`__fastcall` on x86) and the
+  x87 helpers run the reference's own sequences on 32-bit x86. On other
+  architectures they are portable functions.
+- `__vbaExceptHandler`, `__vbaResume`, `__vbaGosub` and `__vbaOnError` rewrite
+  the frames of compiled code on x86 only.
+
+The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

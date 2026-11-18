@@ -225,7 +225,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; the call cases `TC-MP0009-vbrun-cases-*`, `TC-MP0009-vbrun-helpers-*`, `TC-MP0009-vbrun-systemmisc`, `-systemmore`, `-filemisc`, `-openfiles`, `-filedata`, `-settings`, `-objects`, `-errobj`, `-late`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -242,4 +242,14 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-Not implemented.
+All 198 exports have an implementation (`src/implemented.txt`). Most are
+compared with the reference by the call cases of `tests/cases`.
+
+- The functions that need the state of a running program (the `rtc*Var`
+  forms, the file system, `Error`) were measured inside a compiled Visual
+  Basic 6 program instead. See `tests/cases/README.md`.
+- `rtcGetHostLCID` is the user's default locale. The reference returns the
+  locale its host gave at start-up, which a Visual Basic program cannot call
+  to read.
+
+The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

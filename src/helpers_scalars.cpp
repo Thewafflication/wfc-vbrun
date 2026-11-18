@@ -1194,37 +1194,57 @@ static void destroy_array(SAFEARRAY** const slot) {
 // Builds an array (an embedded or fixed-size one of a Type or a procedure)
 // from the descriptor of its declaration: the descriptor is copied and, for an
 // array that does not live inside its owner, the data allocated.
-static void construct_array(SAFEARRAY* const destination,
+static bool construct_array(SAFEARRAY* const destination,
                             const SAFEARRAY* const declaration) {
     const size_t bounds =
         declaration->cDims > 1 ? declaration->cDims - 1U : 0U;
     std::memcpy(destination, declaration,
                 sizeof(SAFEARRAY) + bounds * sizeof(SAFEARRAYBOUND));
     if ((destination->fFeatures & FADF_EMBEDDED) != 0) {
-        return;
+        return true;
     }
     const HRESULT status = SafeArrayAllocData(destination);
     if (FAILED(status) || destination->pvData == nullptr) {
         static_cast<void>(vbrun::raise(7));  // out of memory
+        return false;
     }
+    return true;
 }
 
 void WINAPI __vbaAryConstruct(SAFEARRAY* const destination,
                               const SAFEARRAY* const declaration) {
-    construct_array(destination, declaration);
+    static_cast<void>(construct_array(destination, declaration));
 }
 
-// The same for an array of records: a declaration that already has record
-// information is not valid here (error 5).
+// The same for an array whose elements need information: the record
+// information of an array of records (for a declaration marked FADF_RECORD
+// the argument is the address of the slot that holds it), the interface
+// identifier of an array of a typed interface, or the element type. It goes
+// where the features of the array keep it, as in the reference: the record
+// information and the identifier through SafeArraySetRecordInfo and
+// SafeArraySetIID, the type in the slot just below the descriptor.
 void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
                                const SAFEARRAY* const declaration,
-                               const void* const records) {
-    static_cast<void>(records);
+                               void* information) {
     if ((declaration->fFeatures & FADF_RECORD) != 0) {
-        static_cast<void>(vbrun::raise(5));
+        information = *static_cast<void* const*>(information);
+    }
+    if (!construct_array(destination, declaration) ||
+        information == nullptr) {
         return;
     }
-    construct_array(destination, declaration);
+    if ((destination->fFeatures & FADF_RECORD) != 0) {
+        reinterpret_cast<IRecordInfo**>(destination)[-1] = nullptr;
+        SafeArraySetRecordInfo(destination,
+                               static_cast<IRecordInfo*>(information));
+    } else if ((destination->fFeatures & FADF_HAVEIID) != 0) {
+        std::memset(reinterpret_cast<BYTE*>(destination) - sizeof(IID), 0,
+                    sizeof(IID));
+        SafeArraySetIID(destination, *static_cast<const IID*>(information));
+    } else if ((declaration->fFeatures & FADF_HAVEVARTYPE) != 0) {
+        reinterpret_cast<DWORD*>(destination)[-1] = static_cast<DWORD>(
+            reinterpret_cast<std::uintptr_t>(information));
+    }
 }
 
 // ReDim: the array of a declaration (its features, element size, element type
@@ -2802,19 +2822,77 @@ VARIANT* WINAPI rtcVarFromFormatVar(VARIANT* const result,
 }
 
 // Error$(number): the message of a run-time error; the number is a Variant.
-BSTR WINAPI rtcBstrFromError(const VARIANT* const number) {
-    const LONG value = __vbaI4Var(number);
-    const wchar_t* const message = vbrun::error_message(value);
-    return message == nullptr ? nullptr : SysAllocString(message);
+// Error(number) and Error$(number), as the reference does them (MSVBVM60
+// 6.00.9848, measured with a compiled program): with the argument missing,
+// the error of the moment; a number above 65535 is error 6 (Overflow); 0 (or
+// no error) gives no text; a negative number is an HRESULT. The error of the
+// moment answers with its own description (Err.Description), any other with
+// the message of its number (the generic one when it has none).
+// The text of Error(number); false when the call raised an error.
+static bool error_text(const VARIANT* const number, BSTR* const text) {
+    *text = nullptr;
+    const int current = vbrun::last_error();
+    const vbrun::ErrorDetail saved = vbrun::error_detail();
+    const LONG current_code =
+        current > 0 ? static_cast<LONG>(0x800A0000U |
+                                        static_cast<unsigned>(current))
+                    : current;
+    LONG code = current_code;
+    if (number->vt != VT_ERROR || number->scode != DISP_E_PARAMNOTFOUND) {
+        vbrun::clear_error();
+        const LONG value = __vbaI4Var(number);
+        if (vbrun::last_error() != 0) {
+            return false;
+        }
+        if (value > 0xFFFF) {
+            static_cast<void>(vbrun::raise(6));
+            return false;
+        }
+        static_cast<void>(vbrun::raise(current));
+        vbrun::error_detail() = saved;
+        code = value > 0 ? static_cast<LONG>(0x800A0000U |
+                                             static_cast<unsigned>(value))
+                         : value;
+    }
+    if (code == 0) {
+        return true;
+    }
+    if (code == current_code && !saved.description.empty()) {
+        *text = SysAllocString(saved.description.c_str());
+        return true;
+    }
+    const auto bits = static_cast<unsigned>(code);
+    const int vb_number = (bits & 0x1FFF0000U) == 0x000A0000U
+                              ? static_cast<int>(bits & 0xFFFFU)
+                              : -1;
+    const wchar_t* const message = vbrun::error_message(vb_number);
+    *text = message == nullptr ? nullptr : SysAllocString(message);
+    return true;
 }
 
+// Error$(number) and Error(number), as the reference does them (MSVBVM60
+// 6.00.9848, measured with a compiled program): with the argument missing,
+// the error of the moment; a number above 65535 is error 6 (Overflow); 0 (or
+// no error) gives no text; a negative number is an HRESULT. The error of the
+// moment answers with its own description (Err.Description), any other
+// number with its message (the generic one when it has none).
+BSTR WINAPI rtcBstrFromError(const VARIANT* const number) {
+    BSTR text = nullptr;
+    static_cast<void>(error_text(number, &text));
+    return text;
+}
+
+// The Variant form leaves the result as it was when the call raises.
 VARIANT* WINAPI rtcVarFromError(VARIANT* const result,
                                 const VARIANT* const number) {
-    VariantClear(result);
-    const LONG value = __vbaI4Var(number);
-    const wchar_t* const message = vbrun::error_message(value);
-    result->vt = VT_BSTR;
-    result->bstrVal = SysAllocString(message == nullptr ? L"" : message);
+    BSTR text = nullptr;
+    if (error_text(number, &text)) {
+        result->vt = VT_BSTR;
+        result->wReserved1 = 0;
+        result->wReserved2 = 0;
+        result->wReserved3 = 0;
+        result->bstrVal = text;
+    }
     return result;
 }
 

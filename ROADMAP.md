@@ -24,8 +24,7 @@ item is present, tested and passing in CI; an unchecked one is planned.
       the Microsoft ids on request).
 - [x] A C program tests the DLL (exports, version, registration round trip).
 - [x] Standalone build (tested locally on x64).
-- [ ] CI on Windows x86, x64 and ARM64 (the workflow is in place; its first
-      run is pending).
+- [x] CI on Windows x86, x64 and ARM64.
 - [x] WSP baseline as a submodule, WSP hardening flags in the build.
 - [ ] Screenshots and an example program in the README (done for the
       controls; see below).
@@ -59,7 +58,7 @@ item is present, tested and passing in CI; an unchecked one is planned.
 
 ## Platform track
 
-- [ ] Windows x86, x64, ARM64 (MSVC) passing in CI.
+- [x] Windows x86, x64, ARM64 (MSVC) passing in CI.
 - [ ] Linux x86, x64 and ARM through Winelib (`cmake/winelib.cmake`): x64 and x86
       build and pass in CI; arm64 builds, but Wine 9 hangs when it runs the
       tests, so they are not run there yet.

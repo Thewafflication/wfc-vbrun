@@ -133,7 +133,10 @@ void __vbaFpUI1();
 void __vbaFpR4();
 void __vbaFpR8();
 void __vbaFpCSngR4();
+void __vbaFpCSngR8();
+void __vbaFpCDblR4();
 void __vbaFpCDblR8();
+void __vbaFPException();
 void __vbaFpCy();
 void __vbaFpCmpCy();
 void __vbaFPInt();
@@ -328,6 +331,9 @@ void sequences() {
                        bits_of(x::round_to_double_mantissa(v)),
                    label);
             expect(bits_of(asm_st0(v, __vbaFpCDblR8)) == bits_of(v), label);
+            expect(bits_of(asm_st0(v, __vbaFpCDblR4)) ==
+                       bits_of(x::through_double(v)),
+                   label);
             vbrun::clear_error();
             const double single = asm_st0(v, __vbaFpCSngR4);
             const int error = vbrun::last_error();
@@ -338,8 +344,63 @@ void sequences() {
                 expect(bits_of(single) == bits_of(x::through_single(v)),
                        label);
             }
+            vbrun::clear_error();
+            const double single8 = asm_st0(v, __vbaFpCSngR8);
+            const int error8 = vbrun::last_error();
+            vbrun::clear_error();
+            expect(error8 == core_error &&
+                       (error8 != 0 || bits_of(single8) == bits_of(single)),
+                   label);
         }
     }
+}
+
+// The error __vbaFPException raises after a / b (with the exceptions
+// masked, the division leaves its flag in the status word).
+int fp_exception_after(double a, double b) {
+    vbrun::clear_error();
+    __asm {
+        fnclex
+        fld qword ptr [a]
+        fdiv qword ptr [b]
+        fstp st(0)
+        call __vbaFPException
+        fnclex
+    }
+    const int error = vbrun::last_error();
+    vbrun::clear_error();
+    return error;
+}
+
+void fp_exception() {
+    expect(fp_exception_after(1.0, 0.0) == 11,
+           "__vbaFPException after a division by zero is error 11");
+    expect(fp_exception_after(0.0, 0.0) == 6,
+           "__vbaFPException after an invalid operation is error 6");
+}
+
+}  // namespace
+
+#else
+
+extern "C" {
+double __vbaFpCSngR8(double value);
+double __vbaFpCDblR4(double value);
+void __vbaFPException();
+}
+
+namespace {
+
+// Elsewhere the exports take the operand as a double, and there is no x87
+// status to read: __vbaFPException is the overflow error.
+void exports_elsewhere() {
+    expect(__vbaFpCSngR8(1.1) == static_cast<double>(1.1F),
+           "__vbaFpCSngR8 rounds to a Single");
+    expect(error_of([] { __vbaFpCSngR8(1e300); }) == 6,
+           "__vbaFpCSngR8 of a Double too large is error 6");
+    expect(__vbaFpCDblR4(0.5) == 0.5, "__vbaFpCDblR4 keeps the value");
+    expect(error_of([] { __vbaFPException(); }) == 6,
+           "__vbaFPException is error 6");
 }
 
 }  // namespace
@@ -352,6 +413,9 @@ int main() {
     currency();
 #if defined(_MSC_VER) && defined(_M_IX86)
     sequences();
+    fp_exception();
+#else
+    exports_elsewhere();
 #endif
     if (failures == 0) {
         std::printf("vbrun x87: all checks passed\n");

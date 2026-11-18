@@ -51,7 +51,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-helpers-memory`, `TC-MP0009-vbrun-members`, `TC-MP0009-vbrun-records`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -68,4 +68,14 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-Not implemented.
+All 24 exports have an implementation (`src/implemented.txt`), written from
+the disassembly of the reference.
+
+- The `GetMem*` and `PutMem*` helpers are compared with the reference by the
+  memory probe.
+- The default-member forms (`PutMemVar`, `PutMemObj`, `SetMemVar`) and the
+  `*NewObj` and `*Event` forms are checked against the documented contract.
+- `SetMemEvent` stores the object without connecting its events.
+- `CopyRecord` reads the compiler's record descriptors.
+
+The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

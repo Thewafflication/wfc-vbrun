@@ -43,6 +43,11 @@ SHORT WINAPI rtcEndOfFile(SHORT number);
 LONG WINAPI rtcFileLocation(SHORT number);
 LONG WINAPI rtcFileSeek(SHORT number);
 void WINAPI __vbaLineInputStr(BSTR* text, SHORT number);
+void WINAPI __vbaPutFxStr3(LONG length, const wchar_t* text, SHORT number);
+void WINAPI __vbaGetFxStr3(LONG length, wchar_t* text, SHORT number);
+void WINAPI __vbaLineInputVar(VARIANT* target, SHORT number);
+void __cdecl rtcFileReset();
+void WINAPI __vbaFileSeek(LONG position, SHORT number);
 }
 
 namespace {
@@ -731,6 +736,87 @@ void control_statements() {
     DeleteFileA("wfcio_d.tmp");
 }
 
+// Results measured with a compiled Visual Basic 6 program (MSVBVM60
+// 6.00.9848, under On Error Resume Next): Put and Get of a String * 5
+// without a record number, Get past the end of the file (NUL characters, no
+// error), Line Input # into a Variant (a String; 62 at the end of the file,
+// the Variant kept; 52 for a file that is not open) and Reset.
+int g_measured_failures = 0;
+
+void measured(const bool ok, const char* const what) {
+    if (!ok) {
+        std::fprintf(stderr, "FAIL: %s\n", what);
+        ++g_measured_failures;
+    }
+}
+
+void measured_statements() {
+    DeleteFileA("wfcmisc_fx.tmp");
+    open(kBinary | kReadWrite, 30, "wfcmisc_fx.tmp");
+    vbrun::clear_error();
+    wchar_t five[5];
+    std::memcpy(five, L"abcde", sizeof(five));
+    __vbaPutFxStr3(5, five, 30);
+    measured(vbrun::last_error() == 0 && rtcFileLength(30) == 5,
+             "Put of a String * 5 without a record number writes 5 bytes");
+    __vbaFileSeek(1, 30);
+    std::memcpy(five, L"zzzzz", sizeof(five));
+    __vbaGetFxStr3(5, five, 30);
+    measured(vbrun::last_error() == 0 &&
+                 std::memcmp(five, L"abcde", sizeof(five)) == 0 &&
+                 rtcFileSeek(30) == 6,
+             "Get of a String * 5 reads at the position");
+    __vbaGetFxStr3(5, five, 30);
+    bool nuls = true;
+    for (const wchar_t c : five) {
+        nuls = nuls && c == L'\0';
+    }
+    measured(vbrun::last_error() == 0 && nuls && rtcEndOfFile(30) != 0,
+             "Get past the end leaves NUL characters, without an error");
+    __vbaFileClose(30);
+
+    std::ofstream lines("wfcmisc_li.tmp", std::ios::binary);
+    lines << "line one\r\n\r\n3";
+    lines.close();
+    open(kInput, 31, "wfcmisc_li.tmp");
+    VARIANT v;
+    VariantInit(&v);
+    __vbaLineInputVar(&v, 31);
+    measured(v.vt == VT_BSTR && std::wcscmp(v.bstrVal, L"line one") == 0,
+             "Line Input # into a Variant gives a String");
+    __vbaLineInputVar(&v, 31);
+    measured(v.vt == VT_BSTR && SysStringLen(v.bstrVal) == 0,
+             "an empty line is an empty String");
+    __vbaLineInputVar(&v, 31);
+    measured(v.vt == VT_BSTR && std::wcscmp(v.bstrVal, L"3") == 0,
+             "the last line without its line break");
+    vbrun::clear_error();
+    __vbaLineInputVar(&v, 31);
+    measured(vbrun::last_error() == 62 && v.vt == VT_BSTR &&
+                 std::wcscmp(v.bstrVal, L"3") == 0,
+             "Line Input # past the end is error 62 and keeps the Variant");
+    vbrun::clear_error();
+    __vbaLineInputVar(&v, 9);
+    measured(vbrun::last_error() == 52,
+             "Line Input # of a file that is not open is error 52");
+    VariantClear(&v);
+
+    vbrun::clear_error();
+    open(kBinary | kReadWrite, 32, "wfcmisc_fx.tmp");
+    rtcFileReset();
+    measured(vbrun::last_error() == 0, "Reset raises no error");
+    __vbaLineInputVar(&v, 31);
+    const int after_input = vbrun::last_error();
+    vbrun::clear_error();
+    static_cast<void>(rtcFileLength(32));
+    measured(after_input == 52 && vbrun::last_error() == 52,
+             "Reset closes every open file");
+    vbrun::clear_error();
+    VariantClear(&v);
+    DeleteFileA("wfcmisc_fx.tmp");
+    DeleteFileA("wfcmisc_li.tmp");
+}
+
 }  // namespace
 
 int main(const int argument_count, const char* const arguments[]) {
@@ -747,6 +833,10 @@ int main(const int argument_count, const char* const arguments[]) {
     lock_statements();
     fixed_statements();
     control_statements();
+    measured_statements();
+    if (g_measured_failures != 0) {
+        return 1;
+    }
     std::ofstream actual("filemisc.actual", std::ios::binary);
     actual << g_lines;
     actual.close();

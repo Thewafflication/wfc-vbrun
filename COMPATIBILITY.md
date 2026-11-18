@@ -21,12 +21,28 @@ implements all 635 of them.
 
 ## How it is checked
 
-- `vbrun_tests` compares the exports with the reference inventory (needs the
-  WFC evidence, so it runs in WFC only).
-- `vbrun_helper_tests` runs the helper families (strings, memory, variants,
-  conversions, operators) and the `.cases`/`.expected` pairs in `tests/cases`.
-- `vbrun_static_tests` links the static library.
-- `vbrun_dll_test` (C) loads the DLL, checks its version and registration.
+Every export is called by at least one test (see
+`requirements/implementation-status.md`).
+
+- `vbrun_tests` (`TC-MP0007-vbrun-library`) compares the export directory
+  with the reference inventory. It needs the WFC evidence, so it runs in WFC
+  only.
+- The call cases (`TC-MP0009-vbrun-cases-<family>`) call the exports with the
+  arguments in `tests/cases/<family>.cases` and compare the results with
+  `.expected`, which holds the installed runtime's answers.
+- 22 unit test programs cover the families that need a running program, x87
+  operands or registers, or compiled-code frames:
+  - `-helpers-*`, `-systemmisc`, `-systemmore`, `-settings`, `-errobj`,
+    `-objects`, `-late`, `-foreach`, `-midstmt`;
+  - the file statements: `-openfiles`, `-filedata`, `-filemisc`, `-owner`;
+  - `-regcall`, `-x87`, `-x87math`, `-members`, `-records`, `-frames`,
+    `-engine`.
+
+  Their expected values come from the reference: the probe scripts, Visual
+  Basic 6 programs built with `VB6.EXE /make`, or its disassembly.
+- `vbrun_static_tests` (`TC-MP0010-vbrun-static`) links the static library.
+- `vbrun_dll_test` (`TC-MP0010-vbrun-dll`, in C) loads the DLL and checks its
+  version and registration.
 
 ## Known gaps
 

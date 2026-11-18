@@ -48,7 +48,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-x87math`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -65,4 +65,15 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-Not implemented.
+All 21 exports have an implementation (`src/implemented.txt`).
+
+- On 32-bit x86 with MSVC they are the reference's own x87 sequences:
+  - the `_CI*` functions at the control word 0x027F (Exp at 0x133F), with the
+    range reduction for a huge operand;
+  - the `_adj_*` helpers, which are the single instruction they stand for;
+  - `_allmul`.
+- On every other architecture they take doubles.
+
+`TC-MP0009-vbrun-x87math` compares the two forms value by value on x86.
+
+The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

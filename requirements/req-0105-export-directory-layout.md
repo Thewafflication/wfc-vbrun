@@ -27,7 +27,7 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; test case TBD
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0007-vbrun-library`
 
 Parse the built PE export directory and compare ordinal base, table size, holes, names, and ordinal assignments with the retained machine-readable inventory.
 
