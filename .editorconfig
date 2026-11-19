@@ -1,0 +1,23 @@
+# @file .editorconfig
+# @brief Editor defaults for wfc-vbrun-owned text (WSP-STYLE-0002 to 0004).
+# @note Editor hint only; Test-SourceStyle.ps1 enforces the 80-column limit.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 80
+
+[*.{yaml,yml,json,cmake}]
+indent_size = 2
+
+[CMakeLists.txt]
+indent_size = 2
+
+[*.md]
+max_line_length = off
+

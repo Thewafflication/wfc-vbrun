@@ -1,0 +1,6 @@
+# @file .gersemirc
+# @brief Controlled CMake formatting (WSP-LANG-0010).
+# @note Pinned tool: gersemi 0.29.2.
+indent: 2
+line_length: 80
+list_expansion: favour-inlining

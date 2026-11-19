@@ -104,8 +104,11 @@ if(WIN32)
   list(GET version_parts 1 WFC_LIB_VERSION_MINOR)
   list(GET version_parts 2 WFC_LIB_VERSION_PATCH)
   set(WFC_LIB_VERSION "${WFC_VBRUN_VERSION}")
-  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET" WFC_LIB_TARGET
-       LIMIT_COUNT 1)
+  file(
+    STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/TARGET"
+    WFC_LIB_TARGET
+    LIMIT_COUNT 1
+  )
   configure_file(
     src/registration_info.hpp.in
     "${CMAKE_CURRENT_BINARY_DIR}/registration_info.hpp"
@@ -139,9 +142,7 @@ endif()
 
 # --- The static library ---------------------------------------------------
 add_library(wfc_vbrun_static STATIC ${wfc_vbrun_sources})
-target_link_libraries(
-  wfc_vbrun_static PUBLIC oleaut32 ole32 advapi32 user32
-)
+target_link_libraries(wfc_vbrun_static PUBLIC oleaut32 ole32 advapi32 user32)
 set_target_properties(wfc_vbrun_static PROPERTIES OUTPUT_NAME wfcvbrun_static)
 wfc_vbrun_harden(wfc_vbrun_static)
 
@@ -203,8 +204,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-openfiles")
     add_test(
       NAME TC-MP0009-vbrun-openfiles
-      COMMAND vbrun_file_tests
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/openfiles.expected"
+      COMMAND
+        vbrun_file_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/openfiles.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-openfiles"
     )
     set_tests_properties(
@@ -225,10 +227,11 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filedata")
     add_test(
       NAME TC-MP0009-vbrun-filedata
-      COMMAND vbrun_file_data_tests
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileprint.expected"
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileinput.expected"
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filenumbers.expected"
+      COMMAND
+        vbrun_file_data_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileprint.expected"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/fileinput.expected"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filenumbers.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filedata"
     )
     set_tests_properties(
@@ -440,7 +443,8 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       src/vbrun_state.cpp
     )
     target_link_libraries(
-      vbrun_engine_tests PRIVATE oleaut32 ole32 advapi32 user32
+      vbrun_engine_tests
+      PRIVATE oleaut32 ole32 advapi32 user32
     )
     wfc_vbrun_harden(vbrun_engine_tests)
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-engine")
@@ -504,8 +508,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filemisc")
     add_test(
       NAME TC-MP0009-vbrun-filemisc
-      COMMAND vbrun_file_misc_tests
-              "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filemisc.expected"
+      COMMAND
+        vbrun_file_misc_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filemisc.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filemisc"
     )
     set_tests_properties(
@@ -515,10 +520,30 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")
-    foreach(vbrun_cases
-            strings variants convert varops language varfuncs varstrings
-            scalars scalars2 scalars3 random random2 numeric finance dates
-            dates2 payments arrays lists system files)
+    foreach(
+      vbrun_cases
+      strings
+      variants
+      convert
+      varops
+      language
+      varfuncs
+      varstrings
+      scalars
+      scalars2
+      scalars3
+      random
+      random2
+      numeric
+      finance
+      dates
+      dates2
+      payments
+      arrays
+      lists
+      system
+      files
+    )
       add_test(
         NAME TC-MP0009-vbrun-cases-${vbrun_cases}
         COMMAND
