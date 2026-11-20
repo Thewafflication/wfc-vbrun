@@ -36,10 +36,14 @@ struct NamedMember {
 };
 
 const NamedMember kMembers[] = {
-    {L"number", kNumber},         {L"source", kSource},
-    {L"description", kDescription}, {L"helpfile", kHelpFile},
-    {L"helpcontext", kHelpContext}, {L"raise", kRaise},
-    {L"clear", kClear},           {L"lastdllerror", kLastDllError},
+    {L"number", kNumber},
+    {L"source", kSource},
+    {L"description", kDescription},
+    {L"helpfile", kHelpFile},
+    {L"helpcontext", kHelpContext},
+    {L"raise", kRaise},
+    {L"clear", kClear},
+    {L"lastdllerror", kLastDllError},
 };
 
 class ErrObject : public IDispatch {
@@ -75,9 +79,8 @@ public:
     HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID, ITypeInfo**) override {
         return E_NOTIMPL;
     }
-    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR* names,
-                                            UINT count, LCID,
-                                            DISPID* ids) override {
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR* names, UINT count,
+                                            LCID, DISPID* ids) override {
         HRESULT result = S_OK;
         for (UINT at = 0; at < count; ++at) {
             ids[at] = DISPID_UNKNOWN;
@@ -101,8 +104,8 @@ public:
     HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD flags,
                                      DISPPARAMS* params, VARIANT* result,
                                      EXCEPINFO*, UINT*) override {
-        const bool put = (flags & (DISPATCH_PROPERTYPUT |
-                                   DISPATCH_PROPERTYPUTREF)) != 0;
+        const bool put =
+            (flags & (DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF)) != 0;
         if (result != nullptr) {
             VariantInit(result);
         }
@@ -123,9 +126,7 @@ public:
     }
 
     // The members, in the order of the interface after IDispatch.
-    virtual LONG STDMETHODCALLTYPE get_Number() {
-        return vbrun::last_error();
-    }
+    virtual LONG STDMETHODCALLTYPE get_Number() { return vbrun::last_error(); }
     virtual void STDMETHODCALLTYPE put_Number(const LONG number) {
         const ErrorDetail kept = vbrun::error_detail();
         static_cast<void>(vbrun::raise(static_cast<int>(number)));
@@ -187,9 +188,7 @@ public:
             detail.help_context = number_of(help_context);
         }
     }
-    virtual void STDMETHODCALLTYPE Clear() {
-        vbrun::clear_error();
-    }
+    virtual void STDMETHODCALLTYPE Clear() { vbrun::clear_error(); }
     virtual LONG STDMETHODCALLTYPE get_LastDllError() {
         return static_cast<LONG>(vbrun::last_dll_error());
     }
@@ -208,9 +207,8 @@ private:
         VARIANT converted;
         VariantInit(&converted);
         std::wstring text;
-        if (SUCCEEDED(VariantChangeType(&converted,
-                                        const_cast<VARIANT*>(value), 0,
-                                        VT_BSTR))) {
+        if (SUCCEEDED(VariantChangeType(&converted, const_cast<VARIANT*>(value),
+                                        0, VT_BSTR))) {
             text.assign(converted.bstrVal == nullptr ? L"" : converted.bstrVal,
                         SysStringLen(converted.bstrVal));
         }
@@ -222,9 +220,8 @@ private:
         VARIANT converted;
         VariantInit(&converted);
         LONG number = 0;
-        if (SUCCEEDED(VariantChangeType(&converted,
-                                        const_cast<VARIANT*>(value), 0,
-                                        VT_I4))) {
+        if (SUCCEEDED(VariantChangeType(&converted, const_cast<VARIANT*>(value),
+                                        0, VT_I4))) {
             number = converted.lVal;
         }
         return number;
@@ -240,8 +237,7 @@ private:
         VariantInit(&absent);
         absent.vt = VT_ERROR;
         absent.scode = DISP_E_PARAMNOTFOUND;
-        const VARIANT* given[5] = {&absent, &absent, &absent, &absent,
-                                   &absent};
+        const VARIANT* given[5] = {&absent, &absent, &absent, &absent, &absent};
         for (UINT at = 0; at < count; ++at) {
             given[at] = &params->rgvarg[count - 1 - at];
         }

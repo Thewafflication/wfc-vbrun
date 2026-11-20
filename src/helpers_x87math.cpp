@@ -649,13 +649,27 @@ __declspec(naked) void _allmul() {
 
 extern "C" {
 
-double _CIsin(const double value) { return std::sin(value); }
-double _CIcos(const double value) { return std::cos(value); }
-double _CItan(const double value) { return std::tan(value); }
-double _CIatan(const double value) { return std::atan(value); }
-double _CIexp(const double value) { return std::exp(value); }
-double _CIlog(const double value) { return std::log(value); }
-double _CIsqrt(const double value) { return std::sqrt(value); }
+double _CIsin(const double value) {
+    return std::sin(value);
+}
+double _CIcos(const double value) {
+    return std::cos(value);
+}
+double _CItan(const double value) {
+    return std::tan(value);
+}
+double _CIatan(const double value) {
+    return std::atan(value);
+}
+double _CIexp(const double value) {
+    return std::exp(value);
+}
+double _CIlog(const double value) {
+    return std::log(value);
+}
+double _CIsqrt(const double value) {
+    return std::sqrt(value);
+}
 
 // st0 / operand and operand / st0.
 double _adj_fdiv_m32(const double st0, const float operand) {
@@ -712,7 +726,9 @@ double _adj_fprem1(const double st0, const double st1) {
 double _adj_fpatan(const double st1, const double st0) {
     return std::atan2(st1, st0);
 }
-double _adj_fptan(const double value) { return std::tan(value); }
+double _adj_fptan(const double value) {
+    return std::tan(value);
+}
 
 std::int64_t _allmul(const std::int64_t left, const std::int64_t right) {
     return static_cast<std::int64_t>(static_cast<std::uint64_t>(left) *

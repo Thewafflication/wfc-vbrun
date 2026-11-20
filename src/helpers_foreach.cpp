@@ -83,11 +83,11 @@ LONG next_in_array(const unsigned short type, SAFEARRAY** const state,
         case VT_BSTR: {
             const BSTR text = reinterpret_cast<const BSTR*>(data)[at];
             out->vt = VT_BSTR;
-            out->bstrVal = text == nullptr
-                               ? SysAllocStringByteLen(nullptr, 0)
-                               : SysAllocStringByteLen(
-                                     reinterpret_cast<const char*>(text),
-                                     SysStringByteLen(text));
+            out->bstrVal =
+                text == nullptr
+                    ? SysAllocStringByteLen(nullptr, 0)
+                    : SysAllocStringByteLen(reinterpret_cast<const char*>(text),
+                                            SysStringByteLen(text));
             break;
         }
         case VT_DISPATCH: {
@@ -127,10 +127,10 @@ void new_enumerator(IDispatch* const object, IUnknown** const slot) {
     VariantInit(&result);
     EXCEPINFO excep = {};
     UINT bad_argument = 0;
-    const HRESULT status = object->Invoke(
-        DISPID_NEWENUM, IID_NULL, language_locale(),
-        DISPATCH_METHOD | DISPATCH_PROPERTYGET, &none, &result, &excep,
-        &bad_argument);
+    const HRESULT status =
+        object->Invoke(DISPID_NEWENUM, IID_NULL, language_locale(),
+                       DISPATCH_METHOD | DISPATCH_PROPERTYGET, &none, &result,
+                       &excep, &bad_argument);
     if (FAILED(status)) {
         if (status == DISP_E_MEMBERNOTFOUND || status == DISP_E_UNKNOWNNAME) {
             static_cast<void>(vbrun::raise(kNoMember));
@@ -187,9 +187,9 @@ void element_interface(IUnknown* const element, const IID* const iid,
         *target = nullptr;
         return;
     }
-    HRESULT status = element->QueryInterface(
-        iid == nullptr ? IID_IDispatch : *iid,
-        reinterpret_cast<void**>(target));
+    HRESULT status =
+        element->QueryInterface(iid == nullptr ? IID_IDispatch : *iid,
+                                reinterpret_cast<void**>(target));
     if (SUCCEEDED(status) && *target == nullptr) {
         status = E_NOINTERFACE;
     }
@@ -223,9 +223,8 @@ LONG WINAPI __vbaForEachAry(const unsigned short type, SAFEARRAY** const state,
     return next_in_array(type, state, index, out);
 }
 
-LONG WINAPI __vbaNextEachAry(const unsigned short type,
-                             SAFEARRAY** const state, ULONG* const index,
-                             VARIANT* const out) {
+LONG WINAPI __vbaNextEachAry(const unsigned short type, SAFEARRAY** const state,
+                             ULONG* const index, VARIANT* const out) {
     return next_in_array(type, state, index, out);
 }
 
@@ -266,8 +265,7 @@ LONG WINAPI __vbaNextEachCollVar(IUnknown** const slot, VARIANT* const out) {
 }
 
 // The element is an object (IDispatch).
-LONG WINAPI __vbaForEachCollAd(IUnknown** const slot,
-                               IDispatch** const element,
+LONG WINAPI __vbaForEachCollAd(IUnknown** const slot, IDispatch** const element,
                                IDispatch* const object) {
     VARIANT value;
     VariantInit(&value);
@@ -340,8 +338,7 @@ LONG WINAPI __vbaForEachVar(SAFEARRAY** const state, ULONG* const index,
 
 LONG WINAPI __vbaNextEachVar(SAFEARRAY** const state, ULONG* const index,
                              const LONG* const kind,
-                             IUnknown** const enumerator,
-                             VARIANT* const out) {
+                             IUnknown** const enumerator, VARIANT* const out) {
     const auto type = static_cast<unsigned short>(*kind);
     if (type == 0) {
         return __vbaNextEachCollVar(enumerator, out);

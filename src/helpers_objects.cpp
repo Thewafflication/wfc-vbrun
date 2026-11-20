@@ -67,7 +67,6 @@ IUnknown* bind_name(const BSTR name) {
     return SUCCEEDED(bound) ? object : nullptr;
 }
 
-
 // What `New` of a class is given: a flags word, then the class and the
 // interface to ask for (null means IUnknown).
 struct ClassInfo {
@@ -149,8 +148,7 @@ VARIANT* WINAPI rtcGetObject(VARIANT* const result, const VARIANT* const path,
     } else {
         BSTR class_text = text_of(class_name);
         CLSID id = {};
-        if (class_text == nullptr ||
-            FAILED(CLSIDFromProgID(class_text, &id))) {
+        if (class_text == nullptr || FAILED(CLSIDFromProgID(class_text, &id))) {
             SysFreeString(class_text);
             static_cast<void>(vbrun::raise(kCannotCreate));
             return result;
@@ -160,8 +158,7 @@ VARIANT* WINAPI rtcGetObject(VARIANT* const result, const VARIANT* const path,
         if (name == nullptr || SysStringLen(name) == 0) {
             GetActiveObject(id, nullptr, &object);
         } else if (SUCCEEDED(CoCreateInstance(
-                       id, nullptr,
-                       CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER,
+                       id, nullptr, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER,
                        IID_IUnknown, reinterpret_cast<void**>(&object)))) {
             IPersistFile* file = nullptr;
             if (SUCCEEDED(object->QueryInterface(

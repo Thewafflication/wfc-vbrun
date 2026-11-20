@@ -224,15 +224,15 @@ std::vector<WORD> input_template() {
     add_word(data, 0);  // title set at run time
     add_word(data, 8);  // font size
     add_text(data, L"MS Shell Dlg");
-    add_item(data, WS_CHILD | WS_VISIBLE | SS_LEFT, 8, 8, 190, 48,
-             kPromptId, 0x0082);
-    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
-             206, 8, 46, 14, IDOK, 0x0080);
-    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 206,
-             26, 46, 14, IDCANCEL, 0x0080);
+    add_item(data, WS_CHILD | WS_VISIBLE | SS_LEFT, 8, 8, 190, 48, kPromptId,
+             0x0082);
+    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON, 206,
+             8, 46, 14, IDOK, 0x0080);
+    add_item(data, WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON, 206, 26,
+             46, 14, IDCANCEL, 0x0080);
     add_item(data,
-             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL,
-             8, 72, 244, 14, kEditId, 0x0081);
+             WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_AUTOHSCROLL, 8,
+             72, 244, 14, kEditId, 0x0081);
     return data;
 }
 
@@ -337,14 +337,14 @@ LONG ime_state() {
     if (imm == nullptr) {
         return -1;
     }
-    const auto context = reinterpret_cast<ImeContextFn>(
-        GetProcAddress(imm, "ImmGetContext"));
+    const auto context =
+        reinterpret_cast<ImeContextFn>(GetProcAddress(imm, "ImmGetContext"));
     const auto release = reinterpret_cast<ImeReleaseFn>(
         GetProcAddress(imm, "ImmReleaseContext"));
     const auto is_ime =
         reinterpret_cast<ImeIsFn>(GetProcAddress(imm, "ImmIsIME"));
-    const auto is_open = reinterpret_cast<ImeOpenFn>(
-        GetProcAddress(imm, "ImmGetOpenStatus"));
+    const auto is_open =
+        reinterpret_cast<ImeOpenFn>(GetProcAddress(imm, "ImmGetOpenStatus"));
     const auto conversion = reinterpret_cast<ImeConversionFn>(
         GetProcAddress(imm, "ImmGetConversionStatus"));
     if (context == nullptr || release == nullptr || is_ime == nullptr ||
@@ -393,15 +393,18 @@ struct NamedKey {
 };
 
 const NamedKey kNamedKeys[] = {
-    {L"BACKSPACE", VK_BACK}, {L"BS", VK_BACK},        {L"BKSP", VK_BACK},
-    {L"BREAK", VK_CANCEL},   {L"CAPSLOCK", VK_CAPITAL},
-    {L"DELETE", VK_DELETE},  {L"DEL", VK_DELETE},     {L"DOWN", VK_DOWN},
-    {L"END", VK_END},        {L"ENTER", VK_RETURN},   {L"ESC", VK_ESCAPE},
-    {L"HELP", VK_HELP},      {L"HOME", VK_HOME},      {L"INSERT", VK_INSERT},
-    {L"INS", VK_INSERT},     {L"LEFT", VK_LEFT},      {L"NUMLOCK", VK_NUMLOCK},
-    {L"PGDN", VK_NEXT},      {L"PGUP", VK_PRIOR},     {L"PRTSC", VK_SNAPSHOT},
-    {L"RIGHT", VK_RIGHT},    {L"SCROLLLOCK", VK_SCROLL},
-    {L"TAB", VK_TAB},        {L"UP", VK_UP},
+    {L"BACKSPACE", VK_BACK},   {L"BS", VK_BACK},
+    {L"BKSP", VK_BACK},        {L"BREAK", VK_CANCEL},
+    {L"CAPSLOCK", VK_CAPITAL}, {L"DELETE", VK_DELETE},
+    {L"DEL", VK_DELETE},       {L"DOWN", VK_DOWN},
+    {L"END", VK_END},          {L"ENTER", VK_RETURN},
+    {L"ESC", VK_ESCAPE},       {L"HELP", VK_HELP},
+    {L"HOME", VK_HOME},        {L"INSERT", VK_INSERT},
+    {L"INS", VK_INSERT},       {L"LEFT", VK_LEFT},
+    {L"NUMLOCK", VK_NUMLOCK},  {L"PGDN", VK_NEXT},
+    {L"PGUP", VK_PRIOR},       {L"PRTSC", VK_SNAPSHOT},
+    {L"RIGHT", VK_RIGHT},      {L"SCROLLLOCK", VK_SCROLL},
+    {L"TAB", VK_TAB},          {L"UP", VK_UP},
 };
 
 constexpr unsigned kShift = 1;
@@ -449,8 +452,7 @@ struct KeyParser {
             return;
         }
         const unsigned shifts = static_cast<unsigned>(scan >> 8) & 7U;
-        press(static_cast<WORD>(scan & 0xFF), false, modifiers | shifts,
-              count);
+        press(static_cast<WORD>(scan & 0xFF), false, modifiers | shifts, count);
     }
 
     // {NAME}, {NAME count}, {character}, {character count}.
@@ -470,8 +472,7 @@ struct KeyParser {
         if (blank != std::wstring::npos) {
             const std::wstring digits = body.substr(blank + 1);
             if (digits.empty() ||
-                digits.find_first_not_of(L"0123456789") !=
-                    std::wstring::npos) {
+                digits.find_first_not_of(L"0123456789") != std::wstring::npos) {
                 return false;
             }
             count = std::stoi(digits);
@@ -767,9 +768,8 @@ SHORT WINAPI rtcMsgBox(const VARIANT* const prompt, LONG buttons,
     if (prompt != nullptr && prompt->vt != VT_EMPTY) {
         VARIANT converted;
         VariantInit(&converted);
-        if (FAILED(VariantChangeType(&converted,
-                                     const_cast<VARIANT*>(prompt), 0,
-                                     VT_BSTR))) {
+        if (FAILED(VariantChangeType(&converted, const_cast<VARIANT*>(prompt),
+                                     0, VT_BSTR))) {
             static_cast<void>(vbrun::raise(13));
             return 0;
         }
@@ -782,9 +782,8 @@ SHORT WINAPI rtcMsgBox(const VARIANT* const prompt, LONG buttons,
     if (titled) {
         VARIANT converted;
         VariantInit(&converted);
-        if (SUCCEEDED(VariantChangeType(&converted,
-                                        const_cast<VARIANT*>(title), 0,
-                                        VT_BSTR))) {
+        if (SUCCEEDED(VariantChangeType(&converted, const_cast<VARIANT*>(title),
+                                        0, VT_BSTR))) {
             caption.assign(
                 converted.bstrVal == nullptr ? L"" : converted.bstrVal,
                 SysStringLen(converted.bstrVal));
@@ -880,13 +879,12 @@ BSTR WINAPI rtcInputBox(const VARIANT* const prompt, const VARIANT* const title,
     }
     variant_text(initial, state.text);
     const std::vector<WORD> data = input_template();
-    DialogBoxIndirectParamW(
-        GetModuleHandleW(nullptr),
-        reinterpret_cast<const DLGTEMPLATE*>(data.data()), GetActiveWindow(),
-        input_dialog_proc, reinterpret_cast<LPARAM>(&state));
+    DialogBoxIndirectParamW(GetModuleHandleW(nullptr),
+                            reinterpret_cast<const DLGTEMPLATE*>(data.data()),
+                            GetActiveWindow(), input_dialog_proc,
+                            reinterpret_cast<LPARAM>(&state));
     return SysAllocString(state.accepted ? state.text.c_str() : L"");
 }
-
 
 // Date = value and Time = value as statements: the clock of the computer.
 void WINAPI rtcSetDateVar(const VARIANT* const value) {
@@ -933,7 +931,6 @@ void WINAPI rtcSetTimeBstr(const BSTR text) {
     rtcSetTimeVar(&value);
 }
 
-
 // IMEStatus: the mode of the input method editor (-1 when there is none).
 LONG WINAPI rtcIMEStatus() {
     return ime_state();
@@ -944,7 +941,6 @@ LONG WINAPI rtcIMEStatus() {
 void WINAPI __vbaFailedFriend() {
     static_cast<void>(vbrun::raise(97));
 }
-
 
 // SendKeys string, wait: the keys go to the window that has the focus.
 void WINAPI rtcSendKeys(const BSTR keys, const VARIANT* const wait) {
@@ -986,7 +982,6 @@ void WINAPI rtcSendKeys(const BSTR keys, const VARIANT* const wait) {
         }
     }
 }
-
 
 // AppleScript is a Macintosh feature: on Windows it is error 5.
 void WINAPI rtcAppleScript() {

@@ -38,8 +38,7 @@ Rounded times_ten_thousand(const double value) {
     }
     int exponent = 0;
     const double fraction = std::frexp(magnitude, &exponent);
-    const auto mantissa =
-        static_cast<std::uint64_t>(std::ldexp(fraction, 53));
+    const auto mantissa = static_cast<std::uint64_t>(std::ldexp(fraction, 53));
     const std::uint64_t product = mantissa * 625U;  // below 2^63
     const int shift = exponent - 53 + 4;
     if (shift >= 0) {
@@ -130,9 +129,13 @@ std::uint8_t to_ui1(const double value) {
     return static_cast<std::uint8_t>(rounded);
 }
 
-double floor_value(const double value) { return std::floor(value); }
+double floor_value(const double value) {
+    return std::floor(value);
+}
 
-double trunc_value(const double value) { return std::trunc(value); }
+double trunc_value(const double value) {
+    return std::trunc(value);
+}
 
 std::int16_t floor_i2(const double value) {
     return to_i2(std::floor(value));
@@ -167,7 +170,9 @@ double through_single(const double value) {
     return static_cast<double>(stored);
 }
 
-double through_double(const double value) { return value; }
+double through_double(const double value) {
+    return value;
+}
 
 std::int64_t to_currency(const double value) {
     if (!std::isfinite(value)) {
@@ -222,11 +227,12 @@ extern "C" {
 // error clears them (the reference's error path resets the unit) or the next
 // conversion would fail on the old flags.
 void __cdecl vbrun_x87_fail(unsigned status) {
-    __asm fnclex
-    vbrun::x87::raise_for_status(status);
+    __asm fnclex vbrun::x87::raise_for_status(status);
 }
 
-void __cdecl vbrun_x87_overflow() { static_cast<void>(vbrun::raise(6)); }
+void __cdecl vbrun_x87_overflow() {
+    static_cast<void>(vbrun::raise(6));
+}
 
 extern const unsigned short vbrun_cw_default;
 extern const unsigned short vbrun_cw_double;
@@ -596,9 +602,15 @@ __declspec(naked) void __vbaR8FixI4() {
 
 extern "C" {
 
-SHORT __vbaFpI2(const double value) { return vbrun::x87::to_i2(value); }
-LONG __vbaFpI4(const double value) { return vbrun::x87::to_i4(value); }
-BYTE __vbaFpUI1(const double value) { return vbrun::x87::to_ui1(value); }
+SHORT __vbaFpI2(const double value) {
+    return vbrun::x87::to_i2(value);
+}
+LONG __vbaFpI4(const double value) {
+    return vbrun::x87::to_i4(value);
+}
+BYTE __vbaFpUI1(const double value) {
+    return vbrun::x87::to_ui1(value);
+}
 double __vbaFpR4(const double value) {
     return vbrun::x87::round_to_single_mantissa(value);
 }
@@ -629,7 +641,9 @@ double __vbaFPInt(const double value) {
 double __vbaFPFix(const double value) {
     return vbrun::x87::trunc_value(value);
 }
-void __vbaFPException() { vbrun::x87::raise_for_status(0); }
+void __vbaFPException() {
+    vbrun::x87::raise_for_status(0);
+}
 SHORT __vbaR8IntI2(const double value) {
     return vbrun::x87::floor_i2(value);
 }

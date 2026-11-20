@@ -519,11 +519,11 @@ VARIANT* WINAPI rtcStrConvVar2(VARIANT* const result, VARIANT* const operand,
     if (code_page == 0) {
         code_page = CP_ACP;
     }
-    const int size =
-        text.empty() ? 0
-                     : WideCharToMultiByte(code_page, 0, text.data(),
-                                           static_cast<int>(text.size()),
-                                           nullptr, 0, nullptr, nullptr);
+    const int size = text.empty()
+                         ? 0
+                         : WideCharToMultiByte(code_page, 0, text.data(),
+                                               static_cast<int>(text.size()),
+                                               nullptr, 0, nullptr, nullptr);
     std::string bytes(static_cast<std::size_t>(size), '\0');
     if (size != 0) {
         WideCharToMultiByte(code_page, 0, text.data(),

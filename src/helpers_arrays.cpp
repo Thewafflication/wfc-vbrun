@@ -51,8 +51,8 @@ bool same_at(const std::wstring& text, const std::size_t at,
     }
     return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE,
                           text.data() + at, static_cast<int>(find.size()),
-                          find.data(), static_cast<int>(find.size())) ==
-           CSTR_EQUAL;
+                          find.data(),
+                          static_cast<int>(find.size())) == CSTR_EQUAL;
 }
 
 bool contains(const std::wstring& text, const std::wstring& find,
@@ -74,8 +74,8 @@ VARIANT* give_array(VARIANT* const result,
     SAFEARRAY* const array = SafeArrayCreate(VT_BSTR, 1, &bound);
     for (LONG at = 0; at < static_cast<LONG>(items.size()); ++at) {
         const std::wstring& item = items[static_cast<std::size_t>(at)];
-        BSTR made = SysAllocStringLen(item.data(),
-                                      static_cast<UINT>(item.size()));
+        BSTR made =
+            SysAllocStringLen(item.data(), static_cast<UINT>(item.size()));
         SafeArrayPutElement(array, &at, made);
         SysFreeString(made);
     }
@@ -91,8 +91,8 @@ bool elements_of(const VARIANT* const value, std::vector<std::wstring>& out) {
         static_cast<void>(vbrun::raise(13));
         return false;
     }
-    SAFEARRAY* array = (value->vt & VT_BYREF) != 0 ? *value->pparray
-                                                    : value->parray;
+    SAFEARRAY* array =
+        (value->vt & VT_BYREF) != 0 ? *value->pparray : value->parray;
     if (array == nullptr || SafeArrayGetDim(array) != 1) {
         static_cast<void>(
             vbrun::raise(array == nullptr ? 0 : kInvalidArgument));
@@ -107,8 +107,7 @@ bool elements_of(const VARIANT* const value, std::vector<std::wstring>& out) {
         if (kind == VT_BSTR) {
             BSTR item = nullptr;
             SafeArrayGetElement(array, &at, &item);
-            out.emplace_back(item == nullptr ? L"" : item,
-                             SysStringLen(item));
+            out.emplace_back(item == nullptr ? L"" : item, SysStringLen(item));
             SysFreeString(item);
         } else if (kind == VT_VARIANT) {
             VARIANT item;

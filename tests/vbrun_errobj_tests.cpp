@@ -127,8 +127,7 @@ int main() {
 
     // Clear.
     err->Clear();
-    expect(err->get_Number() == 0 && vbrun::last_error() == 0,
-           "Err.Clear");
+    expect(err->get_Number() == 0 && vbrun::last_error() == 0, "Err.Clear");
 
     // LastDllError.
     vbrun::set_last_dll_error(87);
@@ -137,8 +136,7 @@ int main() {
     // The interfaces it answers to.
     IUnknown* unknown = nullptr;
     expect(object->QueryInterface(IID_IUnknown,
-                                  reinterpret_cast<void**>(&unknown)) ==
-                   S_OK &&
+                                  reinterpret_cast<void**>(&unknown)) == S_OK &&
                unknown != nullptr,
            "QueryInterface for IUnknown");
     if (unknown != nullptr) {

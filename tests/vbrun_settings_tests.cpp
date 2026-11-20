@@ -99,8 +99,7 @@ int main() {
     VARIANT rows;
     VariantInit(&rows);
     rtcGetAllSettings(&rows, app, section);
-    expect(rows.vt == (VT_ARRAY | VT_BSTR) &&
-               SafeArrayGetDim(rows.parray) == 2,
+    expect(rows.vt == (VT_ARRAY | VT_BSTR) && SafeArrayGetDim(rows.parray) == 2,
            "all settings is a two dimensional array");
     bool has_left = false;
     bool has_top = false;

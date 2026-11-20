@@ -31,9 +31,8 @@ LONG WINAPI __vbaNextEachCollObj(const IID* iid, IUnknown** slot,
 LONG WINAPI __vbaForEachVar(SAFEARRAY** state, ULONG* index, LONG* kind,
                             IUnknown** enumerator, VARIANT* out,
                             const VARIANT* source);
-LONG WINAPI __vbaNextEachVar(SAFEARRAY** state, ULONG* index,
-                             const LONG* kind, IUnknown** enumerator,
-                             VARIANT* out);
+LONG WINAPI __vbaNextEachVar(SAFEARRAY** state, ULONG* index, const LONG* kind,
+                             IUnknown** enumerator, VARIANT* out);
 void WINAPI __vbaExitEachVar(SAFEARRAY** state, const LONG* kind,
                              IUnknown** enumerator);
 }
@@ -55,8 +54,7 @@ public:
     long references = 1;
     long position = 0;
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,
-                                             void** out) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** out) override {
         if (iid == IID_IUnknown || iid == IID_IEnumVARIANT) {
             *out = static_cast<IEnumVARIANT*>(this);
             AddRef();
@@ -93,8 +91,7 @@ public:
     long references = 1;
     bool objects = false;
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,
-                                             void** out) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** out) override {
         if (iid == IID_IUnknown || iid == IID_IDispatch) {
             *out = static_cast<IDispatch*>(this);
             AddRef();
@@ -116,8 +113,8 @@ public:
                                             DISPID*) override {
         return DISP_E_UNKNOWNNAME;
     }
-    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD,
-                                     DISPPARAMS*, VARIANT* result, EXCEPINFO*,
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD, DISPPARAMS*,
+                                     VARIANT* result, EXCEPINFO*,
                                      UINT*) override {
         if (id != DISPID_NEWENUM) {
             return DISP_E_MEMBERNOTFOUND;
@@ -294,8 +291,8 @@ int main() {
         VARIANT out;
         VariantInit(&out);
         long total = 0;
-        LONG more = __vbaForEachVar(&state, &index, &kind, &enumerator, &out,
-                                    &source);
+        LONG more =
+            __vbaForEachVar(&state, &index, &kind, &enumerator, &out, &source);
         while (more != 0) {
             total += out.lVal;
             more = __vbaNextEachVar(&state, &index, &kind, &enumerator, &out);
@@ -307,15 +304,15 @@ int main() {
         source.vt = VT_DISPATCH;
         source.pdispVal = &collection;
         total = 0;
-        more = __vbaForEachVar(&state, &index, &kind, &enumerator, &out,
-                               &source);
+        more =
+            __vbaForEachVar(&state, &index, &kind, &enumerator, &out, &source);
         while (more != 0) {
             total += out.lVal;
             more = __vbaNextEachVar(&state, &index, &kind, &enumerator, &out);
         }
         expect(kind == 0 && total == 60, "object in a Variant");
-        more = __vbaForEachVar(&state, &index, &kind, &enumerator, &out,
-                               &source);
+        more =
+            __vbaForEachVar(&state, &index, &kind, &enumerator, &out, &source);
         __vbaExitEachVar(&state, &kind, &enumerator);
         expect(enumerator == nullptr, "Exit For on a Variant");
         vbrun::clear_error();

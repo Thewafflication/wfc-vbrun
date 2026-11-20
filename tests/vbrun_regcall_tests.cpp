@@ -620,7 +620,9 @@ void stack_probe() {
 #else
 extern "C" void __vbaChkstk();
 
-void stack_probe() { __vbaChkstk(); }
+void stack_probe() {
+    __vbaChkstk();
+}
 #endif
 
 }  // namespace

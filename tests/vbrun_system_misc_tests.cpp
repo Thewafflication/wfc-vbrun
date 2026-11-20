@@ -134,8 +134,7 @@ IUnknown* WINAPI __vbaUnkVar(VARIANT* value);
 LONG WINAPI __vbaI2ForNextCheck(SHORT counter, SHORT limit, SHORT step);
 LONG WINAPI __vbaI4ForNextCheck(LONG counter, LONG limit, LONG step);
 LONG WINAPI __vbaR4ForNextCheck(float counter, float limit, float step);
-LONG WINAPI __vbaR8ForNextCheck(double counter, double limit,
-                                double step);
+LONG WINAPI __vbaR8ForNextCheck(double counter, double limit, double step);
 SHORT WINAPI __vbaOnGoCheck(SHORT index);
 BSTR WINAPI rtcStringBstr(LONG count, VARIANT* character);
 BSTR WINAPI rtcCommandBstr();
@@ -222,9 +221,9 @@ int main() {
         expect(__vbaCheckTypeVar(&held, &IID_IStream) == 0,
                "check type var other");
         vbrun::clear_error();
-        expect(__vbaUdtVar(nullptr, &held) == nullptr ||
-                   vbrun::last_error() == 13,
-               "udt var not a record");
+        expect(
+            __vbaUdtVar(nullptr, &held) == nullptr || vbrun::last_error() == 13,
+            "udt var not a record");
         vbrun::clear_error();
         stream->Release();
     }
@@ -354,9 +353,9 @@ int main() {
         held.vt = VT_ARRAY | VT_I4;
         held.parray = items;
         expect(__vbaAryVar(VT_I4, &held) == items, "array of variant");
-        expect(__vbaAryVar(VT_R8, &held) == nullptr &&
-                   vbrun::last_error() == 13,
-               "array of variant wrong type");
+        expect(
+            __vbaAryVar(VT_R8, &held) == nullptr && vbrun::last_error() == 13,
+            "array of variant wrong type");
         vbrun::clear_error();
         SafeArrayDestroy(items);
         SAFEARRAYBOUND grid[2] = {{2, 1}, {3, 0}};

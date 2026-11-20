@@ -204,8 +204,8 @@ __int64 multiply64(const __int64 left, const __int64 right) {
 namespace {
 
 void functions() {
-    const double values[] = {0.0,  0.5,    1.0,   2.0,    3.14159, -0.75,
-                             10.0, 100.25, -2.5,  1e-9,   700.0,   1e6};
+    const double values[] = {0.0,  0.5,    1.0,  2.0,  3.14159, -0.75,
+                             10.0, 100.25, -2.5, 1e-9, 700.0,   1e6};
     for (const double value : values) {
 #if defined(_MSC_VER) && defined(_M_IX86)
         expect(close(unary(_CIsin, value), std::sin(value)), "Sin");
@@ -305,8 +305,10 @@ void multiply() {
     expect(_allmul_value(-6, 7) == -42 && _allmul_value(6, -7) == -42 &&
                _allmul_value(-6, -7) == 42,
            "_allmul signs");
-    expect(_allmul_value(0x100000000LL, 3) == 0x300000000LL, "_allmul high word");
-    expect(_allmul_value(0x12345678LL, 0x9ABCDEF0LL) == 0x12345678LL * 0x9ABCDEF0LL,
+    expect(_allmul_value(0x100000000LL, 3) == 0x300000000LL,
+           "_allmul high word");
+    expect(_allmul_value(0x12345678LL, 0x9ABCDEF0LL) ==
+               0x12345678LL * 0x9ABCDEF0LL,
            "_allmul wide");
     expect(_allmul_value(0x7FFFFFFFFFFFFFFFLL, 2) == -2, "_allmul wraps");
 }

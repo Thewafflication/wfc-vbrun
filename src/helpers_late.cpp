@@ -51,8 +51,8 @@ bool dispatch_id(IDispatch* const object, const BSTR name, DISPID& id) {
         return false;
     }
     OLECHAR* names[1] = {name};
-    const HRESULT result = object->GetIDsOfNames(
-        IID_NULL, names, 1, language_locale(), &id);
+    const HRESULT result =
+        object->GetIDsOfNames(IID_NULL, names, 1, language_locale(), &id);
     if (FAILED(result)) {
         EXCEPINFO none = {};
         raise_late(result, none);
@@ -128,15 +128,14 @@ void put(IDispatch* const object, const DISPID id, const WORD flags,
 // Named arguments: the member name first, then the argument names. The
 // first of the arguments belong to the names, in order.
 VARIANT* invoke_named(IDispatch* const object, const BSTR member,
-                      const std::vector<BSTR>& argument_names,
-                      const WORD flags, std::vector<VARIANT>& values,
-                      VARIANT* const result) {
+                      const std::vector<BSTR>& argument_names, const WORD flags,
+                      std::vector<VARIANT>& values, VARIANT* const result) {
     if (object == nullptr) {
         static_cast<void>(vbrun::raise(kNoObject));
         return result;
     }
-    const bool assignment = (flags & (DISPATCH_PROPERTYPUT |
-                                      DISPATCH_PROPERTYPUTREF)) != 0;
+    const bool assignment =
+        (flags & (DISPATCH_PROPERTYPUT | DISPATCH_PROPERTYPUTREF)) != 0;
     if (assignment && !put_value_ok(flags, values[0])) {
         return result;
     }
@@ -146,9 +145,9 @@ VARIANT* invoke_named(IDispatch* const object, const BSTR member,
         names.push_back(name);
     }
     std::vector<DISPID> ids(names.size(), DISPID_UNKNOWN);
-    HRESULT status = object->GetIDsOfNames(
-        IID_NULL, names.data(), static_cast<UINT>(names.size()),
-        language_locale(), ids.data());
+    HRESULT status = object->GetIDsOfNames(IID_NULL, names.data(),
+                                           static_cast<UINT>(names.size()),
+                                           language_locale(), ids.data());
     if (status == DISP_E_UNKNOWNNAME && ids[0] != DISPID_UNKNOWN) {
         status = DISP_E_PARAMNOTFOUND;
     }
@@ -188,8 +187,8 @@ bool variant_object(const VARIANT* const value, IDispatch*& object) {
         static_cast<void>(vbrun::raise(kObjectRequired));
         return false;
     }
-    object = (target->vt & VT_BYREF) != 0 ? *target->ppdispVal
-                                          : target->pdispVal;
+    object =
+        (target->vt & VT_BYREF) != 0 ? *target->ppdispVal : target->pdispVal;
     return true;
 }
 
@@ -410,13 +409,12 @@ void __cdecl __vbaLateMemNamedStAd(IDispatch* const object, const BSTR name,
     }
     std::vector<VARIANT> values = take_variants(list, count + 1);
     va_end(list);
-    invoke_named(object, name, names, DISPATCH_PROPERTYPUTREF, values,
-                 nullptr);
+    invoke_named(object, name, names, DISPATCH_PROPERTYPUTREF, values, nullptr);
 }
 
 static void put_by_id_named(IDispatch* const object, const LONG id,
-                     const WORD flags, const LONG count,
-                     const LONG name_count, va_list& list) {
+                            const WORD flags, const LONG count,
+                            const LONG name_count, va_list& list) {
     std::vector<DISPID> names;
     names.push_back(DISPID_PROPERTYPUT);
     for (LONG index = 0; index < name_count; ++index) {
@@ -461,8 +459,7 @@ void __cdecl __vbaLateIdNamedStAd(IDispatch* const object, const LONG id,
 // The same calls on an object held in a Variant.
 VARIANT* __cdecl __vbaVarLateMemCallLd(VARIANT* const result,
                                        const VARIANT* const holder,
-                                       const BSTR name, const LONG count,
-                                       ...) {
+                                       const BSTR name, const LONG count, ...) {
     va_list list;
     va_start(list, count);
     std::vector<VARIANT> values = take_variants(list, count);
@@ -493,8 +490,8 @@ VARIANT* __cdecl __vbaVarLateMemCallLdRf(VARIANT* const result,
     return result;
 }
 
-void __cdecl __vbaVarLateMemCallSt(const VARIANT* const holder,
-                                   const BSTR name, const LONG count, ...) {
+void __cdecl __vbaVarLateMemCallSt(const VARIANT* const holder, const BSTR name,
+                                   const LONG count, ...) {
     va_list list;
     va_start(list, count);
     std::vector<VARIANT> values = take_variants(list, count + 1);
@@ -549,8 +546,7 @@ VARIANT* WINAPI rtcCallByName(VARIANT* const result, IDispatch* const object,
     if (array != nullptr) {
         SafeArrayLock(array);
         const auto count = static_cast<LONG>(array->rgsabound[0].cElements);
-        const auto* const elements =
-            static_cast<const VARIANT*>(array->pvData);
+        const auto* const elements = static_cast<const VARIANT*>(array->pvData);
         // The array runs first to last; an Invoke array runs last to first.
         for (LONG index = count - 1; index >= 0; --index) {
             values.push_back(elements[index]);

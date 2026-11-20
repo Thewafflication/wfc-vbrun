@@ -30,9 +30,13 @@ try {
         '.clang-format', '.editorconfig', '.gersemirc', '.gitattributes',
         '.pre-commit-config.yaml', 'PSScriptAnalyzerSettings.psd1'
     )
-    # These two scripts are byte-identical in every WFC library (a WFC test
-    # compares the copies); they are wrapped when all of them change together.
-    $sharedCopies = "'scripts/capture_web.py','scripts/render_terminal.py'"
+    # The first two scripts are byte-identical in every WFC library (a WFC
+    # test compares the copies); they are wrapped when all of them change
+    # together. The third holds Visual Basic 6 source in Python strings,
+    # which wrapping would change.
+    $sharedCopies = "'scripts/capture_web.py'," +
+        "'scripts/render_terminal.py'," +
+        "'scripts/vb6_harness_gen.py'"
     # A child process gives a reliable exit status; -Command keeps the
     # array parameter intact.
     $quoted = ($styleScope | ForEach-Object { "'$_'" }) -join ','

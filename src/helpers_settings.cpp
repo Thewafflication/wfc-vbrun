@@ -86,10 +86,10 @@ void WINAPI rtcSaveSetting(const BSTR app, const BSTR section, const BSTR key,
         return;
     }
     const std::wstring data = text_of(value);
-    const LONG status = RegSetValueExW(
-        handle, text_of(key).c_str(), 0, REG_SZ,
-        reinterpret_cast<const BYTE*>(data.c_str()),
-        static_cast<DWORD>((data.size() + 1) * sizeof(wchar_t)));
+    const LONG status =
+        RegSetValueExW(handle, text_of(key).c_str(), 0, REG_SZ,
+                       reinterpret_cast<const BYTE*>(data.c_str()),
+                       static_cast<DWORD>((data.size() + 1) * sizeof(wchar_t)));
     const LONG closed = RegCloseKey(handle);
     if (status != ERROR_SUCCESS || closed != ERROR_SUCCESS) {
         static_cast<void>(vbrun::raise(kInvalidCall));
@@ -110,12 +110,11 @@ BSTR WINAPI rtcGetSetting(const BSTR app, const BSTR section, const BSTR key,
     DWORD type = 0;
     DWORD bytes = 0;
     const std::wstring name = text_of(key);
-    bool found =
-        RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0, KEY_QUERY_VALUE,
-                      &handle) == ERROR_SUCCESS;
+    bool found = RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0,
+                               KEY_QUERY_VALUE, &handle) == ERROR_SUCCESS;
     if (found) {
-        found = RegQueryValueExW(handle, name.c_str(), nullptr, &type,
-                                 nullptr, &bytes) == ERROR_SUCCESS;
+        found = RegQueryValueExW(handle, name.c_str(), nullptr, &type, nullptr,
+                                 &bytes) == ERROR_SUCCESS;
     }
     if (!found) {
         if (handle != nullptr) {
@@ -141,17 +140,17 @@ BSTR WINAPI rtcGetSetting(const BSTR app, const BSTR section, const BSTR key,
     }
     std::wstring data(bytes / sizeof(wchar_t) + 1, L'\0');
     DWORD size = static_cast<DWORD>(data.size() * sizeof(wchar_t));
-    const LONG status = RegQueryValueExW(
-        handle, name.c_str(), nullptr, &type,
-        reinterpret_cast<BYTE*>(data.data()), &size);
+    const LONG status =
+        RegQueryValueExW(handle, name.c_str(), nullptr, &type,
+                         reinterpret_cast<BYTE*>(data.data()), &size);
     RegCloseKey(handle);
     if (status != ERROR_SUCCESS) {
         static_cast<void>(vbrun::raise(kInvalidCall));
         return nullptr;
     }
     const size_t length = size / sizeof(wchar_t);
-    const size_t used = length > 0 && data[length - 1] == L'\0' ? length - 1
-                                                                 : length;
+    const size_t used =
+        length > 0 && data[length - 1] == L'\0' ? length - 1 : length;
     BSTR result = SysAllocStringLen(data.c_str(), static_cast<UINT>(used));
     if (result == nullptr) {
         static_cast<void>(vbrun::raise(kOutOfMemory));
@@ -182,8 +181,8 @@ void WINAPI rtcDeleteSetting(const BSTR app, VARIANT section, VARIANT key) {
     if (key_path(app, section_name, path)) {
         if (has_key) {
             HKEY handle = nullptr;
-            if (RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0,
-                              KEY_SET_VALUE, &handle) != ERROR_SUCCESS) {
+            if (RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0, KEY_SET_VALUE,
+                              &handle) != ERROR_SUCCESS) {
                 static_cast<void>(vbrun::raise(kInvalidCall));
             } else {
                 const LONG status =
@@ -219,16 +218,16 @@ VARIANT* WINAPI rtcGetAllSettings(VARIANT* const result, const BSTR app,
         return result;
     }
     HKEY handle = nullptr;
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0, KEY_READ,
-                      &handle) != ERROR_SUCCESS) {
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0, KEY_READ, &handle) !=
+        ERROR_SUCCESS) {
         return result;
     }
     DWORD count = 0;
     DWORD longest_name = 0;
     DWORD longest_data = 0;
     if (RegQueryInfoKeyW(handle, nullptr, nullptr, nullptr, nullptr, nullptr,
-                         nullptr, &count, &longest_name, &longest_data,
-                         nullptr, nullptr) != ERROR_SUCCESS) {
+                         nullptr, &count, &longest_name, &longest_data, nullptr,
+                         nullptr) != ERROR_SUCCESS) {
         RegCloseKey(handle);
         static_cast<void>(vbrun::raise(kInvalidCall));
         return result;
@@ -251,9 +250,9 @@ VARIANT* WINAPI rtcGetAllSettings(VARIANT* const result, const BSTR app,
         DWORD name_size = static_cast<DWORD>(name.size());
         DWORD data_size = static_cast<DWORD>(data.size() * sizeof(wchar_t));
         DWORD type = 0;
-        const LONG status = RegEnumValueW(
-            handle, row, name.data(), &name_size, nullptr, &type,
-            reinterpret_cast<BYTE*>(data.data()), &data_size);
+        const LONG status =
+            RegEnumValueW(handle, row, name.data(), &name_size, nullptr, &type,
+                          reinterpret_cast<BYTE*>(data.data()), &data_size);
         if (status != ERROR_SUCCESS || type != REG_SZ) {
             failed = true;
             break;
@@ -262,8 +261,8 @@ VARIANT* WINAPI rtcGetAllSettings(VARIANT* const result, const BSTR app,
         const size_t used =
             length > 0 && data[length - 1] == L'\0' ? length - 1 : length;
         BSTR key_text = SysAllocStringLen(name.c_str(), name_size);
-        BSTR value_text = SysAllocStringLen(data.c_str(),
-                                            static_cast<UINT>(used));
+        BSTR value_text =
+            SysAllocStringLen(data.c_str(), static_cast<UINT>(used));
         LONG at[2] = {static_cast<LONG>(row), 0};
         failed = FAILED(SafeArrayPutElement(rows, at, key_text));
         at[1] = 1;

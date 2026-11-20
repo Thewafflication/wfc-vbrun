@@ -33,8 +33,8 @@ void WINAPI __vbaLateIdSt(IDispatch* object, LONG id, VARIANT value);
 void __cdecl __vbaLateMemNamedCall(IDispatch* object, BSTR name, LONG count,
                                    LONG name_count, ...);
 VARIANT* __cdecl __vbaLateMemNamedCallLd(VARIANT* result, IDispatch* object,
-                                         BSTR name, LONG count,
-                                         LONG name_count, ...);
+                                         BSTR name, LONG count, LONG name_count,
+                                         ...);
 void __cdecl __vbaLateIdNamedCall(IDispatch* object, LONG id, LONG count,
                                   LONG name_count, ...);
 void __cdecl __vbaLateMemNamedCallSt(IDispatch* object, BSTR name, LONG count,
@@ -47,15 +47,13 @@ void __cdecl __vbaLateIdNamedStAd(IDispatch* object, LONG id, LONG count,
                                   LONG name_count, ...);
 VARIANT* __cdecl __vbaVarLateMemCallLd(VARIANT* result, const VARIANT* holder,
                                        BSTR name, LONG count, ...);
-VARIANT* __cdecl __vbaVarLateMemCallLdRf(VARIANT* result,
-                                         const VARIANT* holder, BSTR name,
-                                         LONG count, ...);
-void __cdecl __vbaVarLateMemCallSt(const VARIANT* holder, BSTR name,
-                                   LONG count, ...);
+VARIANT* __cdecl __vbaVarLateMemCallLdRf(VARIANT* result, const VARIANT* holder,
+                                         BSTR name, LONG count, ...);
+void __cdecl __vbaVarLateMemCallSt(const VARIANT* holder, BSTR name, LONG count,
+                                   ...);
 void __cdecl __vbaVarLateMemStAd(const VARIANT* holder, BSTR name, LONG count,
                                  ...);
-void WINAPI __vbaVarLateMemSt(const VARIANT* holder, BSTR name,
-                              VARIANT value);
+void WINAPI __vbaVarLateMemSt(const VARIANT* holder, BSTR name, VARIANT value);
 VARIANT* __cdecl __vbaLateIdNamedCallLd(VARIANT* result, IDispatch* object,
                                         LONG id, LONG count, LONG name_count,
                                         ...);
@@ -85,8 +83,7 @@ public:
     DISPID last_named_id = 0;
     long value = 0;
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid,
-                                             void** out) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** out) override {
         if (iid == IID_IUnknown || iid == IID_IDispatch) {
             *out = static_cast<IDispatch*>(this);
             AddRef();
@@ -133,9 +130,8 @@ public:
         last_id = id;
         last_count = parameters->cArgs;
         last_named = parameters->cNamedArgs;
-        last_named_id = parameters->cNamedArgs != 0
-                            ? parameters->rgdispidNamedArgs[0]
-                            : 0;
+        last_named_id =
+            parameters->cNamedArgs != 0 ? parameters->rgdispidNamedArgs[0] : 0;
         if (id == 12) {
             excep->scode = static_cast<SCODE>(0x800A0035);
             return DISP_E_EXCEPTION;

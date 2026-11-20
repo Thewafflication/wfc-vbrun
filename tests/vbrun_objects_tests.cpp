@@ -11,8 +11,7 @@
 #include "../src/vbrun_helpers.hpp"
 
 extern "C" {
-VARIANT* WINAPI rtcCreateObject2(VARIANT* result, BSTR class_name,
-                                 BSTR server);
+VARIANT* WINAPI rtcCreateObject2(VARIANT* result, BSTR class_name, BSTR server);
 VARIANT* WINAPI rtcGetObject(VARIANT* result, const VARIANT* path,
                              const VARIANT* class_name);
 IUnknown* WINAPI __vbaNew(const void* info);
@@ -44,11 +43,11 @@ int main() {
             const CLSID* clsid;
             const IID* iid;
         };
-        const CLSID std_font = {0x0BE35203,
-                                0x8F91,
-                                0x11CE,
-                                {0x9D, 0xE3, 0x00, 0xAA, 0x00, 0x4B, 0xB8,
-                                 0x51}};
+        const CLSID std_font = {
+            0x0BE35203,
+            0x8F91,
+            0x11CE,
+            {0x9D, 0xE3, 0x00, 0xAA, 0x00, 0x4B, 0xB8, 0x51}};
         const Info font = {0, &std_font, nullptr};
         IUnknown* made = __vbaNew(&font);
         expect(made != nullptr, "New of a class");

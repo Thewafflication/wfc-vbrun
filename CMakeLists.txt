@@ -169,10 +169,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
           "-DWORK=${CMAKE_BINARY_DIR}/vbrun-test" -P
           "${CMAKE_CURRENT_SOURCE_DIR}/tests/run_vbrun_tests.cmake"
       )
-      set_tests_properties(
-        TC-0001-library
-        PROPERTIES LABELS "unit;vbrun"
-      )
+      set_tests_properties(TC-0001-library PROPERTIES LABELS "unit;vbrun")
     endif()
     # The helpers (REQ-0002 to REQ-0006): behavior of the implemented exports.
     add_executable(vbrun_helper_tests tests/vbrun_helper_tests.cpp)
@@ -213,10 +210,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/openfiles.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-openfiles"
     )
-    set_tests_properties(
-      TC-0004-openfiles
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0004-openfiles PROPERTIES LABELS "unit;vbrun")
     # Print, Write, Input, Get and Put against a Visual Basic 6 program.
     add_executable(
       vbrun_file_data_tests
@@ -238,10 +232,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filenumbers.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filedata"
     )
-    set_tests_properties(
-      TC-0005-filedata
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0005-filedata PROPERTIES LABELS "unit;vbrun")
     # StrComp on Variants, Command$, DoEvents and the small host exports.
     add_executable(
       vbrun_system_misc_tests
@@ -255,10 +246,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_system_misc_tests PRIVATE oleaut32 user32)
     wfc_vbrun_harden(vbrun_system_misc_tests)
     add_test(NAME TC-0006-systemmisc COMMAND vbrun_system_misc_tests)
-    set_tests_properties(
-      TC-0006-systemmisc
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0006-systemmisc PROPERTIES LABELS "unit;vbrun")
     # Late binding.
     add_executable(
       vbrun_late_tests
@@ -296,10 +284,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     )
     wfc_vbrun_harden(vbrun_system_more_tests)
     add_test(NAME TC-0009-systemmore COMMAND vbrun_system_more_tests)
-    set_tests_properties(
-      TC-0009-systemmore
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0009-systemmore PROPERTIES LABELS "unit;vbrun")
     # CreateObject and GetObject.
     add_executable(
       vbrun_objects_tests
@@ -311,10 +296,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_objects_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_objects_tests)
     add_test(NAME TC-0010-objects COMMAND vbrun_objects_tests)
-    set_tests_properties(
-      TC-0010-objects
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0010-objects PROPERTIES LABELS "unit;vbrun")
     # The Err object.
     add_executable(
       vbrun_errobj_tests
@@ -326,10 +308,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_errobj_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_errobj_tests)
     add_test(NAME TC-0011-errobj COMMAND vbrun_errobj_tests)
-    set_tests_properties(
-      TC-0011-errobj
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0011-errobj PROPERTIES LABELS "unit;vbrun")
     # The helpers called with their operands in registers, and the Zombie
     # interface.
     add_executable(
@@ -342,10 +321,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_regcall_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_regcall_tests)
     add_test(NAME TC-0012-regcall COMMAND vbrun_regcall_tests)
-    set_tests_properties(
-      TC-0012-regcall
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0012-regcall PROPERTIES LABELS "unit;vbrun")
     # The helpers that work on the x87 stack.
     add_executable(
       vbrun_x87_tests
@@ -357,10 +333,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_x87_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_x87_tests)
     add_test(NAME TC-0013-x87 COMMAND vbrun_x87_tests)
-    set_tests_properties(
-      TC-0013-x87
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0013-x87 PROPERTIES LABELS "unit;vbrun")
     # Sin, Cos, Tan, Atn, Exp, Log, Sqr, the _adj_ divides and _allmul.
     add_executable(
       vbrun_x87math_tests
@@ -369,10 +342,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     )
     wfc_vbrun_harden(vbrun_x87math_tests)
     add_test(NAME TC-0014-x87math COMMAND vbrun_x87math_tests)
-    set_tests_properties(
-      TC-0014-x87math
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0014-x87math PROPERTIES LABELS "unit;vbrun")
     # PutMemVar, PutMemObj, SetMemVar, the sinks and the record-array move.
     add_executable(
       vbrun_members_tests
@@ -384,10 +354,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_members_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_members_tests)
     add_test(NAME TC-0015-members COMMAND vbrun_members_tests)
-    set_tests_properties(
-      TC-0015-members
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0015-members PROPERTIES LABELS "unit;vbrun")
     # Record copy and destroy from a descriptor.
     add_executable(
       vbrun_records_tests
@@ -399,10 +366,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_records_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_records_tests)
     add_test(NAME TC-0016-records COMMAND vbrun_records_tests)
-    set_tests_properties(
-      TC-0016-records
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0016-records PROPERTIES LABELS "unit;vbrun")
     # The GoSub list and the error-handler frame helpers.
     add_executable(
       vbrun_frames_tests
@@ -414,10 +378,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_frames_tests PRIVATE oleaut32 ole32)
     wfc_vbrun_harden(vbrun_frames_tests)
     add_test(NAME TC-0017-frames COMMAND vbrun_frames_tests)
-    set_tests_properties(
-      TC-0017-frames
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0017-frames PROPERTIES LABELS "unit;vbrun")
     # Get # and Put # of records and arrays, Print on an object.
     add_executable(
       vbrun_owner_tests
@@ -433,10 +394,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       COMMAND vbrun_owner_tests
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-owner"
     )
-    set_tests_properties(
-      TC-0018-owner
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0018-owner PROPERTIES LABELS "unit;vbrun")
     # Declare, End, Stop, the program and DLL entries, contexts, projects.
     add_executable(
       vbrun_engine_tests
@@ -457,10 +415,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
       COMMAND vbrun_engine_tests
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-engine"
     )
-    set_tests_properties(
-      TC-0019-engine
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0019-engine PROPERTIES LABELS "unit;vbrun")
     # SaveSetting, GetSetting, GetAllSettings and DeleteSetting.
     add_executable(
       vbrun_settings_tests
@@ -472,18 +427,9 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_settings_tests PRIVATE oleaut32 advapi32)
     wfc_vbrun_harden(vbrun_settings_tests)
     add_test(NAME TC-0020-settings COMMAND vbrun_settings_tests)
-    set_tests_properties(
-      TC-0020-settings
-      PROPERTIES LABELS "unit;vbrun"
-    )
-    set_tests_properties(
-      TC-0008-foreach
-      PROPERTIES LABELS "unit;vbrun"
-    )
-    set_tests_properties(
-      TC-0007-late
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0020-settings PROPERTIES LABELS "unit;vbrun")
+    set_tests_properties(TC-0008-foreach PROPERTIES LABELS "unit;vbrun")
+    set_tests_properties(TC-0007-late PROPERTIES LABELS "unit;vbrun")
     # The Mid$ statement.
     add_executable(
       vbrun_midstmt_tests
@@ -494,10 +440,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     target_link_libraries(vbrun_midstmt_tests PRIVATE oleaut32)
     wfc_vbrun_harden(vbrun_midstmt_tests)
     add_test(NAME TC-0021-midstmt COMMAND vbrun_midstmt_tests)
-    set_tests_properties(
-      TC-0021-midstmt
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0021-midstmt PROPERTIES LABELS "unit;vbrun")
     # Width, FileAttr, Name, Lock, Input$ and fixed length strings.
     add_executable(
       vbrun_file_misc_tests
@@ -517,10 +460,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases/filemisc.expected"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/work-filemisc"
     )
-    set_tests_properties(
-      TC-0022-filemisc
-      PROPERTIES LABELS "unit;vbrun"
-    )
+    set_tests_properties(TC-0022-filemisc PROPERTIES LABELS "unit;vbrun")
     # Call cases: the results of the reference runtime are in
     # tests/cases/<family>.expected.
     set(vbrun_case_files "${CMAKE_CURRENT_SOURCE_DIR}/tests/cases")

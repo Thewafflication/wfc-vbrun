@@ -41,8 +41,7 @@ float WINAPI rtcGetTimer();
 void WINAPI rtcBeep();
 LONG WINAPI rtcGetHostLCID();
 void WINAPI __vbaAryConstruct2(SAFEARRAY* destination,
-                               const SAFEARRAY* declaration,
-                               void* information);
+                               const SAFEARRAY* declaration, void* information);
 LONG WINAPI __vbaCyForInit(LONGLONG* counter, LONGLONG start, LONGLONG limit,
                            LONGLONG step);
 LONG WINAPI __vbaCyForNext(LONGLONG* counter, LONGLONG limit, LONGLONG step);
@@ -62,8 +61,7 @@ VARIANT* __cdecl __vbaVarIndexLoadRef(VARIANT* result, const VARIANT* holder,
                                       LONG count, ...);
 VARIANT* __cdecl __vbaVarIndexLoadRefLock(VARIANT* result,
                                           const VARIANT* holder,
-                                          SAFEARRAY** locked, LONG count,
-                                          ...);
+                                          SAFEARRAY** locked, LONG count, ...);
 LONG WINAPI __vbaVarForInit(VARIANT* counter, VARIANT* step, VARIANT* limit,
                             const VARIANT* start, const VARIANT* limit_in,
                             const VARIANT* step_in);
@@ -87,8 +85,7 @@ VARIANT* __cdecl __vbaRedimPreserveVar(LONG type, VARIANT* holder,
 VARIANT* __cdecl __vbaRedimVar2(LONG type, VARIANT* holder, LONG dimensions,
                                 const void* info, ...);
 VARIANT* __cdecl __vbaRedimPreserveVar2(LONG type, VARIANT* holder,
-                                        LONG dimensions, const void* info,
-                                        ...);
+                                        LONG dimensions, const void* info, ...);
 VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* result, const VARIANT* holder,
                                    LONG count, ...);
 VARIANT* __cdecl __vbaVarIndexStore(VARIANT* holder, LONG count, ...);
@@ -130,8 +127,8 @@ VARIANT text(const wchar_t* const characters) {
 }
 
 bool under_wine() {
-    return GetProcAddress(GetModuleHandleW(L"ntdll.dll"),
-                          "wine_get_version") != nullptr;
+    return GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "wine_get_version") !=
+           nullptr;
 }
 
 // Closes the dialog of the given title after it shows (exit code 0).
@@ -163,8 +160,7 @@ DWORD finish(Closer& closer) {
 
 void start(Closer& closer, const wchar_t* const title) {
     closer.title = title;
-    closer.thread = CreateThread(nullptr, 0, close_dialog, &closer, 0,
-                                 nullptr);
+    closer.thread = CreateThread(nullptr, 0, close_dialog, &closer, 0, nullptr);
 }
 
 void test_state() {
@@ -206,12 +202,10 @@ void test_strings() {
         holder.pbstrVal = &target;
         __vbaRsetFixstrFree(0xFFFF, reinterpret_cast<wchar_t*>(&holder),
                             SysAllocString(L"xyz"));
-        expect(std::wcsncmp(target, L"     xyz", 8) == 0,
-               "RSet into a String");
+        expect(std::wcsncmp(target, L"     xyz", 8) == 0, "RSet into a String");
         __vbaLsetFixstrFree(0xFFFF, reinterpret_cast<wchar_t*>(&holder),
                             SysAllocString(L"hi"));
-        expect(std::wcsncmp(target, L"hi      ", 8) == 0,
-               "LSet into a String");
+        expect(std::wcsncmp(target, L"hi      ", 8) == 0, "LSet into a String");
         SysFreeString(target);
     }
     VARIANT value = text(L"copy");
@@ -237,9 +231,9 @@ void test_strings() {
     VARIANT source = text(L"Abc");
     VARIANT converted;
     rtcStrConvVar2(&converted, &source, 1, 0x409);
-    expect(converted.vt == VT_BSTR &&
-               std::wcscmp(converted.bstrVal, L"ABC") == 0,
-           "StrConv upper case with a locale");
+    expect(
+        converted.vt == VT_BSTR && std::wcscmp(converted.bstrVal, L"ABC") == 0,
+        "StrConv upper case with a locale");
     VariantClear(&converted);
     rtcStrConvVar2(&converted, &source, 128, 0x409);
     expect(converted.vt == VT_BSTR &&
@@ -295,9 +289,7 @@ public:
     ULONG STDMETHODCALLTYPE Release() override { return --references; }
     HRESULT STDMETHODCALLTYPE RecordInit(PVOID) override { return S_OK; }
     HRESULT STDMETHODCALLTYPE RecordClear(PVOID) override { return S_OK; }
-    HRESULT STDMETHODCALLTYPE RecordCopy(PVOID, PVOID) override {
-        return S_OK;
-    }
+    HRESULT STDMETHODCALLTYPE RecordCopy(PVOID, PVOID) override { return S_OK; }
     HRESULT STDMETHODCALLTYPE GetGuid(GUID*) override { return E_NOTIMPL; }
     HRESULT STDMETHODCALLTYPE GetName(BSTR*) override { return E_NOTIMPL; }
     HRESULT STDMETHODCALLTYPE GetSize(ULONG* size) override {
@@ -507,8 +499,8 @@ void test_small_entries() {
     vbrun::clear_error();
     rtcBeep();
     expect(vbrun::last_error() == 0, "Beep raises no error");
-    expect(IsValidLocale(static_cast<LCID>(rtcGetHostLCID()),
-                         LCID_SUPPORTED) != FALSE,
+    expect(IsValidLocale(static_cast<LCID>(rtcGetHostLCID()), LCID_SUPPORTED) !=
+               FALSE,
            "the host locale is a locale");
     __vbaErrorOverflow();
     expect(vbrun::last_error() == 6, "__vbaErrorOverflow is error 6");
@@ -698,8 +690,8 @@ void test_dialogs() {
 
     caption = text(L"WfcInputBoxTitle");
     start(closer, L"WfcInputBoxTitle");
-    BSTR typed = rtcInputBox(&prompt, &caption, &none, &none, &none, &none,
-                             &none);
+    BSTR typed =
+        rtcInputBox(&prompt, &caption, &none, &none, &none, &none, &none);
     const DWORD input_shown = finish(closer);
     expect(under_wine() || input_shown == 0, "InputBox dialog was shown");
     expect(typed != nullptr && SysStringLen(typed) == 0,
@@ -715,10 +707,10 @@ void test_app_activate() {
     window_class.hInstance = GetModuleHandleW(nullptr);
     window_class.lpszClassName = L"WfcAppActivateTest";
     RegisterClassW(&window_class);
-    const HWND window = CreateWindowW(
-        L"WfcAppActivateTest", L"Wfc AppActivate Window",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 200, 100, nullptr, nullptr,
-        window_class.hInstance, nullptr);
+    const HWND window =
+        CreateWindowW(L"WfcAppActivateTest", L"Wfc AppActivate Window",
+                      WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 200, 100, nullptr,
+                      nullptr, window_class.hInstance, nullptr);
     VARIANT title = text(L"wfc appactivate");
     VARIANT none = absent();
     vbrun::clear_error();
@@ -746,8 +738,7 @@ void test_clock() {
     SYSTEMTIME now = {};
     GetLocalTime(&now);
     wchar_t text[64] = {};
-    std::swprintf(text, 64, L"%04d-%02d-%02d", now.wYear, now.wMonth,
-                  now.wDay);
+    std::swprintf(text, 64, L"%04d-%02d-%02d", now.wYear, now.wMonth, now.wDay);
     BSTR date_text = SysAllocString(text);
     vbrun::clear_error();
     rtcSetDateBstr(date_text);
@@ -938,8 +929,7 @@ void test_ime_and_friend() {
     vbrun::clear_error();
 }
 
-std::vector<vbrun::KeyEvent> keys_of(const wchar_t* const text,
-                                     bool& valid) {
+std::vector<vbrun::KeyEvent> keys_of(const wchar_t* const text, bool& valid) {
     std::vector<vbrun::KeyEvent> events;
     valid = vbrun::parse_send_keys(text, events);
     return events;

@@ -20,14 +20,16 @@ import subprocess
 import sys
 
 
-FILE_EXPORTS = {'rtcCurrentDirBstr', 'rtcCurrentDir', 'rtcFileLen', 'rtcGetFileAttr', 'rtcFileDateTime',
+FILE_EXPORTS = {'rtcCurrentDirBstr', 'rtcCurrentDir', 'rtcFileLen',
+                'rtcGetFileAttr', 'rtcFileDateTime',
                 'rtcSetFileAttr', 'rtcMakeDir', 'rtcRemoveDir',
                 'rtcChangeDir', 'rtcKillFiles', 'rtcFileCopy', 'rtcDir'}
 
 
 def main(folder, family, cases, only=None):
     experiments = []
-    for line in open(os.path.join(folder, 'experiments.txt')).read().splitlines():
+    listing = os.path.join(folder, 'experiments.txt')
+    for line in open(listing).read().splitlines():
         parts = line.split()
         if len(parts) == 3:
             # An export without arguments has no kind.
@@ -67,8 +69,8 @@ def main(folder, family, cases, only=None):
     print('measured', len(lines), 'cases; errors', dict(errors),
           '; no result (crashed or hung):', crashed)
     header = ('# Measured from a Visual Basic 6 program that declares the\n'
-              '# exports (scripts/vb6_harness_gen.py); the calls that raise an\n'
-              '# error are not cases.\n')
+              '# exports (scripts/vb6_harness_gen.py); the calls that raise\n'
+              '# an error are not cases.\n')
     with open(os.path.join(cases, family + '.cases'), 'w',
               newline='\n') as out:
         out.write(header + '\n'.join(l[0] for l in lines) + '\n')

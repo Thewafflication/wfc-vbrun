@@ -65,9 +65,11 @@ jobs:
           fi
           sudo apt-get update
           if [ "${{ matrix.arch }}" = "x86" ]; then
-            sudo apt-get install -y wine64-tools libwine-dev:i386 gcc-multilib g++-multilib cmake ninja-build
+            sudo apt-get install -y wine64-tools libwine-dev:i386 \
+              gcc-multilib g++-multilib cmake ninja-build
           else
-            sudo apt-get install -y wine64-tools libwine-dev wine64 cmake ninja-build
+            sudo apt-get install -y wine64-tools libwine-dev wine64 \
+              cmake ninja-build
           fi
 
       - name: Configure
@@ -88,7 +90,8 @@ jobs:
         if: matrix.arch != 'arm64'
         run: |
           set -o pipefail
-          ctest --test-dir out/winelib --output-on-failure 2>&1 | tee out/test.txt
+          ctest --test-dir out/winelib --output-on-failure 2>&1 \
+            | tee out/test.txt
 
       - name: Screenshot of the session
         if: always()
@@ -105,7 +108,9 @@ jobs:
               echo '(the tests are not run on arm64: Wine hangs there)'
             fi
           } > out/session.txt
-          python3 scripts/render_terminal.py out/session.txt docs/images/linux-winelib-${{ matrix.arch }}.png "wfc-vbrun: Linux (Winelib) ${{ matrix.arch }}"
+          python3 scripts/render_terminal.py out/session.txt \
+            docs/images/linux-winelib-${{ matrix.arch }}.png \
+            "wfc-vbrun: Linux (Winelib) ${{ matrix.arch }}"
 
       - uses: actions/upload-artifact@v4
         if: always()

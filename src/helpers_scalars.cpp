@@ -9,8 +9,8 @@
 // (vbrun::raise_hresult) and the helper returns 0.
 
 #include <cmath>
-#include <cstdint>
 #include <cstdarg>
+#include <cstdint>
 #include <cstring>
 #include <cwctype>
 #include <string>
@@ -673,9 +673,8 @@ LONG WINAPI __vbaObjIs(IUnknown* const left, IUnknown* const right) {
         return left == nullptr && right == nullptr ? -1 : 0;
     }
     IUnknown* left_identity = nullptr;
-    if (FAILED(left->QueryInterface(IID_IUnknown,
-                                    reinterpret_cast<void**>(
-                                        &left_identity))) ||
+    if (FAILED(left->QueryInterface(
+            IID_IUnknown, reinterpret_cast<void**>(&left_identity))) ||
         left_identity == nullptr) {
         return 0;
     }
@@ -819,9 +818,9 @@ BSTR WINAPI __vbaStrToAnsi(BSTR* const destination, const BSTR source) {
         return nullptr;
     }
     const UINT length = SysStringLen(source);
-    const int bytes = WideCharToMultiByte(CP_ACP, 0, source,
-                                          static_cast<int>(length), nullptr, 0,
-                                          nullptr, nullptr);
+    const int bytes =
+        WideCharToMultiByte(CP_ACP, 0, source, static_cast<int>(length),
+                            nullptr, 0, nullptr, nullptr);
     std::string buffer(static_cast<size_t>(bytes > 0 ? bytes : 0), '\0');
     if (bytes > 0) {
         WideCharToMultiByte(CP_ACP, 0, source, static_cast<int>(length),
@@ -839,9 +838,9 @@ BSTR WINAPI __vbaStrToUnicode(BSTR* const destination, const BSTR source) {
         return nullptr;
     }
     const UINT bytes = SysStringByteLen(source);
-    const int chars = MultiByteToWideChar(
-        CP_ACP, 0, reinterpret_cast<const char*>(source),
-        static_cast<int>(bytes), nullptr, 0);
+    const int chars =
+        MultiByteToWideChar(CP_ACP, 0, reinterpret_cast<const char*>(source),
+                            static_cast<int>(bytes), nullptr, 0);
     std::wstring buffer(static_cast<size_t>(chars > 0 ? chars : 0), L'\0');
     if (chars > 0) {
         MultiByteToWideChar(CP_ACP, 0, reinterpret_cast<const char*>(source),
@@ -1068,9 +1067,10 @@ VARIANT* WINAPI __vbaVarErrI4(VARIANT* const result, const LONG number) {
         static_cast<void>(vbrun::raise(5));
     }
     result->vt = VT_ERROR;
-    result->scode = number == 0 ? 0 : static_cast<SCODE>(
-                                          static_cast<ULONG>(number) |
-                                          0x800A0000UL);
+    result->scode =
+        number == 0
+            ? 0
+            : static_cast<SCODE>(static_cast<ULONG>(number) | 0x800A0000UL);
     return result;
 }
 
@@ -1133,8 +1133,8 @@ SAFEARRAY* WINAPI __vbaAryVar(const USHORT type, const VARIANT* const value) {
         (value->vt & VT_BYREF) != 0 ? *value->pparray : value->parray;
     const USHORT element = static_cast<USHORT>(value->vt & VT_TYPEMASK);
     if (element != (type & VT_TYPEMASK) ||
-        (type == VT_RECORD && (array == nullptr ||
-                               (array->fFeatures & FADF_RECORD) == 0))) {
+        (type == VT_RECORD &&
+         (array == nullptr || (array->fFeatures & FADF_RECORD) == 0))) {
         static_cast<void>(vbrun::raise(13));
         return nullptr;
     }
@@ -1196,8 +1196,7 @@ static void destroy_array(SAFEARRAY** const slot) {
 // array that does not live inside its owner, the data allocated.
 static bool construct_array(SAFEARRAY* const destination,
                             const SAFEARRAY* const declaration) {
-    const size_t bounds =
-        declaration->cDims > 1 ? declaration->cDims - 1U : 0U;
+    const size_t bounds = declaration->cDims > 1 ? declaration->cDims - 1U : 0U;
     std::memcpy(destination, declaration,
                 sizeof(SAFEARRAY) + bounds * sizeof(SAFEARRAYBOUND));
     if ((destination->fFeatures & FADF_EMBEDDED) != 0) {
@@ -1229,8 +1228,7 @@ void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
     if ((declaration->fFeatures & FADF_RECORD) != 0) {
         information = *static_cast<void* const*>(information);
     }
-    if (!construct_array(destination, declaration) ||
-        information == nullptr) {
+    if (!construct_array(destination, declaration) || information == nullptr) {
         return;
     }
     if ((destination->fFeatures & FADF_RECORD) != 0) {
@@ -1242,8 +1240,8 @@ void WINAPI __vbaAryConstruct2(SAFEARRAY* const destination,
                     sizeof(IID));
         SafeArraySetIID(destination, *static_cast<const IID*>(information));
     } else if ((declaration->fFeatures & FADF_HAVEVARTYPE) != 0) {
-        reinterpret_cast<DWORD*>(destination)[-1] = static_cast<DWORD>(
-            reinterpret_cast<std::uintptr_t>(information));
+        reinterpret_cast<DWORD*>(destination)[-1] =
+            static_cast<DWORD>(reinterpret_cast<std::uintptr_t>(information));
     }
 }
 
@@ -1262,8 +1260,8 @@ static SAFEARRAY* redim_core(const ULONG features, const LONG element_size,
     }
     SAFEARRAY* array = *slot;
     if (array != nullptr) {
-        if ((array->fFeatures & (FADF_STATIC | FADF_EMBEDDED |
-                                 FADF_FIXEDSIZE)) != 0 ||
+        if ((array->fFeatures &
+             (FADF_STATIC | FADF_EMBEDDED | FADF_FIXEDSIZE)) != 0 ||
             array->cLocks != 0) {
             static_cast<void>(vbrun::raise(10));
             return array;
@@ -1281,15 +1279,14 @@ static SAFEARRAY* redim_core(const ULONG features, const LONG element_size,
     if (array == nullptr) {
         HRESULT status = S_OK;
         if ((features & (FADF_RECORD | FADF_HAVEIID | FADF_HAVEVARTYPE)) == 0) {
-            status = SafeArrayAllocDescriptor(
-                static_cast<UINT>(dimensions), &array);
+            status =
+                SafeArrayAllocDescriptor(static_cast<UINT>(dimensions), &array);
         } else {
-            VARTYPE type = static_cast<VARTYPE>(
-                reinterpret_cast<std::uintptr_t>(info));
+            VARTYPE type =
+                static_cast<VARTYPE>(reinterpret_cast<std::uintptr_t>(info));
             if ((features & FADF_HAVEIID) != 0) {
                 type = static_cast<VARTYPE>(
-                    (features & FADF_DISPATCH) != 0 ? VT_DISPATCH
-                                                    : VT_UNKNOWN);
+                    (features & FADF_DISPATCH) != 0 ? VT_DISPATCH : VT_UNKNOWN);
             } else if ((features & FADF_RECORD) != 0) {
                 type = static_cast<VARTYPE>(VT_RECORD);
             }
@@ -1331,8 +1328,8 @@ static SAFEARRAY* preserve_core(SAFEARRAY** const slot, const LONG dimensions,
         static_cast<void>(vbrun::raise(9));
         return array;
     }
-    if ((array->fFeatures & (FADF_STATIC | FADF_EMBEDDED |
-                             FADF_FIXEDSIZE)) != 0 ||
+    if ((array->fFeatures & (FADF_STATIC | FADF_EMBEDDED | FADF_FIXEDSIZE)) !=
+            0 ||
         array->cLocks != 0) {
         static_cast<void>(vbrun::raise(10));
         return array;
@@ -1343,9 +1340,9 @@ static SAFEARRAY* preserve_core(SAFEARRAY** const slot, const LONG dimensions,
         const SAFEARRAYBOUND& have = array->rgsabound[index];
         const bool changes_here =
             index == 0 && upper >= lower && lower == have.lLbound;
-        const bool kept = upper >= lower && lower == have.lLbound &&
-                          static_cast<ULONG>(upper - lower + 1) ==
-                              have.cElements;
+        const bool kept =
+            upper >= lower && lower == have.lLbound &&
+            static_cast<ULONG>(upper - lower + 1) == have.cElements;
         if (!changes_here && !kept) {
             static_cast<void>(vbrun::raise(9));
             return array;
@@ -1423,9 +1420,10 @@ static VARIANT* redim_variant(const bool preserve, const LONG type,
     if (preserve) {
         preserve_core(slot, dimensions, bounds);
     } else {
-        redim_core(features, size, slot, reinterpret_cast<const void*>(
-                                             static_cast<std::uintptr_t>(type)),
-                   dimensions, bounds);
+        redim_core(
+            features, size, slot,
+            reinterpret_cast<const void*>(static_cast<std::uintptr_t>(type)),
+            dimensions, bounds);
     }
     if (*slot != nullptr) {
         holder->vt = static_cast<VARTYPE>(wanted | (holder->vt & VT_BYREF));
@@ -1660,13 +1658,12 @@ SAFEARRAY* WINAPI __vbaVar2Vec(SAFEARRAY** const slot,
     }
     const bool by_reference = (value->vt & VT_BYREF) != 0;
     if (type == VT_BSTR) {
-        return __vbaStr2Vec(slot, by_reference ? *value->pbstrVal
-                                               : value->bstrVal);
+        return __vbaStr2Vec(slot,
+                            by_reference ? *value->pbstrVal : value->bstrVal);
     }
     const SAFEARRAY* const source =
         by_reference ? *value->pparray : value->parray;
-    const HRESULT result =
-        SafeArrayCopy(const_cast<SAFEARRAY*>(source), slot);
+    const HRESULT result = SafeArrayCopy(const_cast<SAFEARRAY*>(source), slot);
     if (FAILED(result)) {
         static_cast<void>(vbrun::raise_hresult(result));
         return nullptr;
@@ -1752,9 +1749,9 @@ LONG WINAPI __vbaCheckType(IUnknown* const object, const IID* const iid) {
         return 0;
     }
     IUnknown* found = nullptr;
-    const HRESULT result = object->QueryInterface(
-        iid == nullptr ? IID_IDispatch : *iid,
-        reinterpret_cast<void**>(&found));
+    const HRESULT result =
+        object->QueryInterface(iid == nullptr ? IID_IDispatch : *iid,
+                               reinterpret_cast<void**>(&found));
     if (FAILED(result) || found == nullptr) {
         return 0;
     }
@@ -1764,7 +1761,7 @@ LONG WINAPI __vbaCheckType(IUnknown* const object, const IID* const iid) {
 
 // Same for an object or user-defined type held in a Variant.
 LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value,
-                               const IID* const iid) {
+                              const IID* const iid) {
     const unsigned type = value->vt & ~static_cast<unsigned>(VT_BYREF);
     if (type == VT_RECORD) {
         GUID guid = {};
@@ -1773,13 +1770,12 @@ LONG WINAPI __vbaCheckTypeVar(const VARIANT* const value,
             static_cast<void>(vbrun::raise_hresult(result));
             return 0;
         }
-        return iid != nullptr && std::memcmp(&guid, iid, sizeof(GUID)) == 0
-                   ? -1
-                   : 0;
+        return iid != nullptr && std::memcmp(&guid, iid, sizeof(GUID)) == 0 ? -1
+                                                                            : 0;
     }
     if (type == VT_DISPATCH || type == VT_UNKNOWN) {
-        IUnknown* const object = (value->vt & VT_BYREF) != 0 ? *value->ppunkVal
-                                                             : value->punkVal;
+        IUnknown* const object =
+            (value->vt & VT_BYREF) != 0 ? *value->ppunkVal : value->punkVal;
         return __vbaCheckType(object, iid);
     }
     return 0;
@@ -1819,10 +1815,9 @@ static wchar_t* fixed_target(LONG& length, const VARIANT*& holder,
         length = 0;
     }
     if (length == 0) {
-        length = target == nullptr
-                     ? 0
-                     : static_cast<LONG>(SysStringLen(
-                           reinterpret_cast<BSTR>(target)));
+        length = target == nullptr ? 0
+                                   : static_cast<LONG>(SysStringLen(
+                                         reinterpret_cast<BSTR>(target)));
     }
     return target;
 }
@@ -1872,9 +1867,8 @@ wchar_t* WINAPI __vbaRsetFixstr(const LONG length, wchar_t* const target,
 
 wchar_t* WINAPI __vbaRsetFixstrFree(const LONG length, wchar_t* const target,
                                     const BSTR source) {
-    wchar_t* const result =
-        lset_core(length, reinterpret_cast<const VARIANT*>(target), target,
-                  source, true);
+    wchar_t* const result = lset_core(
+        length, reinterpret_cast<const VARIANT*>(target), target, source, true);
     SysFreeString(source);
     return result;
 }
@@ -1887,8 +1881,7 @@ LONG WINAPI __vbaAptOffset(const LONG) {
 // v(i, j, ...) on a Variant that holds an array: the subscripts are Variants
 // (rounded to Long); the wrong number of them or one outside the bounds is
 // error 9. The array of a by-reference Variant is the one it points to.
-static SAFEARRAY* indexed_array(const VARIANT* const holder,
-                                const LONG count) {
+static SAFEARRAY* indexed_array(const VARIANT* const holder, const LONG count) {
     if (count <= 0) {
         static_cast<void>(vbrun::raise(9));
         return nullptr;
@@ -1897,8 +1890,8 @@ static SAFEARRAY* indexed_array(const VARIANT* const holder,
         static_cast<void>(vbrun::raise(13));
         return nullptr;
     }
-    SAFEARRAY* const array = (holder->vt & VT_BYREF) != 0 ? *holder->pparray
-                                                         : holder->parray;
+    SAFEARRAY* const array =
+        (holder->vt & VT_BYREF) != 0 ? *holder->pparray : holder->parray;
     if (array == nullptr || array->cDims != count) {
         static_cast<void>(vbrun::raise(9));
         return nullptr;
@@ -1936,8 +1929,7 @@ VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* const result,
     va_list list;
     va_start(list, count);
     std::vector<VARIANT> values;
-    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
-                values);
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U, values);
     va_end(list);
     VariantInit(result);
     SAFEARRAY* const array = indexed_array(holder, count);
@@ -1948,13 +1940,12 @@ VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* const result,
     VARTYPE type = VT_EMPTY;
     SafeArrayGetVartype(array, &type);
     if (type == VT_VARIANT) {
-        const HRESULT status = SafeArrayGetElement(array, indices.data(),
-                                                   result);
+        const HRESULT status =
+            SafeArrayGetElement(array, indices.data(), result);
         if (FAILED(status)) {
-            static_cast<void>(vbrun::raise(status == DISP_E_BADINDEX
-                                               ? 9
-                                               : vbrun::error_of_hresult(
-                                                     status)));
+            static_cast<void>(vbrun::raise(
+                status == DISP_E_BADINDEX ? 9
+                                          : vbrun::error_of_hresult(status)));
         }
         return result;
     }
@@ -1974,8 +1965,8 @@ VARIANT* __cdecl __vbaVarIndexLoad(VARIANT* const result,
         return result;
     }
     // The element goes in the union of the Variant, as its own type.
-    const HRESULT status = SafeArrayGetElement(array, indices.data(),
-                                               &result->lVal);
+    const HRESULT status =
+        SafeArrayGetElement(array, indices.data(), &result->lVal);
     if (FAILED(status)) {
         static_cast<void>(vbrun::raise(status == DISP_E_BADINDEX ? 9 : 5));
         return result;
@@ -2027,8 +2018,7 @@ VARIANT* __cdecl __vbaVarIndexLoadRef(VARIANT* const result,
     va_list list;
     va_start(list, count);
     std::vector<VARIANT> values;
-    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
-                values);
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U, values);
     va_end(list);
     if (result->vt != VT_EMPTY) {
         VariantClear(result);
@@ -2043,8 +2033,7 @@ VARIANT* __cdecl __vbaVarIndexLoadRefLock(VARIANT* const result,
     va_list list;
     va_start(list, count);
     std::vector<VARIANT> values;
-    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U,
-                values);
+    take_values(list, count > 0 ? static_cast<std::size_t>(count) : 0U, values);
     va_end(list);
     if (result->vt != VT_EMPTY) {
         VariantClear(result);
@@ -2077,15 +2066,14 @@ static VARIANT* store_element(VARIANT* const holder, const LONG count,
             static_cast<void>(vbrun::raise(object ? 424 : 13));
             return holder;
         }
-        IUnknown* const element = (value.vt & VT_BYREF) != 0
-                                      ? *value.ppunkVal
-                                      : value.punkVal;
+        IUnknown* const element =
+            (value.vt & VT_BYREF) != 0 ? *value.ppunkVal : value.punkVal;
         status = SafeArrayPutElement(array, indices.data(), element);
     } else if (type == VT_BSTR) {
         VARIANT text;
         VariantInit(&text);
-        status = VariantChangeType(&text, const_cast<VARIANT*>(&value), 0,
-                                   VT_BSTR);
+        status =
+            VariantChangeType(&text, const_cast<VARIANT*>(&value), 0, VT_BSTR);
         if (SUCCEEDED(status)) {
             status = SafeArrayPutElement(array, indices.data(), text.bstrVal);
             VariantClear(&text);
@@ -2096,8 +2084,8 @@ static VARIANT* store_element(VARIANT* const holder, const LONG count,
         status = VariantChangeType(&converted, const_cast<VARIANT*>(&value), 0,
                                    type);
         if (SUCCEEDED(status)) {
-            status = SafeArrayPutElement(array, indices.data(),
-                                         &converted.lVal);
+            status =
+                SafeArrayPutElement(array, indices.data(), &converted.lVal);
         }
     }
     if (FAILED(status)) {
@@ -2144,9 +2132,8 @@ static VARIANT* set_variant_object_from(VARIANT* const original,
         static_cast<void>(vbrun::raise(13));
         return original;
     }
-    IUnknown* const object = (source->vt & VT_BYREF) != 0
-                                 ? *source->ppunkVal
-                                 : source->punkVal;
+    IUnknown* const object =
+        (source->vt & VT_BYREF) != 0 ? *source->ppunkVal : source->punkVal;
     if (!take_over && object != nullptr) {
         object->AddRef();
     }
@@ -2188,8 +2175,8 @@ LONG WINAPI rtcMacId(const BSTR text) {
     }
     char characters[4] = {' ', ' ', ' ', '\0'};
     const int length = static_cast<int>(SysStringLen(text));
-    WideCharToMultiByte(CP_ACP, 0, text, length < 4 ? length : 4, characters,
-                        4, nullptr, nullptr);
+    WideCharToMultiByte(CP_ACP, 0, text, length < 4 ? length : 4, characters, 4,
+                        nullptr, nullptr);
     ULONG result = 0;
     for (const char character : characters) {
         const char used = character == '\0' ? ' ' : character;
@@ -2204,9 +2191,9 @@ BSTR WINAPI __vbaStrVarCopy(VARIANT* const value) {
         if (value->bstrVal == nullptr) {
             return nullptr;
         }
-        BSTR copy = SysAllocStringByteLen(
-            reinterpret_cast<const char*>(value->bstrVal),
-            SysStringByteLen(value->bstrVal));
+        BSTR copy =
+            SysAllocStringByteLen(reinterpret_cast<const char*>(value->bstrVal),
+                                  SysStringByteLen(value->bstrVal));
         if (copy == nullptr) {
             static_cast<void>(vbrun::raise(7));
         }
@@ -2214,8 +2201,7 @@ BSTR WINAPI __vbaStrVarCopy(VARIANT* const value) {
     }
     VARIANT converted;
     VariantInit(&converted);
-    const HRESULT status =
-        VariantChangeType(&converted, value, 0, VT_BSTR);
+    const HRESULT status = VariantChangeType(&converted, value, 0, VT_BSTR);
     if (FAILED(status)) {
         static_cast<void>(vbrun::raise_hresult(status));
         return nullptr;
@@ -2310,8 +2296,8 @@ static VARTYPE for_type(const VARIANT* const start, const VARIANT* const limit,
             return VT_ERROR;
         }
     }
-    const VARTYPE type = static_cast<VARTYPE>(
-        kForType[kForType[vts[0]][vts[1]]][vts[2]]);
+    const VARTYPE type =
+        static_cast<VARTYPE>(kForType[kForType[vts[0]][vts[1]]][vts[2]]);
     if (type == VT_NULL) {
         static_cast<void>(vbrun::raise(94));
         return VT_ERROR;
@@ -2354,9 +2340,9 @@ static LONG for_runs(const VARIANT* const counter, const VARIANT* const step,
                           LOCALE_USER_DEFAULT, 0) == VARCMP_LT;
     }
     VariantClear(&converted);
-    const HRESULT order = VarCmp(const_cast<VARIANT*>(counter),
-                                 const_cast<VARIANT*>(limit),
-                                 LOCALE_USER_DEFAULT, 0);
+    const HRESULT order =
+        VarCmp(const_cast<VARIANT*>(counter), const_cast<VARIANT*>(limit),
+               LOCALE_USER_DEFAULT, 0);
     if (negative) {
         return order == VARCMP_GT || order == VARCMP_EQ ? 1 : 0;
     }
@@ -2834,9 +2820,9 @@ static bool error_text(const VARIANT* const number, BSTR* const text) {
     const int current = vbrun::last_error();
     const vbrun::ErrorDetail saved = vbrun::error_detail();
     const LONG current_code =
-        current > 0 ? static_cast<LONG>(0x800A0000U |
-                                        static_cast<unsigned>(current))
-                    : current;
+        current > 0
+            ? static_cast<LONG>(0x800A0000U | static_cast<unsigned>(current))
+            : current;
     LONG code = current_code;
     if (number->vt != VT_ERROR || number->scode != DISP_E_PARAMNOTFOUND) {
         vbrun::clear_error();
@@ -2850,9 +2836,10 @@ static bool error_text(const VARIANT* const number, BSTR* const text) {
         }
         static_cast<void>(vbrun::raise(current));
         vbrun::error_detail() = saved;
-        code = value > 0 ? static_cast<LONG>(0x800A0000U |
-                                             static_cast<unsigned>(value))
-                         : value;
+        code =
+            value > 0
+                ? static_cast<LONG>(0x800A0000U | static_cast<unsigned>(value))
+                : value;
     }
     if (code == 0) {
         return true;

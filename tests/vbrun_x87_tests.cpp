@@ -55,9 +55,9 @@ void integers() {
            "CLng at the limits");
     expect(error_of([] { x::to_i4(2147483647.5); }) == 6,
            "CLng(2147483647.5) overflows");
-    expect(x::to_ui1(255.4) == 255 && x::to_ui1(0.5) == 0 &&
-               x::to_ui1(-0.4) == 0,
-           "CByte");
+    expect(
+        x::to_ui1(255.4) == 255 && x::to_ui1(0.5) == 0 && x::to_ui1(-0.4) == 0,
+        "CByte");
     expect(error_of([] { x::to_ui1(255.5); }) == 6, "CByte(255.5) overflows");
     expect(error_of([] { x::to_ui1(-0.6); }) == 6, "CByte(-0.6) overflows");
     expect(x::floor_i2(-2.5) == -3 && x::floor_i2(2.5) == 2 &&
@@ -95,9 +95,9 @@ void currency() {
     expect(x::to_currency(1.5) == 15000 && x::to_currency(2.5) == 25000 &&
                x::to_currency(-1.5) == -15000,
            "CCur");
-    expect(x::to_currency(1.23456) == 12346 &&
-               x::to_currency(-1.23456) == -12346,
-           "CCur rounds");
+    expect(
+        x::to_currency(1.23456) == 12346 && x::to_currency(-1.23456) == -12346,
+        "CCur rounds");
     expect(x::to_currency(-0.00004) == 0, "a small value is zero");
     expect(x::to_currency(922337203685477.0) == 9223372036854770000LL,
            "CCur near the limit");
@@ -259,20 +259,43 @@ std::int64_t bits_of(const double value) {
 
 void sequences() {
     namespace x = vbrun::x87;
-    const std::vector<double> values = {
-        0.0,           -0.0,           0.5,
-        -0.5,          1.5,            2.5,
-        -2.5,          0.1,            255.4,
-        255.5,         256.0,          -0.4,
-        -0.6,          32767.4,        32767.5,
-        -32768.5,      -32769.0,       40000.0,
-        2147483647.4,  2147483647.5,   -2147483648.4,
-        -2147483649.0, 1e10,           1.23456,
-        -1.23456,      16777217.0,     16777219.0,
-        3.0e38,        1e39,           1e300,
-        922337203685477.0, 922337203685478.0, 1e15,
-        -1e15,         kInf,           -kInf,
-        kNan};
+    const std::vector<double> values = {0.0,
+                                        -0.0,
+                                        0.5,
+                                        -0.5,
+                                        1.5,
+                                        2.5,
+                                        -2.5,
+                                        0.1,
+                                        255.4,
+                                        255.5,
+                                        256.0,
+                                        -0.4,
+                                        -0.6,
+                                        32767.4,
+                                        32767.5,
+                                        -32768.5,
+                                        -32769.0,
+                                        40000.0,
+                                        2147483647.4,
+                                        2147483647.5,
+                                        -2147483648.4,
+                                        -2147483649.0,
+                                        1e10,
+                                        1.23456,
+                                        -1.23456,
+                                        16777217.0,
+                                        16777219.0,
+                                        3.0e38,
+                                        1e39,
+                                        1e300,
+                                        922337203685477.0,
+                                        922337203685478.0,
+                                        1e15,
+                                        -1e15,
+                                        kInf,
+                                        -kInf,
+                                        kNan};
     for (const double v : values) {
         char label[96];
         std::snprintf(label, sizeof(label), "x87 sequences for %.17g", v);
@@ -297,33 +320,29 @@ void sequences() {
                         })),
                    label);
         }
-        expect(same(run([&] {
-                        return std::int64_t{asm_r8_i2(v, __vbaR8IntI2)};
-                    }),
-                    run([&] { return std::int64_t{x::floor_i2(v)}; })),
-               label);
-        expect(same(run([&] {
-                        return std::int64_t{asm_r8_i4(v, __vbaR8IntI4)};
-                    }),
-                    run([&] { return std::int64_t{x::floor_i4(v)}; })),
-               label);
-        expect(same(run([&] {
-                        return std::int64_t{asm_r8_i2(v, __vbaR8FixI2)};
-                    }),
-                    run([&] { return std::int64_t{x::trunc_i2(v)}; })),
-               label);
-        expect(same(run([&] {
-                        return std::int64_t{asm_r8_i4(v, __vbaR8FixI4)};
-                    }),
-                    run([&] { return std::int64_t{x::trunc_i4(v)}; })),
-               label);
+        expect(
+            same(run([&] { return std::int64_t{asm_r8_i2(v, __vbaR8IntI2)}; }),
+                 run([&] { return std::int64_t{x::floor_i2(v)}; })),
+            label);
+        expect(
+            same(run([&] { return std::int64_t{asm_r8_i4(v, __vbaR8IntI4)}; }),
+                 run([&] { return std::int64_t{x::floor_i4(v)}; })),
+            label);
+        expect(
+            same(run([&] { return std::int64_t{asm_r8_i2(v, __vbaR8FixI2)}; }),
+                 run([&] { return std::int64_t{x::trunc_i2(v)}; })),
+            label);
+        expect(
+            same(run([&] { return std::int64_t{asm_r8_i4(v, __vbaR8FixI4)}; }),
+                 run([&] { return std::int64_t{x::trunc_i4(v)}; })),
+            label);
         if (std::isfinite(v)) {
-            expect(bits_of(asm_st0(v, __vbaFPInt)) ==
-                       bits_of(x::floor_value(v)),
-                   label);
-            expect(bits_of(asm_st0(v, __vbaFPFix)) ==
-                       bits_of(x::trunc_value(v)),
-                   label);
+            expect(
+                bits_of(asm_st0(v, __vbaFPInt)) == bits_of(x::floor_value(v)),
+                label);
+            expect(
+                bits_of(asm_st0(v, __vbaFPFix)) == bits_of(x::trunc_value(v)),
+                label);
             expect(bits_of(asm_st0(v, __vbaFpR4)) ==
                        bits_of(x::round_to_single_mantissa(v)),
                    label);
@@ -341,8 +360,7 @@ void sequences() {
             const int core_error = error_of([&] { x::through_single(v); });
             expect(error == core_error, label);
             if (error == 0) {
-                expect(bits_of(single) == bits_of(x::through_single(v)),
-                       label);
+                expect(bits_of(single) == bits_of(x::through_single(v)), label);
             }
             vbrun::clear_error();
             const double single8 = asm_st0(v, __vbaFpCSngR8);
