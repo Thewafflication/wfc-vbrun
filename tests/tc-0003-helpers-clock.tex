@@ -1,0 +1,74 @@
+% Test-case specification TC-0003 (CTest test TC-0003-helpers-clock).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\emergencystretch=3em
+
+% Compile from the repository root so this path resolves to
+% the pinned WSP submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0003}
+\def\TCTitle{%
+  Date\$, Time\$ and the present date and time}
+\def\TCPurpose{%
+  Verify that \texttt{rtcGetDateBstr}, \texttt{rtcGetTimeBstr},
+  \texttt{rtcGetDateVar}, \texttt{rtcGetTimeVar} and
+  \texttt{rtcGetPresentDate} return the current date and time in the
+  reference formats.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{%
+  REQ-0004}
+\def\TCDesignRef{%
+  Not applicable.}
+\def\TCFeatureRef{%
+  \texttt{tests/\allowbreak{}vbrun\_\allowbreak{}helper\_\allowbreak{}tests.\allowbreak{}cpp}
+  (family \texttt{clock}),
+  \texttt{src/\allowbreak{}helpers\_\allowbreak{}clock.\allowbreak{}cpp}}
+\def\TCTestTechnique{%
+  Requirements-based testing against the system clock.}
+
+\def\TCPreconditions{%
+  The library and the test program are built
+  (\texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}) and the test
+  is registered with CTest.}
+\def\TCEnvironment{%
+  Windows with the toolchain of
+  \texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}; the local
+  gate builds and runs x64 Debug, CI builds and runs the other
+  architectures. The library is built from this repository in
+  \texttt{out/\allowbreak{}build}.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  The system clock, read before and after each call.}
+\def\TCInitialState{%
+  No state from earlier runs is needed; the test makes what it needs.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item CTest runs \texttt{vbrun\_\allowbreak{}helper\_\allowbreak{}tests
+      \textless{}wfcvbrun.\allowbreak{}dll\textgreater{} clock}.
+    \item Three times: read the clock, call \texttt{rtcGetDateBstr} and
+      \texttt{rtcGetTimeBstr}, read the clock again.
+    \item Call \texttt{rtcGetDateVar}, \texttt{rtcGetTimeVar} and
+      \texttt{rtcGetPresentDate} between two clock readings.
+    \item CTest records the exit code and, on failure, the program's output
+      (\texttt{--output-on-failure}).
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  The text of \texttt{Date\$} is \texttt{mm-dd-yyyy} and the text of
+  \texttt{Time\$} is \texttt{hh:mm:ss} of the clock reading before or after
+  the call. Each Variant is of type \texttt{VT\_\allowbreak{}DATE} and its
+  serial equals the date, the time or both of one of the two readings. The
+  program exits 0.}
+\def\TCPostConditions{%
+  No file or registry state remains that later tests depend on.}
+
+\TCTemplate
+
+\end{document}

@@ -1,0 +1,76 @@
+% Test-case specification TC-0017 (CTest test TC-0017-frames).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\emergencystretch=3em
+
+% Compile from the repository root so this path resolves to
+% the pinned WSP submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0017}
+\def\TCTitle{%
+  GoSub list and error-handler frames}
+\def\TCPurpose{%
+  Verify the GoSub list and the error-handler frame helpers
+  (\texttt{\_\allowbreak{}\_\allowbreak{}vbaGosub},
+  \texttt{\_\allowbreak{}\_\allowbreak{}vbaGosubReturn},
+  \texttt{\_\allowbreak{}\_\allowbreak{}vbaGosubFree},
+  \texttt{\_\allowbreak{}\_\allowbreak{}vbaOnError},
+  \texttt{\_\allowbreak{}\_\allowbreak{}vbaExitProc}, Resume).}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{%
+  REQ-0003}
+\def\TCDesignRef{%
+  Not applicable.}
+\def\TCFeatureRef{%
+  \texttt{tests/\allowbreak{}vbrun\_\allowbreak{}frames\_\allowbreak{}tests.\allowbreak{}cpp},
+  \texttt{src/\allowbreak{}helpers\_\allowbreak{}frames.\allowbreak{}cpp}}
+\def\TCTestTechnique{%
+  Requirements-based testing; behavior depends on the architecture.}
+
+\def\TCPreconditions{%
+  The library and the test program are built
+  (\texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}) and the test
+  is registered with CTest. On 32-bit x86 (MSVC) the real sequences run; on
+  other targets only the list and the error state are checked.}
+\def\TCEnvironment{%
+  Windows with the toolchain of
+  \texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}; the local
+  gate builds and runs x64 Debug, CI builds and runs the other
+  architectures. The library is built from this repository in
+  \texttt{out/\allowbreak{}build}.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  A GoSub list, an exception frame at \texttt{fs:[0]} (x86) and the error
+  state.}
+\def\TCInitialState{%
+  No state from earlier runs is needed; the test makes what it needs.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item CTest runs \texttt{vbrun\_\allowbreak{}frames\_\allowbreak{}tests}.
+    \item Push and return from GoSub calls: execution continues after the call,
+      two GoSubs leave a list, \texttt{GoSubFree} empties it, and
+      \texttt{Return} without \texttt{GoSub} is error 3.
+    \item Install and remove an \texttt{On Error} frame: the handler is stored
+      and turned off by \texttt{GoTo 0}, \texttt{ExitProc} and
+      \texttt{OnError} clear the error, \texttt{Resume} without an error is
+      error 20, and \texttt{Resume} with a label clears the error.
+    \item CTest records the exit code and, on failure, the program's output
+      (\texttt{--output-on-failure}).
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  All checks pass; the program prints \texttt{vbrun frames: all checks
+  passed} and exits 0.}
+\def\TCPostConditions{%
+  No file or registry state remains that later tests depend on.}
+
+\TCTemplate
+
+\end{document}

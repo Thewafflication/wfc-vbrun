@@ -8,6 +8,7 @@ Checks the owned source and configuration scope:
 - gersemi check mode for CMake (WSP-LANG-0010);
 - PowerShell syntax and PSScriptAnalyzer (WSP-LANG-0007);
 - YAML syntax (WSP-LANG-0005);
+- requirements to test cases to runners (scripts/Test-Traceability.ps1);
 - pre-commit configuration validity (WSP-CHECK-0001).
 Stops at the first failing check and exits nonzero. Changes no files.
 .EXAMPLE
@@ -29,12 +30,15 @@ try {
         '.clang-format', '.editorconfig', '.gersemirc', '.gitattributes',
         '.pre-commit-config.yaml', 'PSScriptAnalyzerSettings.psd1'
     )
+    # These two scripts are byte-identical in every WFC library (a WFC test
+    # compares the copies); they are wrapped when all of them change together.
+    $sharedCopies = "'scripts/capture_web.py','scripts/render_terminal.py'"
     # A child process gives a reliable exit status; -Command keeps the
     # array parameter intact.
     $quoted = ($styleScope | ForEach-Object { "'$_'" }) -join ','
     Invoke-CheckedCommand pwsh @('-NoProfile', '-Command',
         "& ./wsp/tools/Test-SourceStyle.ps1 -RepositoryRoot '$root' " +
-        "-SourcePath @($quoted)")
+        "-SourcePath @($quoted) -ExcludePath @($sharedCopies)")
 
     Write-Stage '[lint] clang-format (C++)'
     $clangFormat = Resolve-PinnedTool 'clang-format' '22.1.3'
@@ -69,6 +73,10 @@ try {
     $parseYaml = 'import sys, yaml; [yaml.safe_load(open(p, ' +
         "encoding='utf-8')) for p in sys.argv[1:]]"
     Invoke-CheckedCommand python (@('-c', $parseYaml) + $yaml)
+
+    Write-Stage '[lint] requirements to test cases (traceability)'
+    Invoke-CheckedCommand pwsh @('-NoProfile', '-File',
+        'scripts/Test-Traceability.ps1')
 
     Write-Stage '[lint] pre-commit configuration'
     $preCommit = Resolve-PinnedTool 'pre-commit' '4.6.2'

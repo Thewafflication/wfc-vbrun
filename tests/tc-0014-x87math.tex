@@ -1,0 +1,68 @@
+% Test-case specification TC-0014 (CTest test TC-0014-x87math).
+\documentclass[letterpaper]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\emergencystretch=3em
+
+% Compile from the repository root so this path resolves to
+% the pinned WSP submodule.
+\input{wsp/testing/test-case-library.tex}
+
+\begin{document}
+
+\def\TCID{TC-0014}
+\def\TCTitle{%
+  The x87 math helpers and the wide multiply}
+\def\TCPurpose{%
+  Verify \texttt{\_\allowbreak{}CIsin} and the other
+  \texttt{\_\allowbreak{}CI*} helpers, the
+  \texttt{\_\allowbreak{}adj\_\allowbreak{}*} divides and
+  \texttt{\_\allowbreak{}allmul}.}
+\def\TCPriority{\TCPriorityHigh}
+
+\def\TCRequirementRef{%
+  REQ-0006}
+\def\TCDesignRef{%
+  Not applicable.}
+\def\TCFeatureRef{%
+  \texttt{tests/\allowbreak{}vbrun\_\allowbreak{}x87math\_\allowbreak{}tests.\allowbreak{}cpp},
+  \texttt{src/\allowbreak{}helpers\_\allowbreak{}x87math.\allowbreak{}cpp}}
+\def\TCTestTechnique{%
+  Back-to-back comparison; boundary values.}
+
+\def\TCPreconditions{%
+  The library and the test program are built
+  (\texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}) and the test
+  is registered with CTest.}
+\def\TCEnvironment{%
+  Windows with the toolchain of
+  \texttt{scripts/\allowbreak{}Invoke-Build.\allowbreak{}ps1}; the local
+  gate builds and runs x64 Debug, CI builds and runs the other
+  architectures. The library is built from this repository in
+  \texttt{out/\allowbreak{}build}.}
+\def\TCAssumptions{%
+  Not applicable.}
+
+\def\TCInputData{%
+  Operands of each helper, including the cases that round or raise.}
+\def\TCInitialState{%
+  No state from earlier runs is needed; the test makes what it needs.}
+
+\def\TCProcedure{%
+  \begin{enumerate}
+    \item CTest runs \texttt{vbrun\_\allowbreak{}x87math\_\allowbreak{}tests}.
+    \item On 32-bit x86, call the reference's sequences with the operand on the
+      x87 stack; elsewhere call the exports that take doubles.
+    \item Compare each result with the expected value within the tolerance of
+      the check.
+    \item CTest records the exit code and, on failure, the program's output
+      (\texttt{--output-on-failure}).
+  \end{enumerate}}
+\def\TCExpectedResult{%
+  All checks pass and the program exits 0.}
+\def\TCPostConditions{%
+  No file or registry state remains that later tests depend on.}
+
+\TCTemplate
+
+\end{document}
