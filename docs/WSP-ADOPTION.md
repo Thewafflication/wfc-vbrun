@@ -12,8 +12,8 @@
 
 **Pinned commit:** `f009399dd1406219571ac978bfee85e85bbdfeac`
 
-**Status:** Adoption in progress; configuration and gate added, reformat and
-traceability open (see the gap analysis)
+**Status:** Style, identifiers, traceability and commit gate adopted; CI wiring
+and the adoption-record dispositions open (see the gap analysis)
 
 The library is one of the WFC libraries and follows the WFC adoption record
 (`planning/wsp-adoption-record.md` in
@@ -43,12 +43,12 @@ submodule already pins 1.4.0, commit `f009399`, the same as WFC.
 | `.gersemirc` | WSP-LANG-0010 | Added; `CMakeLists.txt` formatted | None |
 | `.editorconfig` | WSP-STYLE-0002 to 0004 | Added | None |
 | Line endings | WSP-STYLE-0002 | Done (`.gitattributes`, LF) | None |
-| 80-column physical style | WSP-STYLE-0001 | Open: 21 C++ files, 419 clang-format findings; 100 over-long lines (90 in `scripts/vb6_harness_gen.py`, 4 in `ci.yml`, 2 in a test) | Reformat in a follow-up |
+| 80-column physical style | WSP-STYLE-0001 | Done: C++ reformatted; `scripts/capture_web.py` and `render_terminal.py` (identical in every WFC library) and `vb6_harness_gen.py` (Visual Basic source in strings) are excluded from the check | Wrap the shared scripts when all libraries change together |
 | PowerShell analysis | WSP-LANG-0007 | Added (`PSScriptAnalyzerSettings.psd1`); scripts pass | None |
-| Commit gate (lint, build, test) | WSP-CHECK-0001 to 0008 | Added `.pre-commit-config.yaml` and `scripts/Invoke-{Lint,Build,Tests}.ps1`; lint is red until the reformat | Reformat, then `pre-commit install` |
+| Commit gate (lint, build, test) | WSP-CHECK-0001 to 0008 | Added `.pre-commit-config.yaml` and `scripts/Invoke-{Lint,Build,Tests}.ps1`; the first hook is `wfc-gate-start` (machine-wide lock `wfc-commit-gate.lock`, shared with WFC, and the test progress window, which follows `out/test-progress.log`); lint and tests pass | `pre-commit install` |
 | CI runs the same commands | WSP-CHECK-0002 | Open: `ci.yml` calls cmake directly, no lint job | Call the scripts; add a lint job |
-| Requirements | WSP-REQM-0001 to 0005 | Partly: `REQ-0099` to `REQ-0105`, moved from WFC, status Proposed | Number policy (decision) |
-| Test cases and traceability | WSP-REQM-0005, `Test-Traceability.ps1` | Open: tests are CTest names `TC-MP00NN-*`, no `tc-NNNN` specifications; the tool finds none | Define `TC-` specs and links (decision) |
+| Requirements | WSP-REQM-0001 to 0005 | Done: `REQ-0001` to `REQ-0007` in the library's own namespace (old `REQ-0099` to `REQ-0105`, see `docs/id-map.md`), status Proposed | None |
+| Test cases and traceability | WSP-REQM-0005, `Test-Traceability.ps1` | Done: 45 test cases `TC-0001` to `TC-0045` (CTest names `TC-NNNN-<short-name>`), each with `tests/tc-NNNN-*.tex` and `tests/run-tc-NNNN.ps1`; `scripts/Test-Traceability.ps1` passes (7 requirements, 45 specifications, 45 implementations) and runs in lint | Execution evidence and the test report (WSP report template) |
 | Requirement history, baseline, dispositions | WSP-REQM-0006 to 0010 | Open: record above has no per-requirement disposition table | Fill the adoption-record template |
 | `AGENTS.md` | WFC model | Added | None |
 | Windows version resource | WSP-WINRES | Done (`version.rc.in`) | None |
@@ -62,6 +62,23 @@ submodule already pins 1.4.0, commit `f009399`, the same as WFC.
 | Item | Disposition |
 | --- | --- |
 | 80-column style (WSP-STYLE-0001) | CI reports it; the library sources are not yet wrapped (the generated tables are exempt) |
-| Requirements | Adopted: `requirements/` (moved from WFC) |
-| Traceability check | Planned (roadmap, WSP track); see the gap table |
+| Requirements | Adopted: `requirements/` (moved from WFC, renumbered; `docs/id-map.md`) |
+| Traceability check | Adopted: `scripts/Test-Traceability.ps1`, a lint stage. `TC-0001` is registered only in a WFC checkout (needs the MSVBVM60 inventory); its runner skips otherwise |
 | Signing | Planned for the first release |
+
+## Test progress window
+
+`scripts/Start-CommitGate.ps1` and `scripts/Show-TestProgress.ps1` are
+byte-identical copies of WFC's, so they can move to one shared place. The
+window follows `out/test-progress.log`, which `Write-Stage` (lint and build
+stages) and `scripts/Invoke-Tests.ps1` (every ctest line) write. Started with
+`-Run`, the window needs `-BuildDir out/build` (WFC's default build folder
+differs); the gate does not use `-Run`.
+
+## Visuals
+
+The library has no window. `docs/images/windows-x64.png` is a result card of
+the real ctest session (`scripts/New-SessionImage.ps1`, `scripts/render_card.py`,
+house style). The Linux images are made by CI with the shared
+`scripts/render_terminal.py` (a WFC test requires the copies to be identical),
+so they keep its look and still show the old test names until CI runs again.
