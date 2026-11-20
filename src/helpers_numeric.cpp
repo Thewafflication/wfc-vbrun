@@ -1,4 +1,4 @@
-// REQ-0103: the numeric functions of the language (Sin, Cos, Tan, Atn, Exp,
+// REQ-0005: the numeric functions of the language (Sin, Cos, Tan, Atn, Exp,
 // Log, Sqr, Val, Round), MonthName, IIf and Partition.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see

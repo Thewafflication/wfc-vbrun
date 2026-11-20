@@ -1,4 +1,4 @@
-// REQ-0101: conversions between Strings and numbers, and the length of a
+// REQ-0003: conversions between Strings and numbers, and the length of a
 // String (Len, LenB).
 //
 // The conversions are the Automation ones (VarI4FromStr, VarBstrFromI4, ...)

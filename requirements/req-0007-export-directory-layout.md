@@ -1,4 +1,4 @@
-# REQ-0105 — VB6 runtime export-directory layout
+# REQ-0007 — VB6 runtime export-directory layout
 
 **Content type:** Project requirement
 
@@ -27,7 +27,9 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0007-vbrun-library`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0001-library`
 
 Parse the built PE export directory and compare ordinal base, table size, holes, names, and ordinal assignments with the retained machine-readable inventory.
 
@@ -47,5 +49,5 @@ profile that identifies the affected compiled VB6 programs.
 `lib/wfc-vbrun/scripts/New-VbrunExports.ps1` generates `lib/wfc-vbrun/src/wfcvbrun.def` and
 `vbrun_exports.inc` from the inventory: ordinal base 100, 1,911 slots, 635 named
 exports at their reference ordinals, empty slots left empty (ordinals 100 to
-2010). `TC-MP0007-vbrun-library` parses the built DLL's export directory and
+2010). `TC-0001-library` parses the built DLL's export directory and
 compares base, slot count, names, ordinals and holes with the inventory.

@@ -1,4 +1,4 @@
-// REQ-0103: the engine entry points of the runtime: Declare'd calls
+// REQ-0005: the engine entry points of the runtime: Declare'd calls
 // (DllFunctionCall), End and Stop, Resume and the procedure exception
 // handler, the program and ActiveX DLL entries (ThunRTMain, UserDllMain,
 // VBDll*), the execution contexts and projects (Eb*), the type-information

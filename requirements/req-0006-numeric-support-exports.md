@@ -1,4 +1,4 @@
-# REQ-0104 — VB6 native numeric support exports
+# REQ-0006 — VB6 native numeric support exports
 
 **Content type:** Project requirement
 
@@ -48,7 +48,10 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-x87math`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0014-x87math`
+- `TC-0013-x87`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 
@@ -74,6 +77,6 @@ All 21 exports have an implementation (`src/implemented.txt`).
   - `_allmul`.
 - On every other architecture they take doubles.
 
-`TC-MP0009-vbrun-x87math` compares the two forms value by value on x86.
+`TC-0014-x87math` compares the two forms value by value on x86.
 
 The implementation status by family, and how each was measured, is in [implementation-status.md](implementation-status.md).

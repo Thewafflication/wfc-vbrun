@@ -1,4 +1,4 @@
-// REQ-0103: __vbaRecAssign, CopyRecord, __vbaRecDestruct,
+// REQ-0005: __vbaRecAssign, CopyRecord, __vbaRecDestruct,
 // __vbaRecDestructAnsi, the ANSI conversion, __vbaAryRecCopy and
 // __vbaCVarAryUdt on descriptors built as the VB6 compiler builds them (the
 // layout the helpers read: size at +2, field count at +6, entries from +0xc).

@@ -1,4 +1,4 @@
-# REQ-0101 operators on Variants. The operands are passed right first, then
+# REQ-0003 operators on Variants. The operands are passed right first, then
 # left: __vbaVarSub o v3:5 v3:3 is 3 - 5. `o` is the output Variant.
 __vbaVarAdd o v3:2 v3:3 => V
 __vbaVarAdd o v3:2 v3:3 => O

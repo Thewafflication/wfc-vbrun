@@ -1,4 +1,4 @@
-// REQ-0102: the type tests of the language runtime on Variants (VarType,
+// REQ-0004: the type tests of the language runtime on Variants (VarType,
 // IsEmpty, IsNull, IsArray, IsObject, IsError).
 //
 // They return a 16-bit result (the reference sets only AX): -1 for True.

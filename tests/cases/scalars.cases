@@ -1,4 +1,4 @@
-# REQ-0101: scalar conversions, Currency arithmetic, String comparison and
+# REQ-0003: scalar conversions, Currency arithmetic, String comparison and
 # concatenation. Measured from a Visual Basic 6 program that declares the
 # exports (scripts/vb6_harness_gen.py); the calls that raise an error are not
 # cases. The operands arrive right first: __vbaStrCat(right, left).

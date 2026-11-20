@@ -3,7 +3,7 @@
 Each `<family>.cases` file lists calls of exports of the runtime, one per
 line, and `<family>.expected` holds what the installed MSVBVM60 answered, one
 line per case (made by `scripts/Probe-VbrunCases.ps1`, which calls the
-reference from a 32-bit PowerShell). `TC-MP0009-vbrun-cases-<family>` calls the
+reference from a 32-bit PowerShell). `TC-NNNN-cases-<family>` (`TC-0023` to `TC-0043`) calls the
 export of `wfcvbrun.dll` with the same arguments and compares.
 
 ```

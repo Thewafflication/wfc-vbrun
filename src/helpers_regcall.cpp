@@ -1,5 +1,5 @@
 // Helpers the compiler calls with their first arguments in registers, and the
-// Zombie interface (REQ-0100 to REQ-0104).
+// Zombie interface (REQ-0002 to REQ-0006).
 //
 // The Visual Basic compiler calls the small helpers of the reference (the
 // Integer and Byte conversions, Abs and Sgn, the free, copy and move of

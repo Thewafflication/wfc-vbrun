@@ -1,4 +1,4 @@
-// REQ-0103: the member-assignment helpers that go with GetMem and SetMemObj
+// REQ-0005: the member-assignment helpers that go with GetMem and SetMemObj
 // (PutMemVar, PutMemObj, SetMemVar and the Event and NewObj forms that are the
 // same code), the event-sink reference counting, the library load pair and the
 // record-array move. Written from the disassembly of the installed MSVBVM60

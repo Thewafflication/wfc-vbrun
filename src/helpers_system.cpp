@@ -1,4 +1,4 @@
-// REQ-0103: Environ.
+// REQ-0005: Environ.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see
 // tests/cases/system.cases). A name that is not set gives an empty string; a

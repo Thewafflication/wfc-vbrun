@@ -3,7 +3,7 @@
 # diagnostic. scripts/New-VbrunExports.ps1 reads this list; add a name here
 # when its helper is written, and regenerate wfcvbrun.def.
 #
-# REQ-0103 member and memory helpers
+# REQ-0005 member and memory helpers
 GetMem1
 GetMem2
 GetMem4
@@ -18,7 +18,7 @@ PutMemStr
 GetMemObj
 SetMemObj
 GetMemVar
-# REQ-0102 string functions on Strings
+# REQ-0004 string functions on Strings
 rtcLeftBstr
 rtcRightBstr
 rtcLeftCharBstr
@@ -35,14 +35,14 @@ rtcByteValueBstr
 rtcBstrFromChar
 rtcBstrFromByte
 rtcStrReverse
-# REQ-0102 type tests on Variants
+# REQ-0004 type tests on Variants
 rtcVarType
 rtcIsEmpty
 rtcIsNull
 rtcIsArray
 rtcIsObject
 rtcIsError
-# REQ-0101 String and number conversions, Len
+# REQ-0003 String and number conversions, Len
 __vbaLenBstr
 __vbaLenBstrB
 __vbaI4Str
@@ -50,7 +50,7 @@ __vbaI2Str
 __vbaUI1Str
 __vbaStrI4
 __vbaStrUI1
-# REQ-0101 operators and comparisons on Variants
+# REQ-0003 operators and comparisons on Variants
 __vbaVarAdd
 __vbaVarSub
 __vbaVarMul
@@ -594,7 +594,7 @@ __vbaRecDestructAnsi
 _adj_fdiv_r
 IID_IVbaHost
 EbSetContextWorkerThread
-# REQ-0103 the engine exports: records and arrays in files, the ANSI record
+# REQ-0005 the engine exports: records and arrays in files, the ANSI record
 # conversion, events, the class dispatch, Declare, End, Stop, Resume, the
 # exception handler, the program and DLL entries, contexts and projects
 __vbaRecAnsiToUni

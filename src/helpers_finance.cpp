@@ -1,4 +1,4 @@
-// REQ-0103: the financial functions (SLN, SYD, DDB, PMT, FV, PV, NPer) and
+// REQ-0005: the financial functions (SLN, SYD, DDB, PMT, FV, PV, NPer) and
 // WeekdayName, Replace, InStrRev and the Format functions.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see

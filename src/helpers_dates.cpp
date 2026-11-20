@@ -1,4 +1,4 @@
-// REQ-0103: DateAdd, DateDiff and DatePart.
+// REQ-0005: DateAdd, DateDiff and DatePart.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see
 // tests/cases/dates.cases). A failure is an error of the thread (5 for an

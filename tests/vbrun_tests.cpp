@@ -1,5 +1,5 @@
 // Checks the VBRUN compatibility library against the retained reference
-// inventory (REQ-0099, REQ-0105). Usage:
+// inventory (REQ-0001, REQ-0007). Usage:
 //   vbrun_tests layout <dll> <expected.csv>   export directory equals the list
 //   vbrun_tests load <dll>                    loads; names and ordinals resolve
 //   vbrun_tests call <dll> <name>             calls an export (stops the

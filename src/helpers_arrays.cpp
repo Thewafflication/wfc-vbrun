@@ -1,4 +1,4 @@
-// REQ-0103: Split, Join and Filter, the functions of String arrays.
+// REQ-0005: Split, Join and Filter, the functions of String arrays.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see
 // tests/cases/arrays.cases). A failure is an error of the thread (94 for a

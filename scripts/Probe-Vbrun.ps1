@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Calls helpers of the installed MSVBVM60 runtime so that their behavior
-    can be compared with wfcvbrun.dll (REQ-0100 to REQ-0105).
+    can be compared with wfcvbrun.dll (REQ-0002 to REQ-0007).
 .DESCRIPTION
     Runs in a 32-bit PowerShell (the runtime is an x86 DLL; on a 64-bit
     Windows the script starts the SysWOW64 PowerShell itself). Each family

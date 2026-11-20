@@ -1,4 +1,4 @@
-// REQ-0102: Left, Right, Mid and String on Variants, Str, Hex and Oct on
+// REQ-0004: Left, Right, Mid and String on Variants, Str, Hex and Oct on
 // Variants, StrConv, Chr, and the parts of a date (Year, Month, Day, Hour,
 // Minute, Second, Weekday).
 //

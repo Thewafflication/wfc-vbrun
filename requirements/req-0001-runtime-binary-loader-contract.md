@@ -1,4 +1,4 @@
-# REQ-0099 — VB6 runtime binary identity and loader contract
+# REQ-0001 — VB6 runtime binary identity and loader contract
 
 **Content type:** Project requirement
 
@@ -39,7 +39,10 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0007-vbrun-library`, `TC-MP0010-vbrun-dll`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0001-library`
+- `TC-0045-dll`
 
 Build and load the compatibility DLL, inspect its PE headers and export directory, and verify that the x64 and ARM64 builds provide the same exports natively, without an x86 bridge.
 
@@ -67,6 +70,6 @@ conventions. On x64 and ARM64 there is no x86 code to run and, by decision,
 no bridge or helper process (`ADR-0007`); WFC's own native programs link the
 library directly.
 
-`TC-MP0010-vbrun-dll` loads the DLL from a C program and checks its version
-resource and registration. `TC-MP0007-vbrun-library` checks the export
+`TC-0045-dll` loads the DLL from a C program and checks its version
+resource and registration. `TC-0001-library` checks the export
 directory.

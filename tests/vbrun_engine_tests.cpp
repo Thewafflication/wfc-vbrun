@@ -1,4 +1,4 @@
-// REQ-0103: the engine entry points: DllFunctionCall (error numbers and texts
+// REQ-0005: the engine entry points: DllFunctionCall (error numbers and texts
 // measured with a Visual Basic 6 program), End, Stop, ThunRTMain and the
 // p-code entries (run in child processes, since they end the program), the
 // ActiveX DLL registration (under a private HKEY_CLASSES_ROOT), contexts,

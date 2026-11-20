@@ -1,4 +1,4 @@
-# REQ-0101 conversions between Strings and numbers; Len and LenB.
+# REQ-0003 conversions between Strings and numbers; Len and LenB.
 __vbaLenBstr s"hello" => i
 __vbaLenBstr s"" => i
 __vbaLenBstr s0 => i

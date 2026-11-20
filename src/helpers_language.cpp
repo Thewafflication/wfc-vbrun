@@ -1,4 +1,4 @@
-// REQ-0102: Mid and MidB, Space on a Variant, IsDate, RGB and QBColor.
+// REQ-0004: Mid and MidB, Space on a Variant, IsDate, RGB and QBColor.
 //
 // Written from what the installed MSVBVM60 6.00.9848 answers (the call cases
 // of tests/cases/language.cases): the error paths raise a Visual Basic error

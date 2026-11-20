@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Generates the export list of the VBRUN compatibility library from the
-    retained MSVBVM60 inventory (REQ-0105).
+    retained MSVBVM60 inventory (REQ-0007).
 .DESCRIPTION
     Writes src/wfcvbrun.def (ordinals and names) and
     src/vbrun_exports.inc (one VBRUN_EXPORT(ordinal, name) per named

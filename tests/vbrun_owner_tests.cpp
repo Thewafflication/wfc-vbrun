@@ -1,4 +1,4 @@
-// REQ-0103: Get # and Put # of records and arrays (__vbaGetOwner3/4,
+// REQ-0005: Get # and Put # of records and arrays (__vbaGetOwner3/4,
 // __vbaPutOwner3/4) and Print on an object (__vbaPrintObj). The expected file
 // bytes were measured with Visual Basic 6 programs built with VB6.EXE /make;
 // the layouts are built the way the compiler builds them, with the padding

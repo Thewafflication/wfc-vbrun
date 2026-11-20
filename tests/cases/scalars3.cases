@@ -1,4 +1,4 @@
-# REQ-0101/0102: InStr and InStrB, Len of a Variant, Format, Error$,
+# REQ-0003/0004: InStr and InStrB, Len of a Variant, Format, Error$,
 # DateSerial and a Currency times an Integer. Measured from a Visual Basic
 # 6 program that declares the exports (scripts/vb6_harness_gen.py); the
 # calls that raise an error are not cases. The operands arrive right

@@ -1,4 +1,4 @@
-// REQ-0103: the member and memory helpers that move values between the
+// REQ-0005: the member and memory helpers that move values between the
 // fields and locals of a compiled VB6 program (GetMem*, PutMem*, SetMem*,
 // VarPtr).
 //

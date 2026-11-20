@@ -1,4 +1,4 @@
-# REQ-0102 type tests on Variants. The tests return a 16-bit result.
+# REQ-0004 type tests on Variants. The tests return a 16-bit result.
 rtcVarType v0 => w
 rtcVarType v1 => w
 rtcVarType v2:5 => w
@@ -24,7 +24,7 @@ rtcIsObject v3:5 => w
 rtcIsObject v0 => w
 rtcIsArray v3:5 => w
 rtcIsArray v8"x" => w
-# REQ-0102 TypeName and IsNumeric (a String result for the name).
+# REQ-0004 TypeName and IsNumeric (a String result for the name).
 rtcTypeName v0 => s
 rtcTypeName v1 => s
 rtcTypeName v2:5 => s

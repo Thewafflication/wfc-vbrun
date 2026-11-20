@@ -1,4 +1,4 @@
-# REQ-0102 string functions on Strings (see README.md for the format).
+# REQ-0004 string functions on Strings (see README.md for the format).
 # The byte forms (LeftB, RightB) count bytes; an odd result keeps its last byte.
 rtcLeftBstr s"hello world" i5 => s
 rtcLeftBstr s"hello world" i4 => s

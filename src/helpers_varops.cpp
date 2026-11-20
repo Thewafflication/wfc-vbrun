@@ -1,4 +1,4 @@
-// REQ-0101: the operators of the language on Variants (+ - * / \ Mod ^ And Or
+// REQ-0003: the operators of the language on Variants (+ - * / \ Mod ^ And Or
 // Xor Eqv Imp Not, negation, Abs, Fix, Int) and the comparisons of Variants.
 //
 // A compiled program pushes the operands right first: the helper receives

@@ -1,4 +1,4 @@
-// Shared parts of the VBRUN helpers (REQ-0100 to REQ-0104).
+// Shared parts of the VBRUN helpers (REQ-0002 to REQ-0006).
 //
 // The helpers are written from the disassembly of the installed MSVBVM60
 // 6.00.9848 (see requirements/vbrun/implementation-status.md): each one has

@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Runs the call cases of tests/cases against a VBRUN runtime and
-    writes the results (REQ-0100 to REQ-0105).
+    writes the results (REQ-0002 to REQ-0007).
 .DESCRIPTION
     Each case line is `export arg... => result` (see tests/cases/
     README.md). The script runs in a 32-bit PowerShell, calls the export of

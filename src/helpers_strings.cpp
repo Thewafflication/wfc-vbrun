@@ -1,4 +1,4 @@
-// REQ-0102: the string functions of the language runtime on Strings
+// REQ-0004: the string functions of the language runtime on Strings
 // (Left, LeftB, Right, RightB, UCase, LCase, Trim, LTrim, RTrim, Space, Asc,
 // AscB, AscW, Chr, ChrB, ChrW, StrReverse).
 //

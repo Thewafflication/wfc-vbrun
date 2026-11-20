@@ -1,4 +1,4 @@
-# REQ-0103 — VB6 member and memory helper exports
+# REQ-0005 — VB6 member and memory helper exports
 
 **Content type:** Project requirement
 
@@ -51,7 +51,11 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-helpers-memory`, `TC-MP0009-vbrun-members`, `TC-MP0009-vbrun-records`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0002-helpers-memory`
+- `TC-0015-members`
+- `TC-0016-records`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 

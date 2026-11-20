@@ -1,4 +1,4 @@
-# REQ-0102 — VB6 language-runtime service exports
+# REQ-0004 — VB6 language-runtime service exports
 
 **Content type:** Project requirement
 
@@ -225,7 +225,40 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; the call cases `TC-MP0009-vbrun-cases-*`, `TC-MP0009-vbrun-helpers-*`, `TC-MP0009-vbrun-systemmisc`, `-systemmore`, `-filemisc`, `-openfiles`, `-filedata`, `-settings`, `-objects`, `-errobj`, `-late`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0023-cases-strings`
+- `TC-0024-cases-variants`
+- `TC-0025-cases-convert`
+- `TC-0026-cases-varops`
+- `TC-0027-cases-language`
+- `TC-0028-cases-varfuncs`
+- `TC-0029-cases-varstrings`
+- `TC-0030-cases-scalars`
+- `TC-0031-cases-scalars2`
+- `TC-0032-cases-scalars3`
+- `TC-0033-cases-random`
+- `TC-0034-cases-random2`
+- `TC-0035-cases-numeric`
+- `TC-0036-cases-finance`
+- `TC-0037-cases-dates`
+- `TC-0038-cases-dates2`
+- `TC-0039-cases-payments`
+- `TC-0040-cases-arrays`
+- `TC-0041-cases-lists`
+- `TC-0042-cases-system`
+- `TC-0043-cases-files`
+- `TC-0002-helpers-memory`
+- `TC-0003-helpers-clock`
+- `TC-0006-systemmisc`
+- `TC-0009-systemmore`
+- `TC-0022-filemisc`
+- `TC-0004-openfiles`
+- `TC-0005-filedata`
+- `TC-0020-settings`
+- `TC-0010-objects`
+- `TC-0011-errobj`
+- `TC-0007-late`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 

@@ -1,4 +1,4 @@
-// REQ-0103: PutMemVar, PutMemObj, SetMemVar, the Event and NewObj forms, the
+// REQ-0005: PutMemVar, PutMemObj, SetMemVar, the Event and NewObj forms, the
 // event-sink reference counts and the record-array move.
 
 #define WIN32_LEAN_AND_MEAN

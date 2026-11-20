@@ -1,4 +1,4 @@
-// REQ-0101, REQ-0102: the functions of the language that take and give a
+// REQ-0003, REQ-0004: the functions of the language that take and give a
 // Variant (Abs, Fix, Int, Sgn, Len, LenB, LCase, UCase, Trim, LTrim, RTrim).
 //
 // The reference calls were measured from a Visual Basic 6 program that

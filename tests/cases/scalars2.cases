@@ -1,4 +1,4 @@
-# REQ-0101/0102: Like, the error-Variant conversions, Hex$/Oct$, CDate,
+# REQ-0003/0004: Like, the error-Variant conversions, Hex$/Oct$, CDate,
 # CVar, CVErr and TimeSerial. Measured from a Visual Basic 6 program that
 # declares the exports (scripts/vb6_harness_gen.py); the calls that raise
 # an error are not cases. The Like helpers take the pattern first.

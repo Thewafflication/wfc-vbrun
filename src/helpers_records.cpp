@@ -1,4 +1,4 @@
-// REQ-0103: the record helpers that copy, destroy and convert a user-defined
+// REQ-0005: the record helpers that copy, destroy and convert a user-defined
 // type from its descriptor: __vbaRecAssign, CopyRecord, __vbaRecDestruct,
 // __vbaRecDestructAnsi, __vbaRecUniToAnsi, __vbaRecAnsiToUni,
 // __vbaAryRecCopy and __vbaCVarAryUdt. Written from the disassembly of the

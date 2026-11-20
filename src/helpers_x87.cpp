@@ -1,4 +1,4 @@
-// The helpers that work on the x87 stack (REQ-0101, REQ-0104): CInt, CLng,
+// The helpers that work on the x87 stack (REQ-0003, REQ-0006): CInt, CLng,
 // CByte, CSng, CDbl and CCur of a floating-point operand, Int and Fix, and the
 // Currency comparison.
 //

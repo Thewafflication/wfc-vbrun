@@ -1,4 +1,4 @@
-// Behavior tests of the VBRUN helpers (REQ-0100 to REQ-0104). Usage:
+// Behavior tests of the VBRUN helpers (REQ-0002 to REQ-0006). Usage:
 //   vbrun_helper_tests <wfcvbrun.dll> <family>
 // Each family calls exports of the library by name with the argument lists of
 // the reference runtime and checks the results and the effects the reference
@@ -44,7 +44,7 @@ Function export_of(const char* const name) {
     return reinterpret_cast<Function>(proc);
 }
 
-// ----- REQ-0103 member and memory helpers ---------------------------------
+// ----- REQ-0005 member and memory helpers ---------------------------------
 
 // A counted object for the object helpers.
 struct Counted final : IUnknown {

@@ -1,4 +1,4 @@
-# REQ-0100 — VB6 execution-engine and hosting exports
+# REQ-0002 — VB6 execution-engine and hosting exports
 
 **Content type:** Project requirement
 
@@ -85,7 +85,13 @@ form a binary compatibility boundary independent of the VBA object model.
 
 **Method:** Inspection and test
 
-**References:** `evidence/reference/msvbvm60-6.0-runtime.json`; `TC-MP0009-vbrun-engine`, `TC-MP0009-vbrun-members`, `TC-MP0009-vbrun-regcall`, `TC-MP0010-vbrun-dll`, `TC-MP0007-vbrun-library`
+**References:** `evidence/reference/msvbvm60-6.0-runtime.json` (kept by WFC); verified by:
+
+- `TC-0019-engine`
+- `TC-0015-members`
+- `TC-0012-regcall`
+- `TC-0045-dll`
+- `TC-0001-library`
 
 Link representative VB6 native executables that import every listed helper family, compare import resolution by name and ordinal, and compare observable results, errors, state changes, and cleanup against the reference runtime.
 

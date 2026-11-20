@@ -1,4 +1,4 @@
-// The VBRUN compatibility library (ADR-0007, REQ-0099, REQ-0105).
+// The VBRUN compatibility library (ADR-0007, REQ-0001, REQ-0007).
 //
 // The export directory is that of MSVBVM60 6.00.9848 (ordinal base 100, 635
 // named exports in 1,911 slots; see wfcvbrun.def). The signatures of the

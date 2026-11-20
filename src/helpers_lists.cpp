@@ -1,4 +1,4 @@
-// REQ-0103: NPV, MIRR, Choose and Switch, the functions that take an array of
+// REQ-0005: NPV, MIRR, Choose and Switch, the functions that take an array of
 // values by reference.
 //
 // Measured from a Visual Basic 6 program that declares the exports (see
