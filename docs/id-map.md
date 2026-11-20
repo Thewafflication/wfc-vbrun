@@ -34,7 +34,10 @@ requirements are `REQ-0001` to `REQ-0007` in the same order.
 
 The old identifiers were CTest names that carried the WFC milestone
 (`TC-MP0007-`, `TC-MP0009-`, `TC-MP0010-`). The new CTest name is the new
-identifier; the old name is the old title. Every test case now has a
+identifier; the old name is the old title. Mounted in WFC (`lib/wfc-vbrun`),
+the CTest name also carries the library name, `wfc-vbrun-TC-NNNN-<name>`
+(`WFC_VBRUN_TEST_PREFIX` in `CMakeLists.txt`; empty when this repository is
+built alone). Every test case now has a
 specification (`tests/tc-NNNN-<short-title>.tex`) and a runner
 (`tests/run-tc-NNNN.ps1`).
 

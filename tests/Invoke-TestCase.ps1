@@ -3,7 +3,8 @@
 Runs the CTest test of one TC-NNNN test case.
 .DESCRIPTION
 The library names each CTest test TC-NNNN-<short-name>; this runs the one
-whose number is given, from the build that scripts/Invoke-Build.ps1 made.
+whose number is given (also when a parent project prefixed the name with
+wfc-vbrun-), from the build that scripts/Invoke-Build.ps1 made.
 The per-case scripts tests/run-tc-NNNN.ps1 call it, which is the
 implementation each test specification (tests/tc-NNNN-*.tex) is traced to by
 wsp/tools/Test-Traceability.ps1.
@@ -44,7 +45,7 @@ if ($RequiresEvidence) {
 Push-Location $root
 try {
     & ctest --test-dir out/build -C $Config --output-on-failure `
-        --no-tests=error -R "^$Id-"
+        --no-tests=error -R "^(wfc-vbrun-)?$Id-"
     exit $LASTEXITCODE
 }
 finally {

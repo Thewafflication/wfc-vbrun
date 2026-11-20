@@ -40,6 +40,10 @@ submodule of WFC (`lib/wfc-vbrun`); the WSP practices it follows are pinned in
   and has a specification `tests/tc-NNNN-<short-name>.tex` and a runner
   `tests/run-tc-NNNN.ps1`. The library numbers its own requirements and test
   cases from 0001; `docs/id-map.md` maps the identifiers it had in WFC.
+- When another project mounts the library (the WFC submodule `lib/wfc-vbrun`),
+  CMake prefixes every CTest name with `wfc-vbrun-` (`WFC_VBRUN_TEST_PREFIX`,
+  empty standalone), for example `wfc-vbrun-TC-0007-late`. The TC-NNNN
+  identifiers never change; filter with `-R "TC-0007-"` or the per-case runner.
 - `pwsh -NoProfile -File scripts/Test-Traceability.ps1` runs the WSP
   traceability check (requirement to test specification to runner).
 - The reference call cases are in `tests/cases/` (see its README).
