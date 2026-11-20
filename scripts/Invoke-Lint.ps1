@@ -23,7 +23,7 @@ Import-Module (Join-Path $PSScriptRoot 'WfcChecks.psm1') -Force
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
 try {
-    Write-Stage '[lint] WSP physical source style'
+    Write-Stage '[lint] WSP physical source style' -Reset
     $styleScope = @(
         'src', 'tests', 'cmake', 'scripts', '.github', 'CMakeLists.txt',
         '.clang-format', '.editorconfig', '.gersemirc', '.gitattributes',

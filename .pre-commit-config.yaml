@@ -2,7 +2,8 @@
 # @brief wfc-vbrun commit gate: lint, build, then the full test suite
 #        (WSP-CHECK-0001).
 # @note Install once with: pre-commit install. The same three scripts run by
-#   hand and in CI (WSP-CHECK-0002).
+#   hand and in CI (WSP-CHECK-0002). The first hook takes the machine-wide
+#   gate lock shared with WFC and opens the test progress window.
 minimum_pre_commit_version: "4.6.2"
 default_install_hook_types: [pre-commit]
 default_stages: [pre-commit]
@@ -10,6 +11,13 @@ fail_fast: true
 repos:
   - repo: local
     hooks:
+      - id: wfc-gate-start
+        name: wfc-vbrun gate start (single instance, progress window)
+        entry: pwsh -NoProfile -File scripts/Start-CommitGate.ps1
+        language: system
+        always_run: true
+        pass_filenames: false
+        require_serial: true
       - id: vbrun-lint
         name: wfc-vbrun lint
         entry: pwsh -NoProfile -File scripts/Invoke-Lint.ps1

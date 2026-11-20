@@ -116,14 +116,28 @@ function Get-OwnedFile {
 
 <#
 .SYNOPSIS
-Writes a stage line to the output.
+Writes a stage line to the output and to the test progress log.
+.DESCRIPTION
+scripts/Show-TestProgress.ps1 follows out/test-progress.log, so lint and
+build stages show there before the tests start. -Reset starts a new log.
 .PARAMETER Text
 The stage line, for example "[lint] gersemi (CMake)".
+.PARAMETER Reset
+Empties the log first (the first stage of a commit gate run).
 #>
 function Write-Stage {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Text)
+    param(
+        [Parameter(Mandatory)][string]$Text,
+        [switch]$Reset
+    )
 
+    $log = Join-Path (Split-Path -Parent $PSScriptRoot) 'out/test-progress.log'
+    New-Item -ItemType Directory -Force -Path (Split-Path $log) | Out-Null
+    if ($Reset) {
+        [IO.File]::WriteAllText($log, '')
+    }
+    [IO.File]::AppendAllText($log, $Text + "`n")
     Write-Output $Text
 }
 
