@@ -22,11 +22,13 @@ library `wfcvbrun_static.lib`), so a program can link the helpers either way.
 ## Screenshots
 
 The runtime has no window of its own, so there is nothing to photograph. The
-test program prints what it checks:
+picture is the test session: every test case, `TC-NNNN-<short-name>`, with its
+result and time, as ctest printed them on Windows x64.
 
-```
-vbrun: exports, version 0.6.0 and registration are right
-```
+![wfc-vbrun test results on Windows x64: 44 of 44 test cases pass](docs/images/windows-x64.png)
+
+`scripts/New-SessionImage.ps1` regenerates it from the real ctest run
+(`scripts/render_card.py` draws the card in the WFC house style).
 
 ### Linux (Winelib)
 
