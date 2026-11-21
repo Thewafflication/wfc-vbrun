@@ -1,5 +1,5 @@
 // Behavior tests of the VBRUN helpers (REQ-0002 to REQ-0006). Usage:
-//   vbrun_helper_tests <wfcvbrun.dll> <family>
+//   vbrun_helper_tests <msvbvm60.dll> <family>
 // Each family calls exports of the library by name with the argument lists of
 // the reference runtime and checks the results and the effects the reference
 // has (probed on MSVBVM60 6.00.9848 with scripts/Probe-Vbrun.ps1).

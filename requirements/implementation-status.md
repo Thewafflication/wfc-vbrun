@@ -18,7 +18,7 @@ written from what it does and checked against it:
    export from a 32-bit PowerShell with the same arguments; the expected values
    in `lib/wfc-vbrun/tests/vbrun_helper_tests.cpp` are the output of that probe.
 3. **Test.** `TC-0002-helpers-memory` and `TC-0003-helpers-clock` calls the export of
-   `wfcvbrun.dll` by name and checks the same results. It runs on every
+   `msvbvm60.dll` by name and checks the same results. It runs on every
    architecture of the matrix; the exports use `__stdcall` on x86, the only
    architecture whose binaries import them.
 

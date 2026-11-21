@@ -1,7 +1,7 @@
 # wfc-vbrun
 
 The VBRUN compatibility library of WFC: an `MSVBVM60.DLL`-compatible export
-directory (`wfcvbrun.dll`, ordinal base 100, 635 named exports in 1,911 slots)
+directory (`msvbvm60.dll`, ordinal base 100, 635 named exports in 1,911 slots)
 with real implementations for the helpers WFC has confirmed against the
 installed reference runtime: all 635 have an implementation. The p-code
 entries (`ProcCallEngine`, `MethCallEngine`) stop the program with a
@@ -16,7 +16,7 @@ diagnostic, since WFC has no p-code engine.
   `Probe-Vbrun.ps1` and `Probe-VbrunCases.ps1` probe a 32-bit reference runtime.
 - `VERSION` the library version, stamped into the DLL's version resource.
 
-Targets: `wfc_vbrun` (DLL, `wfcvbrun.dll`) and `wfc_vbrun_static` (static
+Targets: `wfc_vbrun` (DLL, `msvbvm60.dll`) and `wfc_vbrun_static` (static
 library `wfcvbrun_static.lib`), so a program can link the helpers either way.
 
 ## Screenshots
@@ -78,7 +78,7 @@ DLL's version resource (`FileVersion`, `Comments`).
 
 ## Registration with Windows
 
-`regsvr32 wfcvbrun.dll` (`/u` to remove) writes `Software\WFC\Libraries\vbrun`
+`regsvr32 msvbvm60.dll` (`/u` to remove) writes `Software\WFC\Libraries\vbrun`
 (version, target, path). `WFC_REGISTER_SCOPE=user|machine` picks the registry
 (default: the machine, the user when that is not writable). The runtime does not create objects through COM yet.
 

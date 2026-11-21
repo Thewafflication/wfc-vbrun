@@ -1,4 +1,4 @@
-/* Black-box check of wfcvbrun.dll: exports, version resource and the
+/* Black-box check of msvbvm60.dll: exports, version resource and the
  * registration round trip (see dll_check.h). Run by CTest with the DLL,
  * the version and the target as arguments. The library has no COM
  * classes. */

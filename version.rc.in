@@ -17,7 +17,7 @@ BEGIN
             VALUE "FileDescription", "@WFC_LIB_DESCRIPTION@"
             VALUE "FileVersion", "@WFC_LIB_VERSION@"
             VALUE "InternalName", "@WFC_LIB_NAME@"
-            VALUE "OriginalFilename", "@WFC_LIB_NAME@.dll"
+            VALUE "OriginalFilename", "@WFC_LIB_FILE@"
             VALUE "ProductName", "WFC"
             VALUE "ProductVersion", "@WFC_LIB_VERSION@"
         END

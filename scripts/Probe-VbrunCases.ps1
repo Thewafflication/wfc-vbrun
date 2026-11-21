@@ -8,7 +8,7 @@
     README.md). The script runs in a 32-bit PowerShell, calls the export of
     the DLL with the arguments as stdcall pointer-sized values and writes one
     line per case. With the default runtime (msvbvm60.dll) it produces the
-    reference results that the tests compare wfcvbrun.dll with.
+    reference results that the tests compare msvbvm60.dll with.
 .PARAMETER Cases
     The case file.
 .PARAMETER Output

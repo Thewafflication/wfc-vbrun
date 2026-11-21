@@ -1,4 +1,4 @@
-# wfc-vbrun: the VBRUN compatibility library (ADR-0007), wfcvbrun.dll.
+# wfc-vbrun: the VBRUN compatibility library (ADR-0007), msvbvm60.dll.
 #
 # Built as a DLL (target wfc_vbrun) and as a static library (target
 # wfc_vbrun_static) so a program can link it either way. The version is the
@@ -132,6 +132,7 @@ if(WIN32)
     @ONLY
   )
   set(WFC_LIB_NAME wfcvbrun)
+  set(WFC_LIB_FILE msvbvm60.dll)
   set(WFC_LIB_DESCRIPTION "WFC VBRUN compatibility library")
   configure_file(version.rc.in "${CMAKE_CURRENT_BINARY_DIR}/wfcvbrun.rc" @ONLY)
 
@@ -148,7 +149,10 @@ if(WIN32)
   set_target_properties(
     wfc_vbrun
     PROPERTIES
-      OUTPUT_NAME wfcvbrun
+      OUTPUT_NAME msvbvm60
+      SUFFIX ".dll"
+      ARCHIVE_OUTPUT_NAME wfcvbrun
+      PDB_NAME wfcvbrun
       VERSION "${WFC_VBRUN_VERSION}"
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
   )
@@ -583,7 +587,7 @@ if(BUILD_TESTING AND WFC_BUILD_TESTS)
     PROPERTIES LABELS "unit;vbrun" TIMEOUT 120
   )
   if(WIN32)
-    # A C program loads wfcvbrun.dll, checks its COM entry points and version
+    # A C program loads msvbvm60.dll, checks its COM entry points and version
     # resource, and registers and unregisters it for the current user.
     enable_language(C)
     add_executable(vbrun_dll_test tests/vbrun_dll_test.c)

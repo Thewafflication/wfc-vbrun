@@ -1,5 +1,5 @@
 // The static form of the VBRUN library: the helpers are linked into the
-// program (target wfc_vbrun_static) instead of loaded from wfcvbrun.dll.
+// program (target wfc_vbrun_static) instead of loaded from msvbvm60.dll.
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

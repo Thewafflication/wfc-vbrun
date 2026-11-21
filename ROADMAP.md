@@ -1,6 +1,6 @@
 # wfc-vbrun roadmap
 
-Library: **VBRUN compatibility library** (`wfcvbrun.dll`), the WFC replacement for `MSVBVM60.DLL`.
+Library: **VBRUN compatibility library** (`msvbvm60.dll`), the WFC replacement for `MSVBVM60.DLL`.
 Current version **0.6.0**, targeting **MSVBVM60.DLL 6.0.98 (Visual Basic 6.0 SP6)**.
 
 The version stays `0.<target major>.<target minor>` until the library matches

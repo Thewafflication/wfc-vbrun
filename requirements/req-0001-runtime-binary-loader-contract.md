@@ -59,7 +59,7 @@ profile that identifies the affected compiled VB6 programs.
 
 ## Implementation Record
 
-`wfcvbrun.dll` (target `wfc_vbrun`, `lib/wfc-vbrun/`) is built for the architecture
+`msvbvm60.dll` (target `wfc_vbrun`, `lib/wfc-vbrun/`) is built for the architecture
 of the build and loads in a GUI-subsystem process. It does not carry the
 reference identity (hash, version, image base); it is a compatible export
 surface with its own implementation of all 635 exports, not a copy (see

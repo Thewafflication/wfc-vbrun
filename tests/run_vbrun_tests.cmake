@@ -1,5 +1,5 @@
 # Verifies the VBRUN library against the retained MSVBVM60 inventory.
-# Usage: cmake -DTESTER=<vbrun_tests> -DDLL=<wfcvbrun.dll>
+# Usage: cmake -DTESTER=<vbrun_tests> -DDLL=<msvbvm60.dll>
 #   -DEVIDENCE=<msvbvm60-6.0-runtime.json> -DWORK=<dir> -P run_vbrun_tests.cmake
 file(MAKE_DIRECTORY "${WORK}")
 file(READ "${EVIDENCE}" json)
