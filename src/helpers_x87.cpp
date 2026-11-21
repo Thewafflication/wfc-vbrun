@@ -227,7 +227,10 @@ extern "C" {
 // error clears them (the reference's error path resets the unit) or the next
 // conversion would fail on the old flags.
 void __cdecl vbrun_x87_fail(unsigned status) {
-    __asm fnclex vbrun::x87::raise_for_status(status);
+    __asm {
+        fnclex
+    }
+    vbrun::x87::raise_for_status(status);
 }
 
 void __cdecl vbrun_x87_overflow() {
